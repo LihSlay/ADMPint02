@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'botoesdefinicoes.dart';
 
 void main() {
   runApp(const MyApp());
@@ -25,29 +26,53 @@ class Definicoes extends StatelessWidget {
 
   const Definicoes({super.key, required this.title});
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          title,
-          style: TextStyle(color: Colors.white), // título branco
-        ),
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Color(0xFF907041), // início
-                Color(0xFFA68A69), // cor final
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: Text(
+        title,
+        style: const TextStyle(color: Colors.white),
+      ),
+      elevation: 0,
+      flexibleSpace: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFF907041), 
+              Color(0xFFA68A69),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
         ),
       ),
-      body: Center(child: Text("Botões")),
-    );
-  }
+    ),
+
+    // botões da página
+    body: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          SettingsButton(
+            icon: Icons.language,
+            label: "Alterar Idioma",
+            onTap: () {},
+          ),
+          SettingsButton(
+            icon: Icons.key,
+            label: "Alterar Palavra-passe",
+            onTap: () {},
+          ),
+          SettingsButton(
+            icon: Icons.shield_outlined,
+            label: "Termos e Condições",
+            onTap: () {},
+          ),
+        ],
+      ),
+    ),
+  );
 }
+}
+
