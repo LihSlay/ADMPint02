@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../login/login.dart';
-import '../login/IniciarSessaoPage.dart';
-import '../login/EsqueceuPasseEmailPage.dart';
-import '../login/EsqueceuPasse.dart';
-import '../login/AlterarPassePage.dart';
-import '../login/TermosCondicoesPage.dart';
+import 'login/login.dart';
+import 'login/IniciarSessaoPage.dart';
+import 'login/EsqueceuPasseEmailPage.dart';
+import 'login/EsqueceuPasse.dart';
+import 'login/AlterarPassePage.dart';
+import 'login/TermosCondicoesPage.dart';
 
 void main() {
   runApp(const MyApp());
