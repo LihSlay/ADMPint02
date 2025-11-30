@@ -7,7 +7,6 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -16,6 +15,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
       home: const Idioma(title: 'Alterar Idioma'),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -29,100 +29,78 @@ class Idioma extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          title,
-          style: const TextStyle(color: Colors.white),
-        ),
+        title: Text(title, style: const TextStyle(color: Colors.white)),
         elevation: 0,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Color(0xFF907041),
-                Color(0xFFA68A69),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+              colors: [Color(0xFF907041), Color(0xFF97774D), Color(0xFFA68A69)],
             ),
           ),
         ),
       ),
 
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
               "Selecione o idioma",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+               style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 20,
+                    height: 1.45,
+                    color: Colors.black,
+                  ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // PORTUGUÊS
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 25),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(3), // quadrado
+                  ),
+                  side: const BorderSide(color: Colors.black26, width: 1),
+                  elevation: 2,
+                ),
+                onPressed: () {
+                  // Ação português
+                },
+                child: const Text("Português"),
               ),
             ),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
 
-            LanguageButton(
-              label: "Português",
-              onTap: () {
-                // ação ao escolher português
-              },
-            ),
-
-            LanguageButton(
-              label: "English",
-              onTap: () {
-                // ação ao escolher inglês
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-
-/// WIDGET dos botões do edioma 
-
-
-class LanguageButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-
-  const LanguageButton({
-    super.key,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(20),
-      onTap: onTap,
-      child: Container(
-        alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(vertical: 18),
-        margin: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
+            // INGLÊS
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 25),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                  side: const BorderSide(color: Colors.black26, width: 1),
+                  elevation: 2,
+                ),
+                onPressed: () {
+                  // Ação inglês
+                },
+                child: const Text("Inglês"),
+              ),
             ),
           ],
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
         ),
       ),
     );

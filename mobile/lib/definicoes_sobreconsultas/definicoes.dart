@@ -40,11 +40,10 @@ Widget build(BuildContext context) {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFF907041), 
-              Color(0xFFA68A69),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+                  Color(0xFF907041),
+                  Color(0xFF97774D),
+                  Color(0xFFA68A69),
+                ],
           ),
         ),
       ),
