@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 // ignore: camel_case_types
 class Dadospessoais_Dependente extends StatelessWidget {
-  const Dadospessoais_Dependente({super.key});
+  final String title;
+  const Dadospessoais_Dependente({super.key, required this.title});
 
   @override
   Widget build(BuildContext context) {

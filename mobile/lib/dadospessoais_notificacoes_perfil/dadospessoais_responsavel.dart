@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-class DadosPessoaisPage extends StatelessWidget {
-  const DadosPessoaisPage({super.key});
+class DadosPessoaisResponsavel extends StatelessWidget {
+  final String title;
+  const DadosPessoaisResponsavel({super.key, required this.title});
 
   @override
   Widget build(BuildContext context) {

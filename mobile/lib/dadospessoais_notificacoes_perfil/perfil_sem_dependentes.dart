@@ -1,28 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/dadospessoais_notificacoes_perfil/dadospessoais_responsavel.dart';
 
-void main() {
-  runApp(const MyApp());
-}
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Clinimolelos',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.brown),
-      ),
-      home: const PerfilPage(),
-      debugShowCheckedModeBanner: false,
-    );
-  }
-}
-
-class PerfilPage extends StatelessWidget {
-  const PerfilPage({super.key});
+class PerfilSemDependentes extends StatelessWidget {
+  const PerfilSemDependentes({super.key,required this.title});
+   final String title;
 
   @override
   Widget build(BuildContext context) {
@@ -113,7 +95,7 @@ class PerfilPage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const DadosPessoaisPage(),
+                    builder: (context) => const DadosPessoaisResponsavel(title: 'Dadospessoais_Responsavel',),
                   ),
                 );
               },

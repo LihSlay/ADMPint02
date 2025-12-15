@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/dadospessoais_notificacoes_perfil/dadospessoais_dependente.dart';
 
-class PerfilPage extends StatelessWidget {
-  const PerfilPage({super.key});
+class PerfilDependente extends StatelessWidget {
+  final String title;
+  const PerfilDependente({super.key, required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +94,7 @@ class PerfilPage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const Dadospessoais_Dependente(),
+                    builder: (context) => const Dadospessoais_Dependente(title: 'Dadospessoais_Dependentes',),
                   ),
                 );
               },
