@@ -1,4 +1,10 @@
 import 'package:go_router/go_router.dart';
+import 'package:mobile/dadospessoais_notificacoes_perfil/dadospessoais_dependente.dart';
+import 'package:mobile/dadospessoais_notificacoes_perfil/dadospessoais_responsavel.dart';
+import 'package:mobile/dadospessoais_notificacoes_perfil/notificacoes.dart';
+import 'package:mobile/dadospessoais_notificacoes_perfil/perfil_com_dependentes.dart';
+import 'package:mobile/dadospessoais_notificacoes_perfil/perfil_dependente.dart';
+import 'package:mobile/dadospessoais_notificacoes_perfil/perfil_sem_dependentes.dart';
 import 'definicoes_sobreconsultas/alteraridioma.dart';
 import 'definicoes_sobreconsultas/definicoes.dart';
 import 'definicoes_sobreconsultas/definicoesTermoseCondicoes.dart';
@@ -35,9 +41,10 @@ final GoRouter rotas = GoRouter(
     GoRoute(
       name: 'Sobre consultas',
       path: '/sobre_consultas',
-      builder: (context, state) => const SobreConsultasPage(title: 'Apl. Route3'),
+      builder: (context, state) =>
+          const SobreConsultasPage(title: 'Apl. Route3'),
     ),
-        GoRoute(
+    GoRoute(
       name: 'inicio',
       path: '/inicio',
       builder: (context, state) => const Inicio(),
@@ -47,15 +54,45 @@ final GoRouter rotas = GoRouter(
       path: '/calendario',
       builder: (context, state) => const Calendario(title: 'Calendário'),
     ),
-        GoRoute(
+    GoRoute(
       name: 'notificacao',
       path: '/notificacao',
       builder: (context, state) => const Notificacao(title: 'Notificações'),
     ),
-            GoRoute(
+    GoRoute(
       name: 'definicao',
       path: '/definicao',
       builder: (context, state) => const Definicao(title: 'Definições'),
+    ),
+    GoRoute(
+      name: 'perfilcomdependentes',
+      path: '/perfilcomdependentes',
+      builder: (context, state) => const PerfilComDep(title: 'PerfilComDep'),
+    ),
+    GoRoute(
+      name: 'perfildependente',
+      path: '/perfildependente',
+      builder: (context, state) => const PerfilDependente(title: 'PerfilDependente'),
+    ),
+    GoRoute(
+      name: 'perfilsemdependentes',
+      path: '/perfilsemdependentes',
+      builder: (context, state) => const PerfilSemDependentes(title: 'PerfilSemDependentes'),
+    ),
+    GoRoute(
+      name: 'dadosdependente',
+      path: '/dadosdependente',
+      builder: (context, state) => const Dadospessoais_Dependente(title: 'Dadospessoais_Dependente'),
+    ),
+    GoRoute(
+      name: 'dadosresponsavel',
+      path: '/dadosresponsavel',
+      builder: (context, state) => const DadosPessoaisResponsavel(title: 'Dadospessoais_Responsavel'),
+    ),
+     GoRoute(
+      name: 'notificacoesdados',
+      path: '/notificacoesdados',
+      builder: (context, state) => const NotificacoesDados(title: 'Notificacoes_Dados'),
     ),
   ],
 );
