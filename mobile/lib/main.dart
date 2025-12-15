@@ -1,10 +1,5 @@
 import 'package:flutter/material.dart';
-import 'login/login.dart';
-import 'login/IniciarSessaoPage.dart';
-import 'login/EsqueceuPasseEmailPage.dart';
-import 'login/EsqueceuPasse.dart';
-import 'login/AlterarPassePage.dart';
-import 'login/TermosCondicoesPage.dart';
+import 'app_route.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,25 +8,12 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  // This widget is the root of your application.
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Clinimolelos',
-      theme: ThemeData(
-        useMaterial3: true,
-      ),
-      debugShowCheckedModeBanner: false,
-
-      initialRoute: '/login',
-
-      routes: {
-        '/login': (context) => const LoginPage(),
-        '/iniciar_sessao': (context) => const IniciarSessaoPage(),
-        '/esqueceu_email': (context) => const EsqueceuPasseEmailPage(),
-        '/esqueceu_codigo': (context) => const EsqueceuPassePage(),
-        '/alterar_passe': (context) => const AlterarPassePage(),
-        '/termos_condicoes': (context) => const TermosCondicoesPage(),
-      },
-    );
+    return MaterialApp.router(
+      routerConfig: rotas
+      );
   }
 }

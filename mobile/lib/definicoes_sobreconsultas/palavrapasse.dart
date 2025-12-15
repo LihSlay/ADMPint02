@@ -1,25 +1,5 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Clinimolelos',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const Palavrapasse(title: 'Alterar Palavra-passe'),
-      debugShowCheckedModeBanner: false,
-    );
-  }
-}
-
 class Palavrapasse extends StatelessWidget {
   final String title;
 
@@ -45,7 +25,7 @@ class Palavrapasse extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(
           20,
-        ), //aplica 20 pixels de espaço em todas as direções
+        ), // aplica 20 pixels de espaço em todas as direções
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -55,7 +35,7 @@ class Palavrapasse extends StatelessWidget {
             ),
             const SizedBox(height: 5),
 
-            //caixas de texto
+            // caixas de texto
             TextField(
               decoration: InputDecoration(border: OutlineInputBorder()),
             ),
@@ -68,7 +48,7 @@ class Palavrapasse extends StatelessWidget {
             ),
             const SizedBox(height: 5),
 
-            //caixas de texto
+            // caixas de texto
             TextField(
               decoration: InputDecoration(border: OutlineInputBorder()),
             ),
@@ -81,7 +61,7 @@ class Palavrapasse extends StatelessWidget {
             ),
             const SizedBox(height: 5),
 
-            //caixas de texto
+            // caixas de texto
             TextField(
               decoration: InputDecoration(border: OutlineInputBorder()),
             ),
@@ -89,15 +69,16 @@ class Palavrapasse extends StatelessWidget {
             const SizedBox(height: 30),
 
             SizedBox(
-              width: double.infinity, //o botão fica no comprimeto da tela
+              width: double.infinity, // o botão fica no comprimento da tela
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color.fromARGB(221, 255, 255, 255),
                   padding: EdgeInsets.symmetric(
                     vertical: 20,
-                  ), //plica padding só na vertical: 20 px em cima, 20 px em baixo
+                  ), // aplica padding só na vertical: 20 px em cima, 20 px em baixo
                   side: const BorderSide(
-                    color: Colors.black26, width: 1, // cor da borda e espessura da borda
+                    color: Colors.black26,
+                    width: 1, // cor da borda e espessura da borda
                   ),
                   // Cantos quadrados
                   shape: RoundedRectangleBorder(
@@ -105,10 +86,8 @@ class Palavrapasse extends StatelessWidget {
                       3,
                     ), // cantos ligeiramente arredondados
                   ),
-
                   elevation: 2, // sombra
                 ),
-
                 onPressed: () {},
                 child: const Text(
                   "Continuar",
