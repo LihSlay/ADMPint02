@@ -1,45 +1,19 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Clinimolelos',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const TermosCondicoes(title: 'Termos e Condições'),
-      debugShowCheckedModeBanner: false,
-    );
-  }
-}
-
 class TermosCondicoes extends StatelessWidget {
   final String title;
-
   const TermosCondicoes({super.key, required this.title});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          title,
-          style: TextStyle(color: Colors.white), // título branco
-        ),
+        title: Text(title, style: const TextStyle(color: Colors.white)),
         elevation: 0,
         flexibleSpace: Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             gradient: LinearGradient(
               colors: [Color(0xFF907041), Color(0xFF97774D), Color(0xFFA68A69)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
             ),
           ),
         ),
@@ -63,7 +37,8 @@ class TermosCondicoes extends StatelessWidget {
                     TextSpan(
                       text: "1. Identificação do responsável pelo tratamento\n",
                       style: TextStyle(
-                        fontWeight: FontWeight.w600, //define o peso (espessura) da fonte no Flutter — ou seja, quão negrito o texto fica.
+                        fontWeight: FontWeight
+                            .w600, //define o peso (espessura) da fonte no Flutter — ou seja, quão negrito o texto fica.
                         fontSize: 14,
                       ),
                     ),
@@ -78,7 +53,8 @@ class TermosCondicoes extends StatelessWidget {
                       text:
                           "2. Informação, consentimento e finalidade do tratamento\n",
                       style: TextStyle(
-                        fontWeight: FontWeight.w600, //define o peso (espessura) da fonte no Flutter — ou seja, quão negrito o texto fica.
+                        fontWeight: FontWeight
+                            .w600, //define o peso (espessura) da fonte no Flutter — ou seja, quão negrito o texto fica.
                         fontSize: 14,
                       ),
                     ),
@@ -94,7 +70,8 @@ class TermosCondicoes extends StatelessWidget {
                     TextSpan(
                       text: "3. Medidas de segurança\n",
                       style: TextStyle(
-                        fontWeight: FontWeight.w600, //define o peso (espessura) da fonte no Flutter — ou seja, quão negrito o texto fica.
+                        fontWeight: FontWeight
+                            .w600, //define o peso (espessura) da fonte no Flutter — ou seja, quão negrito o texto fica.
                         fontSize: 14,
                       ),
                     ),
@@ -107,7 +84,8 @@ class TermosCondicoes extends StatelessWidget {
                     TextSpan(
                       text: "4. Exercício dos direitos\n",
                       style: TextStyle(
-                        fontWeight: FontWeight.w600, //define o peso (espessura) da fonte no Flutter — ou seja, quão negrito o texto fica.
+                        fontWeight: FontWeight
+                            .w600, //define o peso (espessura) da fonte no Flutter — ou seja, quão negrito o texto fica.
                         fontSize: 14,
                       ),
                     ),
@@ -120,7 +98,8 @@ class TermosCondicoes extends StatelessWidget {
                     TextSpan(
                       text: "5. Prazo de conservação\n",
                       style: TextStyle(
-                        fontWeight: FontWeight.w600, //define o peso (espessura) da fonte no Flutter — ou seja, quão negrito o texto fica.
+                        fontWeight: FontWeight
+                            .w600, //define o peso (espessura) da fonte no Flutter — ou seja, quão negrito o texto fica.
                         fontSize: 14,
                       ),
                     ),
@@ -133,7 +112,8 @@ class TermosCondicoes extends StatelessWidget {
                     TextSpan(
                       text: "6. Autoridade de controlo\n",
                       style: TextStyle(
-                        fontWeight: FontWeight.w600, //define o peso (espessura) da fonte no Flutter — ou seja, quão negrito o texto fica.
+                        fontWeight: FontWeight
+                            .w600, //define o peso (espessura) da fonte no Flutter — ou seja, quão negrito o texto fica.
                         fontSize: 14,
                       ),
                     ),
