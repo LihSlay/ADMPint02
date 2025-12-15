@@ -4,15 +4,17 @@ import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 
-class HistoricoDeclaracoesPage extends StatefulWidget {
-  const HistoricoDeclaracoesPage({super.key});
+class HistoricoDeclaracoes extends StatefulWidget {
+  final String title;
+  const HistoricoDeclaracoes({super.key,required this.title});
+  
 
   @override
-  State<HistoricoDeclaracoesPage> createState() =>
-      _HistoricoDeclaracoesPageState();
+  State<HistoricoDeclaracoes> createState() =>
+      _HistoricoDeclaracoesState();
 }
 
-class _HistoricoDeclaracoesPageState extends State<HistoricoDeclaracoesPage> {
+class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
   String filtro = "ambos"; // ambos | declaracoes | atestados
 
   // ---------------- PDF DOWNLOAD ------------------

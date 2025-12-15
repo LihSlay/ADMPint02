@@ -14,6 +14,10 @@ import 'package:mobile/inicio_calendario/inicio.dart';
 import 'package:mobile/inicio_calendario/calendario.dart';
 import 'package:mobile/inicio_calendario/notificacao.dart';
 import 'package:mobile/inicio_calendario/definicao.dart';
+import 'package:mobile/download_documentos/exames clínicos.dart';
+import 'package:mobile/download_documentos/historico_declaracoes.dart';
+import 'package:mobile/download_documentos/plano_tratamento.dart';
+
 
 final GoRouter rotas = GoRouter(
   initialLocation: '/',
@@ -93,6 +97,24 @@ final GoRouter rotas = GoRouter(
       name: 'notificacoesdados',
       path: '/notificacoesdados',
       builder: (context, state) => const NotificacoesDados(title: 'Notificacoes_Dados'),
+    ),
+
+     GoRoute(
+      name: 'exames_clinicos',
+      path: '/exames_clinicos',
+      builder: (context, state) => const ExamesClinicos(title: 'Exames_Clínicos'),
+    ),
+
+     GoRoute(
+      name: 'historico_declaracoes',
+      path: '/historico_declaracoes',
+      builder: (context, state) => const HistoricoDeclaracoes(title: 'Historico_Declarações'),
+    ),
+
+    GoRoute(
+      name: 'plano_tratamento',
+      path: '/historico_declaracoes',
+      builder: (context, state) => const PlanoTratamento(title: 'Plano_Tratamento'),
     ),
   ],
 );

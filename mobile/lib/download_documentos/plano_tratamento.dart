@@ -4,8 +4,9 @@ import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 
-class PlanoTratamentoPage extends StatelessWidget {
-  const PlanoTratamentoPage({super.key});
+class PlanoTratamento extends StatelessWidget {
+  final String title;
+  const PlanoTratamento({super.key,required this.title});
 
   Future<String> downloadPdf(String url, String filename) async {
     final dir = await getApplicationDocumentsDirectory();
