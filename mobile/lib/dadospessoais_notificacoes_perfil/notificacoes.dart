@@ -1,11 +1,49 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
-class NotificacoesDados extends StatelessWidget {
+class NotificacoesDados extends StatefulWidget {
   final String title;
   const NotificacoesDados({super.key, required this.title});
 
   @override
+  State<NotificacoesDados> createState() => _NotificacoesDadosState();
+}
+
+class _NotificacoesDadosState extends State<NotificacoesDados> {
+  int currentPageIndex = 2; // Notificações
+
+  @override
   Widget build(BuildContext context) {
+    final List<Map<String, dynamic>> notificacoes = [
+      {
+        'icon': Icons.close,
+        'texto': "A sua consulta no dia 24/08/2025 foi desmarcada.",
+        'rota': '/calendario',
+      },
+      {
+        'icon': Icons.calendar_month,
+        'texto': "A sua consulta para dia 20/11/2025 foi agendada.",
+        'rota': '/calendario',
+      },
+      {
+        'icon': Icons.restart_alt,
+        'texto':
+            "Foi submetida a declaração de presença para a consulta de Clareamento dentário do dia 13/10/2025.",
+        'rota': '/sobre_consultas',
+      },
+      {
+        'icon': Icons.monitor_heart_outlined,
+        'texto':
+            "Foi submetido um novo exame clínico à sua ficha de paciente.",
+        'rota': '/perfildependente',
+      },
+      {
+        'icon': Icons.article_outlined,
+        'texto': "O seu plano de tratamento dentário foi atualizado.",
+        'rota': '/sobre_consultas',
+      },
+    ];
+
     return Scaffold(
       backgroundColor: Colors.white,
 
@@ -36,55 +74,65 @@ class NotificacoesDados extends StatelessWidget {
       ),
 
       // ---------------- LISTA DE NOTIFICAÇÕES ----------------
-      body: ListView(
+      body: ListView.builder(
         padding: const EdgeInsets.all(20),
-        children: const [
-          NotificacaoItem(
-            icon: Icons.close,
-            texto: "A sua consulta no dia 24/08/2025 foi desmarcada.",
-          ),
-          NotificacaoItem(
-            icon: Icons.calendar_month,
-            texto: "A sua consulta para dia 20/11/2025 foi agendada.",
-          ),
-          NotificacaoItem(
-            icon: Icons.restart_alt,
-            texto:
-                "Foi submetida a declaração de presença para a consulta de Clareamento dentário do dia 13/10/2025.",
-          ),
-          NotificacaoItem(
-            icon: Icons.monitor_heart_outlined,
-            texto:
-                "Foi submetido um novo exame clínico à sua ficha de paciente.",
-          ),
-          NotificacaoItem(
-            icon: Icons.article_outlined,
-            texto: "O seu plano de tratamento dentário foi atualizado.",
-          ),
-        ],
+        itemCount: notificacoes.length,
+        itemBuilder: (context, index) {
+          final item = notificacoes[index];
+          return NotificacaoItem(
+            icon: item['icon'],
+            texto: item['texto'],
+            onTap: () {
+              context.go(item['rota']); // Callback para abrir a página
+            },
+          );
+        },
       ),
 
-      // ---------------- Barra de Navegação ----------------
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 2, // tab das notificações
-        selectedItemColor: Colors.brown,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(
+      // ---------------- NavigationBar ----------------
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: currentPageIndex,
+        indicatorColor: Colors.transparent,
+        onDestinationSelected: (index) {
+          setState(() {
+            currentPageIndex = index;
+          });
+
+          switch (index) {
+            case 0:
+              context.go('/inicio');
+              break;
+            case 1:
+              context.go('/calendario');
+              break;
+            case 2:
+              context.go('/notificacoes');
+              break;
+            case 3:
+              context.go('/definicoes');
+              break;
+          }
+        },
+        destinations: const [
+          NavigationDestination(
             icon: Icon(Icons.home_outlined),
-            label: "Início",
+            selectedIcon: Icon(Icons.home),
+            label: 'Início',
           ),
-          BottomNavigationBarItem(
+          NavigationDestination(
             icon: Icon(Icons.calendar_month_outlined),
-            label: "Calendário",
+            selectedIcon: Icon(Icons.calendar_month),
+            label: 'Calendário',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: "Notificações",
+          NavigationDestination(
+            icon: Icon(Icons.notifications_outlined),
+            selectedIcon: Icon(Icons.notifications),
+            label: 'Notificações',
           ),
-          BottomNavigationBarItem(
+          NavigationDestination(
             icon: Icon(Icons.settings_outlined),
-            label: "Definições",
+            selectedIcon: Icon(Icons.settings),
+            label: 'Definições',
           ),
         ],
       ),
@@ -96,38 +144,43 @@ class NotificacoesDados extends StatelessWidget {
 class NotificacaoItem extends StatelessWidget {
   final IconData icon;
   final String texto;
+  final VoidCallback onTap;
 
   const NotificacaoItem({
     super.key,
     required this.icon,
     required this.texto,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 14),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              top: BorderSide(color: Color(0xFFE2C8A6), width: 1),
-              bottom: BorderSide(color: Color(0xFFE2C8A6), width: 1),
-            ),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, size: 32, color: Colors.black87),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  texto,
-                  style: const TextStyle(fontSize: 16),
-                ),
+        InkWell(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 14),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                top: BorderSide(color: Color(0xFFE2C8A6), width: 1),
+                bottom: BorderSide(color: Color(0xFFE2C8A6), width: 1),
               ),
-            ],
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(icon, size: 32, color: Colors.black87),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    texto,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 12),
