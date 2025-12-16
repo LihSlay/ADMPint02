@@ -36,16 +36,15 @@ class _NotificacaoState extends State<Notificacao> {
           // Navegação entre páginas
           switch (index) {
             case 0:
-              context.go('/'); // Início
+              context.go('/inicio'); 
               break;
             case 1:
-              context.go('/calendario'); // Calendário
+              context.go('/calendario'); 
               break;
             case 2:
-              context.go('/notificacao'); // Notificações
-              break;
+              context.go('/notificacoes'); 
             case 3:
-              context.go('/definicoes'); // Definições
+              context.go('/definicoes'); 
               break;
           }
         },

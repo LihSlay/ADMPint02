@@ -12,18 +12,26 @@ import 'definicoes_sobreconsultas/palavrapasse.dart';
 import 'definicoes_sobreconsultas/sobreconsultas.dart';
 import 'package:mobile/inicio_calendario/inicio.dart';
 import 'package:mobile/inicio_calendario/calendario.dart';
-import 'package:mobile/inicio_calendario/notificacao.dart';
-import 'package:mobile/inicio_calendario/definicao.dart';
 import 'package:mobile/download_documentos/exames clínicos.dart';
 import 'package:mobile/download_documentos/historico_declaracoes.dart';
 import 'package:mobile/download_documentos/plano_tratamento.dart';
 
 
 final GoRouter rotas = GoRouter(
-  initialLocation: '/',
+  initialLocation: '/inicio',
   routes: [
-    GoRoute(
+            GoRoute(
       path: '/',
+      name: 'login',
+      builder: (context, state) => const Definicoes(title: 'Login'),
+    ),
+        GoRoute(
+      path: '/definicoes',
+      name: 'definições',
+      builder: (context, state) => const Definicoes(title: 'Apl. HomePage'),
+    ),
+    GoRoute(
+      path: '/definicoes',
       name: 'definições',
       builder: (context, state) => const Definicoes(title: 'Apl. HomePage'),
     ),
@@ -58,16 +66,7 @@ final GoRouter rotas = GoRouter(
       path: '/calendario',
       builder: (context, state) => const Calendario(title: 'Calendário'),
     ),
-    GoRoute(
-      name: 'notificacao',
-      path: '/notificacao',
-      builder: (context, state) => const Notificacao(title: 'Notificações'),
-    ),
-    GoRoute(
-      name: 'definicao',
-      path: '/definicao',
-      builder: (context, state) => const Definicao(title: 'Definições'),
-    ),
+
     GoRoute(
       name: 'perfilcomdependentes',
       path: '/perfilcomdependentes',
@@ -94,9 +93,9 @@ final GoRouter rotas = GoRouter(
       builder: (context, state) => const DadosPessoaisResponsavel(title: 'Dadospessoais_Responsavel'),
     ),
      GoRoute(
-      name: 'notificacoesdados',
-      path: '/notificacoesdados',
-      builder: (context, state) => const NotificacoesDados(title: 'Notificacoes_Dados'),
+      name: 'notificacoes',
+      path: '/notificacoes',
+      builder: (context, state) => const NotificacoesDados(title: 'Notificações'),
     ),
 
      GoRoute(

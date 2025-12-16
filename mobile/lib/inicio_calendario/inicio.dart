@@ -136,16 +136,16 @@ class _InicioState extends State<Inicio> {
 
           switch (index) {
             case 0:
-              context.go('/');
+              context.go('/inicio');
               break;
             case 1:
               context.go('/calendario');
               break;
             case 2:
-              context.go('/notificacao');
+              context.go('/notificacoes');
               break;
             case 3:
-              context.go('/definicao');
+              context.go('/definicoes');
               break;
           }
         },
