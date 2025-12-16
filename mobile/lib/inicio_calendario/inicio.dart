@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/inicio_calendario/calendario.dart';
-import 'package:mobile/inicio_calendario/notificacao.dart';
+import 'package:mobile/dadospessoais_notificacoes_perfil/notificacoes.dart';
 import 'package:mobile/definicoes_sobreconsultas/definicoes.dart';
 
 class Inicio extends StatefulWidget {
@@ -13,13 +13,6 @@ class Inicio extends StatefulWidget {
 
 class _InicioState extends State<Inicio> {
   int currentPageIndex = 0;
-
-  final List<String> titulos = [
-    '', // Início
-    'Calendário',
-    'Notificações',
-    'Definições',
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -80,9 +73,9 @@ class _InicioState extends State<Inicio> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             MenuItemButton(
-                              onPressed: () => context.go('/calendario'),
-                              child: Row(
-                                children: const [
+                              onPressed: () => context.go('/perfilcomdependentes'),
+                              child: const Row(
+                                children: [
                                   Icon(Icons.person, size: 20),
                                   SizedBox(width: 8),
                                   Text("Perfil"),
@@ -91,8 +84,8 @@ class _InicioState extends State<Inicio> {
                             ),
                             MenuItemButton(
                               onPressed: () => context.go('/sobre_consultas'),
-                              child: Row(
-                                children: const [
+                              child: const Row(
+                                children: [
                                   Icon(Icons.info_outline, size: 20),
                                   SizedBox(width: 8),
                                   Text("Sobre Consultas"),
@@ -101,8 +94,8 @@ class _InicioState extends State<Inicio> {
                             ),
                             MenuItemButton(
                               onPressed: () => context.go('/terminar_sessao'),
-                              child: Row(
-                                children: const [
+                              child: const Row(
+                                children: [
                                   Icon(Icons.logout, size: 20),
                                   SizedBox(width: 8),
                                   Text("Terminar Sessão"),
@@ -118,80 +111,50 @@ class _InicioState extends State<Inicio> {
               ),
             )
           : null,
-      body: Stack(
-        children: [
-          // Conteúdo principal
-          IndexedStack(
-            index: currentPageIndex,
-            children: const [
-              Center(child: Botoes()),
-              Calendario(title: ''),
-              Notificacao(title: ''),
-              Definicoes(title: 'Definições'),
-            ],
-          ),
 
-          // Container de texto à frente de tudo
-          Positioned(
-            top: 24, // altura a partir do topo
-            left: 16,
-            right: 16,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    'António Manuel Pereira',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    'Nº Utente 283740538',
-                    style: TextStyle(fontSize: 12, color: Colors.black87),
-                  ),
-                  SizedBox(height: 24),
-                  Text(
-                    'Clínica Dentária',
-                    style: TextStyle(fontSize: 12, color: Colors.black87),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    'Clinimolelos',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ],
-              ),
+      body: IndexedStack(
+        index: currentPageIndex,
+        children: [
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                // Card do utilizador (em cima dos botões)
+                _cardDashboard(
+                  nome: "António Manuel Pereira",
+                  nUtente: "283740538",
+                  clinica: "Clinimolelos",
+                ),
+                const SizedBox(height: 20),
+
+                const Botoes(),
+                const SizedBox(height: 20),
+
+                // Cards de consultas
+                _cardConsulta(
+                  tipoConsulta: "Consulta de rotina",
+                  data: "16/12/2025",
+                  horario: "10:30",
+                ),
+                _cardConsulta(
+                  tipoConsulta: "Consulta de revisão",
+                  data: "20/12/2025",
+                  horario: "14:00",
+                ),
+              ],
             ),
           ),
+          const Calendario(title: ''),
+          const NotificacoesDados(title: ''),
+          const Definicoes(title: 'Definições'),
         ],
       ),
+
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentPageIndex,
         indicatorColor: Colors.transparent,
         onDestinationSelected: (index) {
-          setState(() {
-            currentPageIndex = index;
-          });
+          setState(() => currentPageIndex = index);
 
           switch (index) {
             case 0:
@@ -235,66 +198,52 @@ class _InicioState extends State<Inicio> {
   }
 }
 
-// Botões do início
+// -------------------- BOTOES --------------------
 class Botoes extends StatelessWidget {
   const Botoes({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-padding: const EdgeInsets.only(top: 0), // aumenta este valor para descer os botões
-      child: Center(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _buildBotao(
-              context,
-              icon: Icons.history_outlined,
-              label: 'Histórico \n e Declarações',
-              onPressed: () {
-                context.go('/historico_declaracoes');
-              },
-            ),
-            const SizedBox(width: 20),
-            _buildBotao(
-              context,
-              icon: Icons.monitor_heart_outlined,
-              label: 'Exames \n Clínicos',
-              onPressed: () {
-                context.go('/exames_clinicos');
-              },
-            ),
-            const SizedBox(width: 20),
-            _buildBotao(
-              context,
-              icon: Icons.assignment_ind_outlined,
-              label: 'Planos \n de Tratamento',
-              onPressed: () {
-                context.go('/plano_tratamento');
-              },
-            ),
-          ],
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _botao(
+          context,
+          icon: Icons.history_outlined,
+          label: 'Histórico \n e Declarações',
+          route: '/historico_declaracoes',
         ),
-      ),
+        const SizedBox(width: 20),
+        _botao(
+          context,
+          icon: Icons.monitor_heart_outlined,
+          label: 'Exames \n Clínicos',
+          route: '/exames_clinicos',
+        ),
+        const SizedBox(width: 20),
+        _botao(
+          context,
+          icon: Icons.assignment_ind_outlined,
+          label: 'Planos \n de Tratamento',
+          route: '/plano_tratamento',
+        ),
+      ],
     );
   }
 
-
-  Widget _buildBotao(
+  Widget _botao(
     BuildContext context, {
     required IconData icon,
     required String label,
-    required VoidCallback onPressed,
+    required String route,
   }) {
     return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         GestureDetector(
-          onTap: onPressed,
+          onTap: () => context.go(route),
           child: Container(
-            width: 67,
-            height: 67,
+            width: 65,
+            height: 65,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [
@@ -302,15 +251,13 @@ padding: const EdgeInsets.only(top: 0), // aumenta este valor para descer os bot
                   Color(0xFF97774D),
                   Color(0xFFA68A69),
                 ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(36),
             ),
             child: Icon(icon, size: 40, color: Colors.white),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         Text(
           label,
           textAlign: TextAlign.center,
@@ -319,4 +266,130 @@ padding: const EdgeInsets.only(top: 0), // aumenta este valor para descer os bot
       ],
     );
   }
+}
+
+// -------------------- CARD UTILIZADOR --------------------
+Widget _cardDashboard({
+  required String nome,
+  required String nUtente,
+  required String clinica,
+}) {
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(8),
+      boxShadow: const [
+        BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4)),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          nome,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 6),
+
+        Text('Nº Utente $nUtente', style: const TextStyle(fontSize: 12)),
+        const SizedBox(height: 6),
+
+        const Text('Clínica Dentária', style:  TextStyle(fontSize: 12)),
+        Text(
+          clinica,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+        ),
+      ],
+    ),
+  );
+}
+
+// -------------------- CARD CONSULTA --------------------
+Widget _cardConsulta({
+  required String tipoConsulta,
+  required String data, // ex: 16/12/2025
+  required String horario,
+}) {
+  final partesData = data.split('/'); // [dd, MM, yyyy]
+  final dia = partesData[0];
+  final mesNumero = int.parse(partesData[1]);
+  final ano = partesData[2];
+
+  const meses = [
+    'Jan',
+    'Fev',
+    'Mar',
+    'Abr',
+    'Mai',
+    'Jun',
+    'Jul',
+    'Ago',
+    'Set',
+    'Out',
+    'Nov',
+    'Dez',
+  ];
+
+  final mesTexto = meses[mesNumero - 1];
+
+
+  return Container(
+    constraints: const BoxConstraints(
+      minHeight: 90, // altura mínima
+    ),
+    margin: const EdgeInsets.only(bottom: 10),
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(8),
+      color: Colors.white,
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // DATA À ESQUERDA
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(mesTexto, style: const TextStyle(fontSize: 12)),
+            Text(
+              dia,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            Text(ano, style: const TextStyle(fontSize: 12)),
+          ],
+        ),
+
+        const SizedBox(width: 16),
+
+
+        // CONTEÚDO À DIREITA
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Consulta',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                tipoConsulta,
+                style: TextStyle(fontSize: 13),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                horario,
+                style: TextStyle(fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 }
