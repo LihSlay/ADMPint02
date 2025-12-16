@@ -155,16 +155,20 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Data",
-                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  const Text(
+                    "Data",
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   Text(data),
                 ],
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Horário",
-                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  const Text(
+                    "Horário",
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   Text(horario),
                 ],
               ),
@@ -252,6 +256,14 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
           "Histórico e Declarações",
           style: TextStyle(color: Colors.white),
         ),
+
+        // setinha
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () =>
+              context.go('/inicio'), // vai diretamente para a rota /definicoes
+        ),
+
         elevation: 0,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
@@ -303,8 +315,7 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
                 pdfs: [
                   {
                     "nome": "declaracao.pdf",
-                    "url":
-                        "https://www.africau.edu/images/default/sample.pdf",
+                    "url": "https://www.africau.edu/images/default/sample.pdf",
                   },
                 ],
               ),
@@ -318,8 +329,7 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
                 pdfs: [
                   {
                     "nome": "atestado.pdf",
-                    "url":
-                        "https://www.africau.edu/images/default/sample.pdf",
+                    "url": "https://www.africau.edu/images/default/sample.pdf",
                   },
                 ],
               ),
@@ -333,8 +343,7 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
                 pdfs: [
                   {
                     "nome": "declaracao.pdf",
-                    "url":
-                        "https://www.africau.edu/images/default/sample.pdf",
+                    "url": "https://www.africau.edu/images/default/sample.pdf",
                   },
                 ],
               ),

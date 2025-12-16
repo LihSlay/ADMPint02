@@ -47,10 +47,7 @@ class _PlanoTratamentoState extends State<PlanoTratamento> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Image.asset(
-            "assets/images/pdf_icon.png",
-            height: 42,
-          ),
+          Image.asset("assets/images/pdf_icon.png", height: 42),
 
           const SizedBox(width: 14),
 
@@ -146,15 +143,9 @@ class _PlanoTratamentoState extends State<PlanoTratamento> {
           ),
           const SizedBox(height: 8),
 
-          const Text(
-            "Médico",
-            style: TextStyle(fontWeight: FontWeight.w600),
-          ),
+          const Text("Médico", style: TextStyle(fontWeight: FontWeight.w600)),
 
-          Text(
-            medico,
-            style: const TextStyle(color: Colors.black87),
-          ),
+          Text(medico, style: const TextStyle(color: Colors.black87)),
 
           const SizedBox(height: 14),
 
@@ -179,14 +170,19 @@ class _PlanoTratamentoState extends State<PlanoTratamento> {
           "Plano de Tratamento",
           style: TextStyle(color: Colors.white),
         ),
+
+        // setinha
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () =>
+              context.go('/inicio'), // vai diretamente para a rota /definicoes
+        ),
+
         elevation: 0,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Color(0xFF907041),
-                Color(0xFFA68A69),
-              ],
+              colors: [Color(0xFF907041), Color(0xFFA68A69)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -300,10 +296,7 @@ class PdfViewerPage extends StatelessWidget {
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Color(0xFF907041),
-                Color(0xFFA68A69),
-              ],
+              colors: [Color(0xFF907041), Color(0xFFA68A69)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),

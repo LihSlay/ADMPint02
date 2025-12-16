@@ -1,4 +1,6 @@
 //import 'dart:io';
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
@@ -187,6 +189,14 @@ class ExamesClinicos extends StatelessWidget {
           "Exames Clínicos",
           style: TextStyle(color: Colors.white),
         ),
+       // setinha
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => context.go(
+            '/inicio',
+          ), // vai diretamente para a rota /definicoes
+        ),
+
         elevation: 0,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
