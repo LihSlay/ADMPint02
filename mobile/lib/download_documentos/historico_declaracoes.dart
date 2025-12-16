@@ -3,15 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:go_router/go_router.dart';
 
 class HistoricoDeclaracoes extends StatefulWidget {
   final String title;
-  const HistoricoDeclaracoes({super.key,required this.title});
-  
+  const HistoricoDeclaracoes({super.key, required this.title});
 
   @override
-  State<HistoricoDeclaracoes> createState() =>
-      _HistoricoDeclaracoesState();
+  State<HistoricoDeclaracoes> createState() => _HistoricoDeclaracoesState();
 }
 
 class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
@@ -49,17 +48,13 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // ÍCONE PDF
           Image.asset("assets/images/pdf_icon.png", height: 30),
-
           const SizedBox(width: 12),
 
-          // COLUNA DE TEXTO
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Nome ficheiro
                 Text(
                   filename,
                   style: const TextStyle(
@@ -72,8 +67,6 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
 
                 const SizedBox(height: 6),
 
-                
-                // LINHA DO TAMANHO + CHECK + CONCLUÍDO (SEM OVERFLOW)
                 Wrap(
                   spacing: 8,
                   runSpacing: 4,
@@ -86,13 +79,11 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
                         color: Colors.grey.shade700,
                       ),
                     ),
-
                     const Icon(
                       Icons.check_circle,
                       color: Color(0xFF4CAF50),
                       size: 16,
                     ),
-
                     Text(
                       "Concluído",
                       style: TextStyle(
@@ -107,10 +98,8 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
             ),
           ),
 
-          //--------------------------------------------------------
           const SizedBox(width: 10),
 
-          // ÍCONE DOWNLOAD
           IconButton(
             splashRadius: 20,
             icon: Icon(
@@ -166,20 +155,16 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Data",
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
+                  const Text("Data",
+                      style: TextStyle(fontWeight: FontWeight.w600)),
                   Text(data),
                 ],
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Horário",
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
+                  const Text("Horário",
+                      style: TextStyle(fontWeight: FontWeight.w600)),
                   Text(horario),
                 ],
               ),
@@ -188,7 +173,6 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
 
           const SizedBox(height: 16),
 
-          // ---------------- CARD DO PDF
           Column(
             children: pdfs.map((p) {
               return Padding(
@@ -219,45 +203,32 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           alignment: Alignment.center,
-
-          // ------------------- BOTÃO GRADIENTE -------------------
           decoration: BoxDecoration(
             gradient: ativo
                 ? const LinearGradient(
                     colors: [
-                      Color(0xFF907041), // dourado escuro
-                      Color.fromARGB(255, 167, 142, 113), // dourado claro
+                      Color(0xFF907041),
+                      Color.fromARGB(255, 167, 142, 113),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   )
-                : null, // sem gradiente quando não está ativo
-
-            color: ativo ? null : Colors.white, // fundo branco nos inativos
-
+                : null,
+            color: ativo ? null : Colors.white,
             borderRadius: BorderRadius.circular(10),
-
             border: Border.all(
               color: ativo ? Colors.transparent : Colors.grey.shade300,
             ),
-
-            // -------------------------------------------------------
             boxShadow: ativo
                 ? [
                     BoxShadow(
-                      color: const Color.fromARGB(
-                        255,
-                        0,
-                        0,
-                        0,
-                      ).withOpacity(0.20),
+                      color: Colors.black.withOpacity(0.20),
                       blurRadius: 7,
                       offset: const Offset(0, 5),
                     ),
                   ]
                 : [],
           ),
-
           child: Text(
             label,
             style: TextStyle(
@@ -311,7 +282,6 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
 
             const SizedBox(height: 20),
 
-            // BOTÕES FILTRO
             Row(
               children: [
                 _filtroButton("Ambos", "ambos"),
@@ -324,7 +294,6 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
 
             const SizedBox(height: 25),
 
-            // ------------ CONTEÚDO FILTRADO --------------
             if (filtro == "ambos" || filtro == "declaracoes")
               _card(
                 medico: "Dt. Melissa Pinto",
@@ -334,7 +303,8 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
                 pdfs: [
                   {
                     "nome": "declaracao.pdf",
-                    "url": "https://www.africau.edu/images/default/sample.pdf",
+                    "url":
+                        "https://www.africau.edu/images/default/sample.pdf",
                   },
                 ],
               ),
@@ -348,7 +318,8 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
                 pdfs: [
                   {
                     "nome": "atestado.pdf",
-                    "url": "https://www.africau.edu/images/default/sample.pdf",
+                    "url":
+                        "https://www.africau.edu/images/default/sample.pdf",
                   },
                 ],
               ),
@@ -362,12 +333,57 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
                 pdfs: [
                   {
                     "nome": "declaracao.pdf",
-                    "url": "https://www.africau.edu/images/default/sample.pdf",
+                    "url":
+                        "https://www.africau.edu/images/default/sample.pdf",
                   },
                 ],
               ),
           ],
         ),
+      ),
+
+      // ---------------- BOTTOM NAV BAR ----------------
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: 0,
+        indicatorColor: Colors.transparent,
+        onDestinationSelected: (index) {
+          switch (index) {
+            case 0:
+              context.go('/inicio');
+              break;
+            case 1:
+              context.go('/calendario');
+              break;
+            case 2:
+              context.go('/notificacoes');
+              break;
+            case 3:
+              context.go('/definicoes');
+              break;
+          }
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Início',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.calendar_month_outlined),
+            selectedIcon: Icon(Icons.calendar_month),
+            label: 'Calendário',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.notifications_outlined),
+            selectedIcon: Icon(Icons.notifications),
+            label: 'Notificações',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: 'Definições',
+          ),
+        ],
       ),
     );
   }
@@ -403,4 +419,3 @@ class PdfViewerPage extends StatelessWidget {
     );
   }
 }
-
