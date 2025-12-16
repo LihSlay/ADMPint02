@@ -18,7 +18,7 @@ import 'package:mobile/download_documentos/plano_tratamento.dart';
 
 
 final GoRouter rotas = GoRouter(
-  initialLocation: '/inicio',  //TESTAR MAIN
+  initialLocation: '/plano_tratamento',  //TESTAR MAIN
   routes: [
             GoRoute(
       path: '/',
@@ -107,7 +107,7 @@ final GoRouter rotas = GoRouter(
 
     GoRoute(
       name: 'plano_tratamento',
-      path: '/historico_declaracoes',
+      path: '/plano_tratamento',
       builder: (context, state) => const PlanoTratamento(title: 'Plano_Tratamento'),
     ),
   ],

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:go_router/go_router.dart';
 
 class ExamesClinicos extends StatelessWidget {
   final String title;
@@ -71,11 +72,14 @@ class ExamesClinicos extends StatelessWidget {
                     const Icon(Icons.check_circle,
                         color: Color(0xFF4CAF50), size: 18),
                     const SizedBox(width: 4),
-                    Text("Concluído",
-                        style: TextStyle(
-                            color: Colors.grey.shade800,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500)),
+                    Text(
+                      "Concluído",
+                      style: TextStyle(
+                        color: Colors.grey.shade800,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -118,7 +122,6 @@ class ExamesClinicos extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Título
           Text(
             titulo,
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
@@ -126,20 +129,17 @@ class ExamesClinicos extends StatelessWidget {
 
           const SizedBox(height: 8),
 
-          // Médico
           const Text("Médico", style: TextStyle(fontWeight: FontWeight.w600)),
           Text(medico),
 
           const SizedBox(height: 14),
 
-          // Tipo de consulta
           const Text("Tipo de consulta",
               style: TextStyle(fontWeight: FontWeight.w600)),
           Text(tipoConsulta),
 
           const SizedBox(height: 14),
 
-          // Data e horário na mesma linha
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -164,7 +164,6 @@ class ExamesClinicos extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // PDF Tile
           _pdfTile(
             context: context,
             filename: pdfNome,
@@ -207,7 +206,6 @@ class ExamesClinicos extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // Texto topo
             const Row(
               children: [
                 Icon(Icons.info_outline, color: Colors.brown),
@@ -222,7 +220,6 @@ class ExamesClinicos extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // EXAME 1
             _cardExame(
               context: context,
               titulo: "Avaliação da oclusão",
@@ -234,7 +231,6 @@ class ExamesClinicos extends StatelessWidget {
               pdfUrl: "https://www.africau.edu/images/default/sample.pdf",
             ),
 
-            // EXAME 2
             _cardExame(
               context: context,
               titulo: "Radiografia dentária",
@@ -247,6 +243,50 @@ class ExamesClinicos extends StatelessWidget {
             ),
           ],
         ),
+      ),
+
+      // ---------------- BOTTOM NAV BAR ------------------
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: 0,
+        indicatorColor: Colors.transparent,
+        onDestinationSelected: (index) {
+          switch (index) {
+            case 0:
+              context.go('/inicio');
+              break;
+            case 1:
+              context.go('/calendario');
+              break;
+            case 2:
+              context.go('/notificacoes');
+              break;
+            case 3:
+              context.go('/definicoes');
+              break;
+          }
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Início',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.calendar_month_outlined),
+            selectedIcon: Icon(Icons.calendar_month),
+            label: 'Calendário',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.notifications_outlined),
+            selectedIcon: Icon(Icons.notifications),
+            label: 'Notificações',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: 'Definições',
+          ),
+        ],
       ),
     );
   }
@@ -283,4 +323,3 @@ class PdfViewerPage extends StatelessWidget {
     );
   }
 }
-
