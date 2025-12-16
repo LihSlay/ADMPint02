@@ -13,7 +13,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      routerConfig: rotas
-      );
+      debugShowCheckedModeBanner: false, // remove a barra de debug
+      routerConfig: rotas,
+    );
   }
 }

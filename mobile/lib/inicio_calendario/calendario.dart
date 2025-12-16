@@ -9,21 +9,32 @@ class Calendario extends StatefulWidget {
   @override
   State<Calendario> createState() => _CalendarioState();
 }
-
 class _CalendarioState extends State<Calendario> {
   int currentPageIndex = 1; // Calendário é o índice 1
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title.isEmpty ? 'Calendário' : widget.title)),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Text('Página Calendário.'),
-          ],
+      appBar: AppBar(
+        title: Text(widget.title.isEmpty ? 'Calendário' : widget.title),
+        foregroundColor: Colors.white,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFF907041),
+                Color(0xFF97774D),
+                Color(0xFFA68A69),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
         ),
+
+      ),
+      body: const Center(
+        child: Text('Página Calendário.'),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentPageIndex,
@@ -32,20 +43,18 @@ class _CalendarioState extends State<Calendario> {
           setState(() {
             currentPageIndex = index;
           });
-
-          // Navegação entre páginas
           switch (index) {
             case 0:
-              context.go('/'); // Início
+              context.go('/inicio');
               break;
             case 1:
-              context.go('/calendario'); // Calendário
+              context.go('/calendario');
               break;
             case 2:
-              context.go('/notificacao'); // Notificações
+              context.go('/notificacao');
               break;
             case 3:
-              context.go('/definicoes'); // Definições
+              context.go('/definicoes');
               break;
           }
         },
