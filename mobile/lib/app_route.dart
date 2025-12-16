@@ -12,13 +12,13 @@ import 'definicoes_sobreconsultas/palavrapasse.dart';
 import 'definicoes_sobreconsultas/sobreconsultas.dart';
 import 'package:mobile/inicio_calendario/inicio.dart';
 import 'package:mobile/inicio_calendario/calendario.dart';
-import 'package:mobile/download_documentos/exames clínicos.dart';
+import 'package:mobile/download_documentos/exames_clinicos.dart';
 import 'package:mobile/download_documentos/historico_declaracoes.dart';
 import 'package:mobile/download_documentos/plano_tratamento.dart';
 
 
 final GoRouter rotas = GoRouter(
-  initialLocation: '/inicio',
+  initialLocation: '/inicio',  //TESTAR MAIN
   routes: [
             GoRoute(
       path: '/',
