@@ -4,8 +4,9 @@ import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 
-class ExamesClinicosPage extends StatelessWidget {
-  const ExamesClinicosPage({super.key});
+class ExamesClinicos extends StatelessWidget {
+  final String title;
+  const ExamesClinicos({super.key, required this.title});
 
   // ---------------- PDF DOWNLOAD ------------------
 
