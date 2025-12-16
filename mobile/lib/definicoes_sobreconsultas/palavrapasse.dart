@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
-class Palavrapasse extends StatelessWidget {
+class Palavrapasse extends StatefulWidget {
   final String title;
 
   const Palavrapasse({super.key, required this.title});
+
+  @override
+  State<Palavrapasse> createState() => _PalavrapasseState();
+}
+
+class _PalavrapasseState extends State<Palavrapasse> {
+  int currentPageIndex = 3; // Definições
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          title,
+          widget.title,
           style: TextStyle(color: Colors.white), // título branco
         ),
         elevation: 0,
@@ -71,35 +79,41 @@ class Palavrapasse extends StatelessWidget {
             SizedBox(
               width: double.infinity, // o botão fica no comprimento da tela
               child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(221, 255, 255, 255),
-                  padding: EdgeInsets.symmetric(
-                    vertical: 20,
-                  ), // aplica padding só na vertical: 20 px em cima, 20 px em baixo
-                  side: const BorderSide(
-                    color: Colors.black26,
-                    width: 1, // cor da borda e espessura da borda
-                  ),
-                  // Cantos quadrados
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                      3,
-                    ), // cantos ligeiramente arredondados
-                  ),
-                  elevation: 2, // sombra
-                ),
                 onPressed: () {},
-                child: const Text(
-                  "Continuar",
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Color.fromARGB(255, 0, 0, 0),
-                  ),
-                ),
+                child: const Text("Continuar"),
               ),
             ),
           ],
         ),
+      ),
+
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: currentPageIndex,
+        indicatorColor: Colors.transparent,
+        onDestinationSelected: (index) {
+          setState(() => currentPageIndex = index);
+
+          switch (index) {
+            case 0:
+              context.go('/inicio');
+              break;
+            case 1:
+              context.go('/calendario');
+              break;
+            case 2:
+              context.go('/notificacoes');
+              break;
+            case 3:
+              context.go('/definicoes');
+              break;
+          }
+        },
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Início'),
+          NavigationDestination(icon: Icon(Icons.calendar_month_outlined), selectedIcon: Icon(Icons.calendar_month), label: 'Calendário'),
+          NavigationDestination(icon: Icon(Icons.notifications_outlined), selectedIcon: Icon(Icons.notifications), label: 'Notificações'),
+          NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: 'Definições'),
+        ],
       ),
     );
   }

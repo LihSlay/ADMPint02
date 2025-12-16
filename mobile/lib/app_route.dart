@@ -27,14 +27,9 @@ final GoRouter rotas = GoRouter(
     ),
         GoRoute(
       path: '/definicoes',
-      name: 'definições',
+      name: 'definicoes',
       builder: (context, state) => const Definicoes(title: 'Apl. HomePage'),
-    ),
-    GoRoute(
-      path: '/definicoes',
-      name: 'definições',
-      builder: (context, state) => const Definicoes(title: 'Apl. HomePage'),
-    ),
+    ),  
     GoRoute(
       name: 'Alterar Idioma',
       path: '/idioma',
