@@ -107,7 +107,7 @@ final GoRouter rotas = GoRouter(
 
     GoRoute(
       name: 'plano_tratamento',
-      path: '/historico_declaracoes',
+      path: '/plano_tratamento',
       builder: (context, state) => const PlanoTratamento(title: 'Plano_Tratamento'),
     ),
   ],

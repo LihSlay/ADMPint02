@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mobile/dadospessoais_notificacoes_perfil/dadospessoais_responsavel.dart';
 
-
 class PerfilSemDependentes extends StatelessWidget {
-  const PerfilSemDependentes({super.key,required this.title});
-   final String title;
+  const PerfilSemDependentes({super.key, required this.title});
+  final String title;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
 
-      // ------------------- APPBAR GRADIENTE --------------------
+      // ------------------- APPBAR GRADIENTE COM SETA --------------------
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(180),
         child: Container(
@@ -27,7 +27,14 @@ class PerfilSemDependentes extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Avatar redondo
+                // ---------- SETA PARA TRÁS ----------
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                const SizedBox(width: 8),
+
+                // ---------- AVATAR ----------
                 Container(
                   width: 70,
                   height: 70,
@@ -55,7 +62,7 @@ class PerfilSemDependentes extends StatelessWidget {
 
                 const SizedBox(width: 16),
 
-                // Nome + Nº utente
+                // ---------- NOME + Nº UTENTE ----------
                 const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -87,7 +94,7 @@ class PerfilSemDependentes extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Botão Dados Pessoais
+            // Dados pessoais
             SettingsCard(
               icon: Icons.person_outline,
               label: "Dados pessoais",
@@ -95,7 +102,9 @@ class PerfilSemDependentes extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const DadosPessoaisResponsavel(title: 'Dadospessoais_Responsavel',),
+                    builder: (context) => const DadosPessoaisResponsavel(
+                      title: 'Dadospessoais_Responsavel',
+                    ),
                   ),
                 );
               },
@@ -103,11 +112,13 @@ class PerfilSemDependentes extends StatelessWidget {
 
             const SizedBox(height: 12),
 
-            // Botão Definições
+            // ---------- DEFINIÇÕES (CORRIGIDO) ----------
             SettingsCard(
               icon: Icons.settings_outlined,
               label: "Definições",
-              onTap: () {},
+              onTap: () {
+                context.go('/definicoes');
+              },
             ),
 
             const SizedBox(height: 25),
@@ -119,7 +130,7 @@ class PerfilSemDependentes extends StatelessWidget {
 
             const SizedBox(height: 25),
 
-            // ------------------- SECÇÃO DEPENDENTES - IGUAL À IMAGEM --------------------
+            // ---------- SEM DEPENDENTES ----------
             Center(
               child: Column(
                 children: const [
@@ -142,7 +153,7 @@ class PerfilSemDependentes extends StatelessWidget {
 
             const SizedBox(height: 40),
 
-            // ------------------- BOTÃO TERMINAR SESSÃO --------------------
+            // ---------- TERMINAR SESSÃO ----------
             Container(
               width: double.infinity,
               decoration: BoxDecoration(

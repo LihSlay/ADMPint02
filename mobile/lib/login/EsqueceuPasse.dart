@@ -18,8 +18,12 @@ class _EsqueceuPassePageState extends State<EsqueceuPassePage> {
 
   @override
   void dispose() {
-    for (var c in controllers) c.dispose();
-    for (var f in focusNodes) f.dispose();
+    for (var c in controllers) {
+      c.dispose();
+    }
+    for (var f in focusNodes) {
+      f.dispose();
+    }
     super.dispose();
   }
 

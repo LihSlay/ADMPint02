@@ -3,10 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:go_router/go_router.dart';
 
-class PlanoTratamento extends StatelessWidget {
+class PlanoTratamento extends StatefulWidget {
   final String title;
-  const PlanoTratamento({super.key,required this.title});
+  const PlanoTratamento({super.key, required this.title});
+
+  @override
+  State<PlanoTratamento> createState() => _PlanoTratamentoState();
+}
+
+class _PlanoTratamentoState extends State<PlanoTratamento> {
+  int currentPageIndex = 0;
 
   Future<String> downloadPdf(String url, String filename) async {
     final dir = await getApplicationDocumentsDirectory();
@@ -23,7 +31,6 @@ class PlanoTratamento extends StatelessWidget {
     );
   }
 
-  // =================== PDF TILE (idêntico ao segundo print) ====================
   Widget _pdfTile({
     required BuildContext context,
     required String filename,
@@ -40,7 +47,6 @@ class PlanoTratamento extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // ÍCON PDF
           Image.asset(
             "assets/images/pdf_icon.png",
             height: 42,
@@ -48,12 +54,10 @@ class PlanoTratamento extends StatelessWidget {
 
           const SizedBox(width: 14),
 
-          // COLUNA COM TEXTO
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Nome do ficheiro
                 Text(
                   filename,
                   style: const TextStyle(
@@ -66,7 +70,6 @@ class PlanoTratamento extends StatelessWidget {
 
                 const SizedBox(height: 6),
 
-                // Linha: tamanho + check + concluído
                 Row(
                   children: [
                     Expanded(
@@ -103,7 +106,6 @@ class PlanoTratamento extends StatelessWidget {
             ),
           ),
 
-          // ÍCONE DOWNLOAD
           IconButton(
             padding: EdgeInsets.zero,
             icon: Icon(
@@ -121,7 +123,6 @@ class PlanoTratamento extends StatelessWidget {
     );
   }
 
-  // =================== CARD TRATAMENTO ====================
   Widget _cardTratamento({
     required BuildContext context,
     required String titulo,
@@ -168,7 +169,6 @@ class PlanoTratamento extends StatelessWidget {
     );
   }
 
-  // =================== PAGE BUILD ====================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -230,11 +230,59 @@ class PlanoTratamento extends StatelessWidget {
           ],
         ),
       ),
+
+      // =================== BOTTOM NAV BAR ===================
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: currentPageIndex,
+        indicatorColor: Colors.transparent,
+        onDestinationSelected: (index) {
+          setState(() {
+            currentPageIndex = index;
+          });
+
+          switch (index) {
+            case 0:
+              context.go('/inicio');
+              break;
+            case 1:
+              context.go('/calendario');
+              break;
+            case 2:
+              context.go('/notificacoes');
+              break;
+            case 3:
+              context.go('/definicoes');
+              break;
+          }
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Início',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.calendar_month_outlined),
+            selectedIcon: Icon(Icons.calendar_month),
+            label: 'Calendário',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.notifications_outlined),
+            selectedIcon: Icon(Icons.notifications),
+            label: 'Notificações',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: 'Definições',
+          ),
+        ],
+      ),
     );
   }
 }
 
-// =================== PDF VIEWER PAGE ====================
+// =================== PDF VIEWER PAGE ===================
 class PdfViewerPage extends StatelessWidget {
   final String path;
 
