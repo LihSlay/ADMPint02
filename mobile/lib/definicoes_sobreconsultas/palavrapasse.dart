@@ -21,6 +21,12 @@ class _PalavrapasseState extends State<Palavrapasse> {
           widget.title,
           style: TextStyle(color: Colors.white), // título branco
         ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => context.go(
+            '/definicoes',
+          ), // vai diretamente para a rota /definicoes
+        ),
         elevation: 0,
         flexibleSpace: Container(
           decoration: BoxDecoration(

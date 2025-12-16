@@ -79,6 +79,12 @@ class _DefinicoesState extends State<Definicoes> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title, style: const TextStyle(color: Colors.white)),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => context.go(
+            '/inicio',
+          ), // vai diretamente para a rota /definicoes
+        ),
         elevation: 0,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
