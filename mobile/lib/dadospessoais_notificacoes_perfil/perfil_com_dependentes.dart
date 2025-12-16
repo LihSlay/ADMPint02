@@ -1,17 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mobile/dadospessoais_notificacoes_perfil/dadospessoais_responsavel.dart';
+import 'package:mobile/dadospessoais_notificacoes_perfil/perfil_dependente.dart';
 
-
-class PerfilComDep extends StatelessWidget {
+class PerfilComDep extends StatefulWidget {
   const PerfilComDep({super.key, required this.title});
-   final String title;
+  final String title;
+
+  @override
+  State<PerfilComDep> createState() => _PerfilComDepState();
+}
+
+class _PerfilComDepState extends State<PerfilComDep> {
+  int currentPageIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
 
-      // ------------------- APPBAR GRADIENTE --------------------
+      // ------------------- APPBAR GRADIENTE COM SETA --------------------
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(180),
         child: Container(
@@ -27,7 +35,14 @@ class PerfilComDep extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Avatar redondo
+                // ---------- SETA DE VOLTAR ----------
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                const SizedBox(width: 8), // espaçamento entre seta e bolinha
+
+                // ---------- BOLINHA DO PERFIL ----------
                 Container(
                   width: 70,
                   height: 70,
@@ -52,10 +67,9 @@ class PerfilComDep extends StatelessWidget {
                     ),
                   ),
                 ),
-
                 const SizedBox(width: 16),
 
-                // Nome + Nº utente
+                // ---------- NOME E Nº DE UTENTE ----------
                 const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -87,7 +101,6 @@ class PerfilComDep extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Botão Dados Pessoais, este tem conexão pq eu queria aprender como se faz
             SettingsCard(
               icon: Icons.person_outline,
               label: "Dados pessoais",
@@ -95,65 +108,71 @@ class PerfilComDep extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const DadosPessoaisResponsavel(title: 'Dadospessoais_Responsavel',),
+                    builder: (context) => const DadosPessoaisResponsavel(
+                      title: 'Dadospessoais_Responsavel',
+                    ),
                   ),
                 );
               },
             ),
-
             const SizedBox(height: 12),
-
-            // Botão Definições
             SettingsCard(
               icon: Icons.settings_outlined,
               label: "Definições",
-              onTap: () {},
+              onTap: () {
+                context.go('/definicoes');
+              },
             ),
-
             const SizedBox(height: 25),
-
             const Text(
               "Dependentes",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
-
             const SizedBox(height: 15),
 
-            // Bolinha do Dependente
-            Row(
-              children: [
-                Container(
-                  width: 70,
-                  height: 70,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 6,
-                        offset: Offset(0, 3),
-                      ),
-                    ],
+            // ------------------- BOLINHA DO DEPENDENTE --------------------
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PerfilDependente(title: 'Perfil do Dependente'),
                   ),
-                  child: const Center(
-                    child: Text(
-                      "PP",
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+                );
+              },
+              child: Row(
+                children: [
+                  Container(
+                    width: 70,
+                    height: 70,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 6,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: const Center(
+                      child: Text(
+                        "PP",
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                const Text("Paula Pereira", style: TextStyle(fontSize: 16)),
-              ],
+                  const SizedBox(width: 12),
+                  const Text("Paula Pereira", style: TextStyle(fontSize: 16)),
+                ],
+              ),
             ),
 
             const SizedBox(height: 40),
-
-            // ------------------- BOTÃO TERMINAR SESSÃO --------------------
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
@@ -179,26 +198,50 @@ class PerfilComDep extends StatelessWidget {
         ),
       ),
 
-      // ------------------- Barra de Navegação--------------------
-      bottomNavigationBar: BottomNavigationBar(
-        selectedItemColor: Colors.brown,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(
+      // ------------------- NavigationBar --------------------
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: currentPageIndex,
+        indicatorColor: Colors.transparent,
+        onDestinationSelected: (index) {
+          setState(() {
+            currentPageIndex = index;
+          });
+
+          switch (index) {
+            case 0:
+              context.go('/inicio');
+              break;
+            case 1:
+              context.go('/calendario');
+              break;
+            case 2:
+              context.go('/notificacoes');
+              break;
+            case 3:
+              context.go('/definicoes');
+              break;
+          }
+        },
+        destinations: const [
+          NavigationDestination(
             icon: Icon(Icons.home_outlined),
-            label: "Início",
+            selectedIcon: Icon(Icons.home),
+            label: 'Início',
           ),
-          BottomNavigationBarItem(
+          NavigationDestination(
             icon: Icon(Icons.calendar_month_outlined),
-            label: "Calendário",
+            selectedIcon: Icon(Icons.calendar_month),
+            label: 'Calendário',
           ),
-          BottomNavigationBarItem(
+          NavigationDestination(
             icon: Icon(Icons.notifications_outlined),
-            label: "Notificações",
+            selectedIcon: Icon(Icons.notifications),
+            label: 'Notificações',
           ),
-          BottomNavigationBarItem(
+          NavigationDestination(
             icon: Icon(Icons.settings_outlined),
-            label: "Definições",
+            selectedIcon: Icon(Icons.settings),
+            label: 'Definições',
           ),
         ],
       ),
