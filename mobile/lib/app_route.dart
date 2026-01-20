@@ -14,10 +14,55 @@ import 'package:mobile/inicio_calendario/inicio.dart';
 import 'package:mobile/inicio_calendario/calendario.dart';
 import 'package:mobile/inicio_calendario/notificacao.dart';
 import 'package:mobile/inicio_calendario/definicao.dart';
+import 'package:mobile/login/login.dart';
+import 'package:mobile/login/IniciarSessaoPage.dart';
+import 'package:mobile/login/EsqueceuPasseEmailPage.dart';
+import 'package:mobile/login/EsqueceuPasse.dart';
+import 'package:mobile/login/TermosCondicoesPage.dart';
+import 'package:mobile/login/AlterarPassePage.dart';
 
 final GoRouter rotas = GoRouter(
-  initialLocation: '/',
+  initialLocation: '/login',
   routes: [
+    GoRoute(
+      path: '/login',
+      name: 'login',
+      builder: (context, state) => const LoginPage(),
+    ),
+    GoRoute(
+      path: '/iniciar_sessao',
+      name: 'iniciar_sessao',
+      builder: (context, state) => const IniciarSessaoPage(),
+    ),
+    GoRoute(
+      path: '/esqueceu_email',
+      name: 'esqueceu_email',
+      builder: (context, state) => const EsqueceuPasseEmailPage(),
+    ),
+    GoRoute(
+      path: '/recuperar_codigo',
+      name: 'recuperar_codigo',
+      builder: (context, state) {
+        final email = state.extra as String? ?? "";
+        return EsqueceuPassePage(email: email);
+      },
+    ),
+    GoRoute(
+      path: '/termos_condicoes_login',
+      name: 'termos_condicoes_login',
+      builder: (context, state) => const TermosCondicoesPage(),
+    ),
+    GoRoute(
+      path: '/alterar_passe_recuperacao',
+      name: 'alterar_passe_recuperacao',
+      builder: (context, state) {
+        final data = state.extra as Map<String, dynamic>?;
+        return AlterarPassePage(
+          email: data?['email'] ?? "",
+          code: data?['code'] ?? "",
+        );
+      },
+    ),
     GoRoute(
       path: '/',
       name: 'definições',

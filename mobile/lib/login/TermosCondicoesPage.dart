@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class TermosCondicoesPage extends StatefulWidget {
   const TermosCondicoesPage({super.key});
@@ -217,7 +218,7 @@ class _TermosPageState extends State<TermosCondicoesPage> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: aceitou ? () {} : null,
+                    onPressed: aceitou ? () => context.go('/inicio') : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
                           aceitou ? Colors.white : Colors.grey.shade300,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'IniciarSessaoPage.dart';
+import 'package:go_router/go_router.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -70,31 +70,7 @@ class LoginPage extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          PageRouteBuilder(
-                            transitionDuration:
-                                const Duration(milliseconds: 450),
-                            pageBuilder: (_, __, ___) =>
-                                const IniciarSessaoPage(),
-                            transitionsBuilder: (context, animation,
-                                secondaryAnimation, child) {
-                              final tween = Tween(
-                                begin: const Offset(0.0, 1.0),
-                                end: Offset.zero,
-                              ).chain(
-                                CurveTween(curve: Curves.easeOutCubic),
-                              );
-
-                              return SlideTransition(
-                                position: animation.drive(tween),
-                                child: child,
-                              );
-                            },
-                          ),
-                        );
-                      },
+                      onPressed: () => context.push('/iniciar_sessao'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.black,

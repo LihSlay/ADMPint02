@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 class AlterarPassePage extends StatefulWidget {
-  const AlterarPassePage({super.key});
+  final String email;
+  final String code;
+  const AlterarPassePage({super.key, required this.email, required this.code});
 
   @override
   State<AlterarPassePage> createState() => _AlterarPassePageState();

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class EsqueceuPassePage extends StatefulWidget {
-  const EsqueceuPassePage({super.key});
+  final String email;
+  const EsqueceuPassePage({super.key, required this.email});
 
   @override
   State<EsqueceuPassePage> createState() => _EsqueceuPassePageState();

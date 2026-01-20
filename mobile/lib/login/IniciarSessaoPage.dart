@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../services/api_service.dart';
 
 class IniciarSessaoPage extends StatefulWidget {
   const IniciarSessaoPage({super.key});
@@ -10,6 +12,11 @@ class IniciarSessaoPage extends StatefulWidget {
 class _IniciarSessaoPageState extends State<IniciarSessaoPage> {
   int selectedField = -1; 
   bool forgotPressed = false;
+  bool aCarregar = false;
+
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passController = TextEditingController();
+  final ApiService _apiService = ApiService();
 
   final FocusNode emailFocus = FocusNode();
   final FocusNode passFocus = FocusNode();
@@ -18,9 +25,44 @@ class _IniciarSessaoPageState extends State<IniciarSessaoPage> {
 
   @override
   void dispose() {
+    emailController.dispose();
+    passController.dispose();
     emailFocus.dispose();
     passFocus.dispose();
     super.dispose();
+  }
+
+  Future<void> _fazerLogin() async {
+    if (emailController.text.isEmpty || passController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Por favor, preencha todos os campos")),
+      );
+      return;
+    }
+
+    setState(() => aCarregar = true);
+
+    try {
+      final usuario = await _apiService.login(
+        emailController.text,
+        passController.text,
+      );
+
+      setState(() => aCarregar = false);
+
+      if (usuario != null) {
+        // Login com sucesso! Vamos para os Termos e Condições primeiro
+        if (mounted) context.go('/termos_condicoes_login');
+      }
+    } catch (e) {
+      setState(() => aCarregar = false);
+      if (mounted) {
+        String msg = e.toString().replaceAll("Exception: ", "");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg)),
+        );
+      }
+    }
   }
 
   @override
@@ -117,6 +159,7 @@ class _IniciarSessaoPageState extends State<IniciarSessaoPage> {
                           ],
                         ),
                         child: TextField(
+                          controller: emailController,
                           focusNode: emailFocus,
                           onTap: () => setState(() => selectedField = 0),
                           keyboardType: TextInputType.emailAddress,
@@ -171,6 +214,7 @@ class _IniciarSessaoPageState extends State<IniciarSessaoPage> {
                         ),
 
                         child: TextField(
+                          controller: passController,
                           focusNode: passFocus,
                           onTap: () => setState(() => selectedField = 1),
 
@@ -218,7 +262,7 @@ class _IniciarSessaoPageState extends State<IniciarSessaoPage> {
                           onTapDown: (_) => setState(() => forgotPressed = true),
                           onTapUp: (_) {
                             setState(() => forgotPressed = false);
-                            Navigator.pushNamed(context, '/esqueceu_email');
+                            context.push('/esqueceu_email');
                           },
                           onTapCancel: () =>
                               setState(() => forgotPressed = false),
@@ -254,9 +298,7 @@ class _IniciarSessaoPageState extends State<IniciarSessaoPage> {
                           ],
                         ),
                         child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.pushNamed(context, '/termos_condicoes');
-                          },
+                          onPressed: aCarregar ? null : _fazerLogin,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: Colors.black,
@@ -266,10 +308,16 @@ class _IniciarSessaoPageState extends State<IniciarSessaoPage> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          icon: const Icon(Icons.login),
-                          label: const Text(
-                            "Entrar",
-                            style: TextStyle(
+                          icon: aCarregar 
+                            ? const SizedBox(
+                                width: 20, 
+                                height: 20, 
+                                child: CircularProgressIndicator(strokeWidth: 2)
+                              )
+                            : const Icon(Icons.login),
+                          label: Text(
+                            aCarregar ? "A entrar..." : "Entrar",
+                            style: const TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
