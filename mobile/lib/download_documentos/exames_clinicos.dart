@@ -1,16 +1,21 @@
 //import 'dart:io';
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:go_router/go_router.dart';
 
-class PlanoTratamentoPage extends StatelessWidget {
-  const PlanoTratamentoPage({super.key});
+class ExamesClinicos extends StatelessWidget {
+  final String title;
+  const ExamesClinicos({super.key, required this.title});
+
+  // ---------------- PDF DOWNLOAD ------------------
 
   Future<String> downloadPdf(String url, String filename) async {
     final dir = await getApplicationDocumentsDirectory();
     final filePath = "${dir.path}/$filename";
-
     await Dio().download(url, filePath);
     return filePath;
   }
@@ -22,7 +27,8 @@ class PlanoTratamentoPage extends StatelessWidget {
     );
   }
 
-  // =================== PDF TILE (idêntico ao segundo print) ====================
+  // ---------------- PDF CARD ------------------
+
   Widget _pdfTile({
     required BuildContext context,
     required String filename,
@@ -37,35 +43,23 @@ class PlanoTratamentoPage extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade300),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // ÍCON PDF
-          Image.asset(
-            "assets/images/pdf_icon.png",
-            height: 42,
-          ),
+          Image.asset("assets/images/pdf_icon.png", height: 40),
 
-          const SizedBox(width: 14),
+          const SizedBox(width: 1),
 
-          // COLUNA COM TEXTO
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Nome do ficheiro
                 Text(
                   filename,
                   style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
+                      fontSize: 15, fontWeight: FontWeight.w600),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-
                 const SizedBox(height: 6),
-
-                // Linha: tamanho + check + concluído
                 Row(
                   children: [
                     Expanded(
@@ -75,19 +69,11 @@ class PlanoTratamentoPage extends StatelessWidget {
                           color: Colors.grey.shade700,
                           fontSize: 13,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-
-                    const Icon(
-                      Icons.check_circle,
-                      color: Color(0xFF4CAF50),
-                      size: 18,
-                    ),
-
+                    const Icon(Icons.check_circle,
+                        color: Color(0xFF4CAF50), size: 18),
                     const SizedBox(width: 4),
-
                     Text(
                       "Concluído",
                       style: TextStyle(
@@ -102,14 +88,10 @@ class PlanoTratamentoPage extends StatelessWidget {
             ),
           ),
 
-          // ÍCONE DOWNLOAD
           IconButton(
             padding: EdgeInsets.zero,
-            icon: Icon(
-              Icons.download_outlined,
-              size: 26,
-              color: Colors.grey.shade700,
-            ),
+            icon: Icon(Icons.download_outlined,
+                size: 26, color: Colors.grey.shade700),
             onPressed: () async {
               final path = await downloadPdf(url, filename);
               abrirPdf(context, path);
@@ -120,11 +102,15 @@ class PlanoTratamentoPage extends StatelessWidget {
     );
   }
 
-  // =================== CARD TRATAMENTO ====================
-  Widget _cardTratamento({
+  // ---------------- CARD EXAME ------------------
+
+  Widget _cardExame({
     required BuildContext context,
     required String titulo,
     required String medico,
+    required String tipoConsulta,
+    required String data,
+    required String horario,
     required String pdfNome,
     required String pdfUrl,
   }) {
@@ -142,19 +128,43 @@ class PlanoTratamentoPage extends StatelessWidget {
             titulo,
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
           ),
+
           const SizedBox(height: 8),
 
-          const Text(
-            "Médico",
-            style: TextStyle(fontWeight: FontWeight.w600),
-          ),
-
-          Text(
-            medico,
-            style: const TextStyle(color: Colors.black87),
-          ),
+          const Text("Médico", style: TextStyle(fontWeight: FontWeight.w600)),
+          Text(medico),
 
           const SizedBox(height: 14),
+
+          const Text("Tipo de consulta",
+              style: TextStyle(fontWeight: FontWeight.w600)),
+          Text(tipoConsulta),
+
+          const SizedBox(height: 14),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("Data",
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  Text(data),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("Horário",
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  Text(horario),
+                ],
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
 
           _pdfTile(
             context: context,
@@ -167,7 +177,8 @@ class PlanoTratamentoPage extends StatelessWidget {
     );
   }
 
-  // =================== PAGE BUILD ====================
+  // ---------------- PAGE BUILD ------------------
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -175,9 +186,17 @@ class PlanoTratamentoPage extends StatelessWidget {
 
       appBar: AppBar(
         title: const Text(
-          "Plano de Tratamento",
+          "Exames Clínicos",
           style: TextStyle(color: Colors.white),
         ),
+       // setinha
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => context.go(
+            '/inicio',
+          ), // vai diretamente para a rota /definicoes
+        ),
+
         elevation: 0,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
@@ -203,7 +222,7 @@ class PlanoTratamentoPage extends StatelessWidget {
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    "Para obter os planos de tratamento em papel é necessário contactar a clínica via contacto telefónico.",
+                    "Para obter os exames em papel é necessário contactar a clínica via contacto telefónico.",
                   ),
                 ),
               ],
@@ -211,29 +230,80 @@ class PlanoTratamentoPage extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            _cardTratamento(
+            _cardExame(
               context: context,
-              titulo: "Reabilitação oral",
-              medico: "Dt. Melissa Pinto",
-              pdfNome: "reabilitacao_oral.pdf",
+              titulo: "Avaliação da oclusão",
+              medico: "Dt. Sílvia Coimbra",
+              tipoConsulta: "Remoção de Cárie",
+              data: "02 out 2025",
+              horario: "10:00 – 10:45",
+              pdfNome: "exame_oclusão.pdf",
               pdfUrl: "https://www.africau.edu/images/default/sample.pdf",
             ),
 
-            _cardTratamento(
+            _cardExame(
               context: context,
-              titulo: "Tratamento para bruxismo",
-              medico: "Dt. Sílvia Coimbra",
-              pdfNome: "exame_oclusao.pdf",
+              titulo: "Radiografia dentária",
+              medico: "Dt. Diogo Calçada",
+              tipoConsulta: "Check-up",
+              data: "17 set 2025",
+              horario: "17:30 – 18:00",
+              pdfNome: "exame_radiografia.pdf",
               pdfUrl: "https://www.africau.edu/images/default/sample.pdf",
             ),
           ],
         ),
       ),
+
+      // ---------------- BOTTOM NAV BAR ------------------
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: 0,
+        indicatorColor: Colors.transparent,
+        onDestinationSelected: (index) {
+          switch (index) {
+            case 0:
+              context.go('/inicio');
+              break;
+            case 1:
+              context.go('/calendario');
+              break;
+            case 2:
+              context.go('/notificacoes');
+              break;
+            case 3:
+              context.go('/definicoes');
+              break;
+          }
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Início',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.calendar_month_outlined),
+            selectedIcon: Icon(Icons.calendar_month),
+            label: 'Calendário',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.notifications_outlined),
+            selectedIcon: Icon(Icons.notifications),
+            label: 'Notificações',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: 'Definições',
+          ),
+        ],
+      ),
     );
   }
 }
 
-// =================== PDF VIEWER PAGE ====================
+// ---------------- PDF VIEWER ------------------
+
 class PdfViewerPage extends StatelessWidget {
   final String path;
 
@@ -243,10 +313,8 @@ class PdfViewerPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          "Visualizar PDF",
-          style: TextStyle(color: Colors.white),
-        ),
+        title:
+            const Text("Visualizar PDF", style: TextStyle(color: Colors.white)),
         elevation: 0,
         flexibleSpace: Container(
           decoration: const BoxDecoration(

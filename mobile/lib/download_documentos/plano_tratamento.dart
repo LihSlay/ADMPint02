@@ -3,15 +3,23 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:go_router/go_router.dart';
 
-class ExamesClinicosPage extends StatelessWidget {
-  const ExamesClinicosPage({super.key});
+class PlanoTratamento extends StatefulWidget {
+  final String title;
+  const PlanoTratamento({super.key, required this.title});
 
-  // ---------------- PDF DOWNLOAD ------------------
+  @override
+  State<PlanoTratamento> createState() => _PlanoTratamentoState();
+}
+
+class _PlanoTratamentoState extends State<PlanoTratamento> {
+  int currentPageIndex = 0;
 
   Future<String> downloadPdf(String url, String filename) async {
     final dir = await getApplicationDocumentsDirectory();
     final filePath = "${dir.path}/$filename";
+
     await Dio().download(url, filePath);
     return filePath;
   }
@@ -22,8 +30,6 @@ class ExamesClinicosPage extends StatelessWidget {
       MaterialPageRoute(builder: (_) => PdfViewerPage(path: path)),
     );
   }
-
-  // ---------------- PDF CARD ------------------
 
   Widget _pdfTile({
     required BuildContext context,
@@ -39,10 +45,11 @@ class ExamesClinicosPage extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade300),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Image.asset("assets/images/pdf_icon.png", height: 40),
+          Image.asset("assets/images/pdf_icon.png", height: 42),
 
-          const SizedBox(width: 1),
+          const SizedBox(width: 14),
 
           Expanded(
             child: Column(
@@ -51,11 +58,15 @@ class ExamesClinicosPage extends StatelessWidget {
                 Text(
                   filename,
                   style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w600),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+
                 const SizedBox(height: 6),
+
                 Row(
                   children: [
                     Expanded(
@@ -65,16 +76,27 @@ class ExamesClinicosPage extends StatelessWidget {
                           color: Colors.grey.shade700,
                           fontSize: 13,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const Icon(Icons.check_circle,
-                        color: Color(0xFF4CAF50), size: 18),
+
+                    const Icon(
+                      Icons.check_circle,
+                      color: Color(0xFF4CAF50),
+                      size: 18,
+                    ),
+
                     const SizedBox(width: 4),
-                    Text("Concluído",
-                        style: TextStyle(
-                            color: Colors.grey.shade800,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500)),
+
+                    Text(
+                      "Concluído",
+                      style: TextStyle(
+                        color: Colors.grey.shade800,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -83,8 +105,11 @@ class ExamesClinicosPage extends StatelessWidget {
 
           IconButton(
             padding: EdgeInsets.zero,
-            icon: Icon(Icons.download_outlined,
-                size: 26, color: Colors.grey.shade700),
+            icon: Icon(
+              Icons.download_outlined,
+              size: 26,
+              color: Colors.grey.shade700,
+            ),
             onPressed: () async {
               final path = await downloadPdf(url, filename);
               abrirPdf(context, path);
@@ -95,15 +120,10 @@ class ExamesClinicosPage extends StatelessWidget {
     );
   }
 
-  // ---------------- CARD EXAME ------------------
-
-  Widget _cardExame({
+  Widget _cardTratamento({
     required BuildContext context,
     required String titulo,
     required String medico,
-    required String tipoConsulta,
-    required String data,
-    required String horario,
     required String pdfNome,
     required String pdfUrl,
   }) {
@@ -117,53 +137,18 @@ class ExamesClinicosPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Título
           Text(
             titulo,
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
           ),
-
           const SizedBox(height: 8),
 
-          // Médico
           const Text("Médico", style: TextStyle(fontWeight: FontWeight.w600)),
-          Text(medico),
+
+          Text(medico, style: const TextStyle(color: Colors.black87)),
 
           const SizedBox(height: 14),
 
-          // Tipo de consulta
-          const Text("Tipo de consulta",
-              style: TextStyle(fontWeight: FontWeight.w600)),
-          Text(tipoConsulta),
-
-          const SizedBox(height: 14),
-
-          // Data e horário na mesma linha
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("Data",
-                      style: TextStyle(fontWeight: FontWeight.w600)),
-                  Text(data),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("Horário",
-                      style: TextStyle(fontWeight: FontWeight.w600)),
-                  Text(horario),
-                ],
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          // PDF Tile
           _pdfTile(
             context: context,
             filename: pdfNome,
@@ -175,8 +160,6 @@ class ExamesClinicosPage extends StatelessWidget {
     );
   }
 
-  // ---------------- PAGE BUILD ------------------
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -184,17 +167,22 @@ class ExamesClinicosPage extends StatelessWidget {
 
       appBar: AppBar(
         title: const Text(
-          "Exames Clínicos",
+          "Plano de Tratamento",
           style: TextStyle(color: Colors.white),
         ),
+
+        // setinha
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () =>
+              context.go('/inicio'), // vai diretamente para a rota /definicoes
+        ),
+
         elevation: 0,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Color(0xFF907041),
-                Color(0xFFA68A69),
-              ],
+              colors: [Color(0xFF907041), Color(0xFFA68A69)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -206,14 +194,13 @@ class ExamesClinicosPage extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // Texto topo
             const Row(
               children: [
                 Icon(Icons.info_outline, color: Colors.brown),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    "Para obter os exames em papel é necessário contactar a clínica via contacto telefónico.",
+                    "Para obter os planos de tratamento em papel é necessário contactar a clínica via contacto telefónico.",
                   ),
                 ),
               ],
@@ -221,38 +208,77 @@ class ExamesClinicosPage extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // EXAME 1
-            _cardExame(
+            _cardTratamento(
               context: context,
-              titulo: "Avaliação da oclusão",
-              medico: "Dt. Sílvia Coimbra",
-              tipoConsulta: "Remoção de Cárie",
-              data: "02 out 2025",
-              horario: "10:00 – 10:45",
-              pdfNome: "exame_oclusão.pdf",
+              titulo: "Reabilitação oral",
+              medico: "Dt. Melissa Pinto",
+              pdfNome: "reabilitacao_oral.pdf",
               pdfUrl: "https://www.africau.edu/images/default/sample.pdf",
             ),
 
-            // EXAME 2
-            _cardExame(
+            _cardTratamento(
               context: context,
-              titulo: "Radiografia dentária",
-              medico: "Dt. Diogo Calçada",
-              tipoConsulta: "Check-up",
-              data: "17 set 2025",
-              horario: "17:30 – 18:00",
-              pdfNome: "exame_radiografia.pdf",
+              titulo: "Tratamento para bruxismo",
+              medico: "Dt. Sílvia Coimbra",
+              pdfNome: "exame_oclusao.pdf",
               pdfUrl: "https://www.africau.edu/images/default/sample.pdf",
             ),
           ],
         ),
       ),
+
+      // =================== BOTTOM NAV BAR ===================
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: currentPageIndex,
+        indicatorColor: Colors.transparent,
+        onDestinationSelected: (index) {
+          setState(() {
+            currentPageIndex = index;
+          });
+
+          switch (index) {
+            case 0:
+              context.go('/inicio');
+              break;
+            case 1:
+              context.go('/calendario');
+              break;
+            case 2:
+              context.go('/notificacoes');
+              break;
+            case 3:
+              context.go('/definicoes');
+              break;
+          }
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Início',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.calendar_month_outlined),
+            selectedIcon: Icon(Icons.calendar_month),
+            label: 'Calendário',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.notifications_outlined),
+            selectedIcon: Icon(Icons.notifications),
+            label: 'Notificações',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: 'Definições',
+          ),
+        ],
+      ),
     );
   }
 }
 
-// ---------------- PDF VIEWER ------------------
-
+// =================== PDF VIEWER PAGE ===================
 class PdfViewerPage extends StatelessWidget {
   final String path;
 
@@ -262,16 +288,15 @@ class PdfViewerPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title:
-            const Text("Visualizar PDF", style: TextStyle(color: Colors.white)),
+        title: const Text(
+          "Visualizar PDF",
+          style: TextStyle(color: Colors.white),
+        ),
         elevation: 0,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Color(0xFF907041),
-                Color(0xFFA68A69),
-              ],
+              colors: [Color(0xFF907041), Color(0xFFA68A69)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -282,4 +307,3 @@ class PdfViewerPage extends StatelessWidget {
     );
   }
 }
-

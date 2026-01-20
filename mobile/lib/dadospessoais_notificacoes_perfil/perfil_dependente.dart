@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mobile/dadospessoais_notificacoes_perfil/dadospessoais_dependente.dart';
 
-class PerfilDependente extends StatelessWidget {
-  final String title;
+class PerfilDependente extends StatefulWidget {
   const PerfilDependente({super.key, required this.title});
+  final String title;
+
+  @override
+  State<PerfilDependente> createState() => _PerfilDependenteState();
+}
+
+class _PerfilDependenteState extends State<PerfilDependente> {
+  int currentPageIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
 
-      // ------------------- APPBAR GRADIENTE --------------------
+      // ------------------- APPBAR GRADIENTE COM SETA --------------------
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(180),
         child: Container(
@@ -26,7 +34,14 @@ class PerfilDependente extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Avatar redondo
+                // ---------- SETA DE VOLTAR ----------
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                const SizedBox(width: 8),
+
+                // ---------- BOLINHA ----------
                 Container(
                   width: 70,
                   height: 70,
@@ -51,10 +66,9 @@ class PerfilDependente extends StatelessWidget {
                     ),
                   ),
                 ),
-
                 const SizedBox(width: 16),
 
-                // Nome + Nº utente
+                // ---------- NOME E Nº DE UTENTE ----------
                 const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -86,7 +100,6 @@ class PerfilDependente extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Botão Dados Pessoais -> dependente
             SettingsCard(
               icon: Icons.person_outline,
               label: "Dados pessoais",
@@ -94,26 +107,25 @@ class PerfilDependente extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const Dadospessoais_Dependente(title: 'Dadospessoais_Dependentes',),
+                    builder: (context) => const Dadospessoais_Dependente(
+                      title: 'Dadospessoais_Dependentes',
+                    ),
                   ),
                 );
               },
             ),
-
             const SizedBox(height: 12),
 
-            // Botão Definições
+            // ---------- DEFINIÇÕES (CORRIGIDO) ----------
             SettingsCard(
               icon: Icons.settings_outlined,
               label: "Definições",
-              onTap: () {},
+              onTap: () {
+                context.go('/definicoes');
+              },
             ),
 
-            const SizedBox(height: 25),
-
             const SizedBox(height: 40),
-
-            // ------------------- BOTÃO TERMINAR SESSÃO --------------------
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
@@ -139,26 +151,50 @@ class PerfilDependente extends StatelessWidget {
         ),
       ),
 
-      // ------------------- Barra de Navegação--------------------
-      bottomNavigationBar: BottomNavigationBar(
-        selectedItemColor: Colors.brown,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(
+      // ------------------- NavigationBar --------------------
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: currentPageIndex,
+        indicatorColor: Colors.transparent,
+        onDestinationSelected: (index) {
+          setState(() {
+            currentPageIndex = index;
+          });
+
+          switch (index) {
+            case 0:
+              context.go('/inicio');
+              break;
+            case 1:
+              context.go('/calendario');
+              break;
+            case 2:
+              context.go('/notificacoes');
+              break;
+            case 3:
+              context.go('/definicoes');
+              break;
+          }
+        },
+        destinations: const [
+          NavigationDestination(
             icon: Icon(Icons.home_outlined),
-            label: "Início",
+            selectedIcon: Icon(Icons.home),
+            label: 'Início',
           ),
-          BottomNavigationBarItem(
+          NavigationDestination(
             icon: Icon(Icons.calendar_month_outlined),
-            label: "Calendário",
+            selectedIcon: Icon(Icons.calendar_month),
+            label: 'Calendário',
           ),
-          BottomNavigationBarItem(
+          NavigationDestination(
             icon: Icon(Icons.notifications_outlined),
-            label: "Notificações",
+            selectedIcon: Icon(Icons.notifications),
+            label: 'Notificações',
           ),
-          BottomNavigationBarItem(
+          NavigationDestination(
             icon: Icon(Icons.settings_outlined),
-            label: "Definições",
+            selectedIcon: Icon(Icons.settings),
+            label: 'Definições',
           ),
         ],
       ),
