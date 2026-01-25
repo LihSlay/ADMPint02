@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../services/api_service.dart';
 
 class TermosCondicoesPage extends StatefulWidget {
-  const TermosCondicoesPage({super.key});
+  final int? idPerfis;
+  const TermosCondicoesPage({super.key, this.idPerfis});
 
   @override
   State<TermosCondicoesPage> createState() => _TermosPageState();
@@ -10,6 +12,28 @@ class TermosCondicoesPage extends StatefulWidget {
 
 class _TermosPageState extends State<TermosCondicoesPage> {
   bool aceitou = false;
+  bool aCarregar = false;
+  final ApiService _apiService = ApiService();
+
+  Future<void> _aceitarTermos() async {
+    if (!aceitou) return;
+
+    setState(() => aCarregar = true);
+    try {
+      if (widget.idPerfis != null) {
+        await _apiService.atualizarConsentimento(widget.idPerfis!);
+      }
+      if (mounted) context.go('/inicio');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Erro ao guardar consentimento.")),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => aCarregar = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,11 +60,7 @@ class _TermosPageState extends State<TermosCondicoesPage> {
             child: Row(
               children: [
                 GestureDetector(
-                  onTap: () => Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/iniciar_sessao',
-                    (route) => false,
-                  ),
+                  onTap: () => context.go('/iniciar_sessao'),
                   child: const Icon(
                     Icons.arrow_back_ios_new,
                     color: Colors.white,
@@ -218,7 +238,7 @@ class _TermosPageState extends State<TermosCondicoesPage> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: aceitou ? () => context.go('/inicio') : null,
+                    onPressed: (aceitou && !aCarregar) ? _aceitarTermos : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
                           aceitou ? Colors.white : Colors.grey.shade300,
@@ -229,14 +249,23 @@ class _TermosPageState extends State<TermosCondicoesPage> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    child: const Text(
-                      "Continuar",
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    child: aCarregar
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Color(0xFFB49B6D),
+                            ),
+                          )
+                        : const Text(
+                            "Continuar",
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                   ),
                 ),
               ],

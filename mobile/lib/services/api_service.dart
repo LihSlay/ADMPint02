@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:sqflite/sqflite.dart';
 import '../database/database_helper.dart';
 import '../models/consulta_model.dart';
 import '../models/usuario_model.dart';
@@ -30,19 +31,35 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        debugPrint("Dados do login: $data");
         
         // Mapeamento flexível para aceitar diferentes formatos de resposta do backend
         Usuario usuario = Usuario(
           idUtilizadores: data['user']?['id_utilizadores'] ?? data['id_utilizadores'] ?? 0,
           email: email,
-          idPerfis: data['user']?['id_perfis'] ?? data['id_perfis'],
-          idTipoUtilizadores: data['user']?['id_tipo_utilizadores'] ?? data['id_tipo_utilizadores'],
-          token: data['token'] ?? data['accessToken'],
+          idPerfis: data['user']?['id_perfis'] ?? data['id_perfis'] ?? 0,
+          idTipoUtilizadores: data['user']?['id_tipo_utilizadores'] ?? data['id_tipo_utilizadores'] ?? 0,
+          token: data['user']?['token'],
+          termosAssinados: data['user']?['termos_assinados'] ?? data['termos_assinados'] ?? data['user']?['aceitou_termos'] ?? data['aceitou_termos'],
         );
 
         final db = await _dbHelper.database;
         await db.delete('utilizadores');
         await db.insert('utilizadores', usuario.toMap());
+
+        // Se o login já trouxer a informação de termos assinados (1, true ou "assinado")
+        final statusTermos = usuario.termosAssinados;
+        if (statusTermos == 1 || statusTermos == true || statusTermos == 'assinado') {
+          await db.insert(
+            'consentimentos',
+            {
+              'id_perfis': usuario.idPerfis,
+              'estado': 'assinado',
+              'data_assinatura': DateTime.now().toIso8601String(),
+            },
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+        }
 
         if (data['perfil'] != null) {
           Perfil perfil = Perfil.fromMap(data['perfil']);
@@ -71,11 +88,13 @@ class ApiService {
   // RECUPERAR PASSE 1: Enviar email para receber código
   Future<bool> forgotPassword(String email) async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/forgot-password'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'email': email}),
-      );
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/auth/forgot-password'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({'email': email}),
+          )
+          .timeout(const Duration(seconds: 45)); // Timeout maior para wake-up do Render
       return response.statusCode == 200;
     } catch (e) {
       debugPrint("Erro forgotPassword: $e");
@@ -86,34 +105,88 @@ class ApiService {
   // RECUPERAR PASSE 2: Verificar o código de 5 dígitos (Mailtrap)
   Future<bool> verifyResetCode(String email, String code) async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/verify-reset-code'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'email': email, 'reset_code': code}),
-      );
-      return response.statusCode == 200;
+      debugPrint("Verificando código: Email: '$email', Código: '$code'");
+      final requestBody = {
+        'email': email.trim(),
+        // Enviar variantes para maximizar compatibilidade com o backend
+        'reset_code': code.trim(),
+        'code': code.trim(),
+        'codigo': code.trim(),
+      };
+      debugPrint("Request Verify body: ${json.encode(requestBody)}");
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/auth/verify-reset-code'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(requestBody),
+          )
+          .timeout(const Duration(seconds: 20));
+
+      debugPrint(
+          "Resposta Verify: Status ${response.statusCode}, Body: ${response.body}");
+      // Alguns backends respondem 201/204 para operações válidas.
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return true;
+      }
+      // Se falhar, tentar obter mensagem clara do backend.
+      try {
+        final data = json.decode(response.body);
+        final msg = data['message'] ?? data['error'] ?? 'Falha na verificação do código.';
+        debugPrint("Falha Verify: $msg");
+        throw Exception(msg);
+      } catch (_) {
+        throw Exception('Falha na verificação do código.');
+      }
     } catch (e) {
       debugPrint("Erro verifyResetCode: $e");
-      return false;
+      // Propagar mensagem para UI mostrar
+      throw Exception(e.toString());
     }
   }
 
   // RECUPERAR PASSE 3: Definir nova password
-  Future<bool> resetPassword(String email, String code, String newPassword) async {
+  Future<bool> resetPassword(
+      String email, String code, String newPassword) async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/reset-password'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'email': email,
-          'reset_code': code,
-          'palavra_passe': newPassword, // Ajustado para bater com o teu modelo Utilizadores.js
-        }),
-      );
-      return response.statusCode == 200;
+      final requestBody = {
+        'email': email.trim(),
+        // Variantes de campo para o código
+        'reset_code': code.trim(),
+        'code': code.trim(),
+        'codigo': code.trim(),
+        // Variantes de campo para a nova palavra‑passe (maximizar compatibilidade)
+        'palavra_passe': newPassword,
+        'new_password': newPassword,
+        'password': newPassword,
+        'nova_palavra_passe': newPassword,
+        'nova_senha': newPassword,
+        // Algumas APIs exigem confirmação
+        'password_confirmation': newPassword,
+        'confirm_password': newPassword,
+      };
+      debugPrint("Request Reset body: ${json.encode(requestBody)}");
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/auth/reset-password'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(requestBody),
+          )
+          .timeout(const Duration(seconds: 45));
+      debugPrint("Resposta Reset: Status ${response.statusCode}, Body: ${response.body}");
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return true;
+      }
+      try {
+        final data = json.decode(response.body);
+        final msg = data['message'] ?? data['error'] ?? 'Falha ao alterar a palavra‑passe.';
+        debugPrint("Falha Reset: $msg");
+        throw Exception(msg);
+      } catch (_) {
+        throw Exception('Falha ao alterar a palavra‑passe.');
+      }
     } catch (e) {
       debugPrint("Erro resetPassword: $e");
-      return false;
+      throw Exception(e.toString());
     }
   }
 
@@ -144,5 +217,85 @@ class ApiService {
     // Fallback Local
     final List<Map<String, dynamic>> maps = await db.query('consultas');
     return maps.map((m) => Consulta.fromMap(m)).toList();
+  }
+
+  Future<bool> verificarConsentimento(int idPerfis) async {
+    // 1. Verificar primeiro localmente (mais rápido e seguro)
+    bool assinadoLocal = await verificarConsentimentoLocal(idPerfis);
+    if (assinadoLocal) return true;
+
+    // Nota: Removida a chamada GET /consentimentos porque exige permissões de admin/gestor.
+    // O estado de consentimento deve vir preferencialmente no objeto Usuario durante o login.
+    
+    return false;
+  }
+
+  Future<void> atualizarConsentimento(int idPerfis) async {
+    try {
+      // 1. Guardar logo localmente
+      final db = await _dbHelper.database;
+      await db.insert(
+        'consentimentos',
+        {
+          'id_perfis': idPerfis,
+          'estado': 'assinado',
+          'data_assinatura': DateTime.now().toIso8601String(),
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+
+      // 2. Enviar para o servidor usando a rota correta do backend: PUT /consentimentos/:id_perfis/assinar
+      if (await hasInternet()) {
+        final response = await http.put(
+          Uri.parse('$baseUrl/consentimentos/$idPerfis/assinar'),
+          headers: {'Content-Type': 'application/json'},
+        ).timeout(const Duration(seconds: 30));
+        
+        debugPrint("Atualizar consentimento ($idPerfis): ${response.statusCode}");
+      }
+    } catch (e) {
+      debugPrint("Erro ao atualizar consentimento: $e");
+    }
+  }
+
+  Future<bool> verificarConsentimentoLocal(int idPerfis) async {
+    final db = await _dbHelper.database;
+    final List<Map<String, dynamic>> result = await db.query(
+      'consentimentos',
+      where: 'id_perfis = ?',
+      whereArgs: [idPerfis],
+    );
+
+    if (result.isNotEmpty) {
+      return result.first['estado'] == 'assinado';
+    }
+    return false;
+  }
+
+  Future<void> sincronizarConsentimento(int idPerfis) async {
+    if (await hasInternet()) {
+      final db = await _dbHelper.database;
+      try {
+        final response = await http.get(
+          Uri.parse('$baseUrl/consentimentos/$idPerfis'),
+          headers: {'Content-Type': 'application/json'},
+        ).timeout(const Duration(seconds: 30));
+
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          await db.insert(
+            'consentimentos',
+            {
+              'id_perfis': idPerfis,
+              'estado': data['estado'],
+              'data_assinatura': data['data_assinatura'],
+            },
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+        }
+      } catch (e) {
+        debugPrint('Erro ao sincronizar consentimento: $e');
+      }
+    }
   }
 }

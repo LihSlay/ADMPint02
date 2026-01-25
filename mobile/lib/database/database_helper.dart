@@ -19,9 +19,22 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'clinica_database.db');
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS consentimentos(
+          id_perfis INTEGER PRIMARY KEY,
+          estado TEXT,
+          data_assinatura TEXT
+        )
+      ''');
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -108,6 +121,15 @@ class DatabaseHelper {
         alcunha TEXT,
         id_tipo_utilizadores INTEGER,
         FOREIGN KEY (id_especialidades) REFERENCES especialidades (id_especialidades)
+      )
+    ''');
+
+    // Tabela Consentimentos
+    await db.execute('''
+      CREATE TABLE consentimentos(
+        id_perfis INTEGER PRIMARY KEY,
+        estado TEXT,
+        data_assinatura TEXT
       )
     ''');
   }

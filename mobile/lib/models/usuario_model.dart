@@ -4,6 +4,7 @@ class Usuario {
   final int? idPerfis;
   final int idTipoUtilizadores;
   final String? token;
+  final int? termosAssinados;
 
   Usuario({
     required this.idUtilizadores,
@@ -11,6 +12,7 @@ class Usuario {
     this.idPerfis,
     required this.idTipoUtilizadores,
     this.token,
+    this.termosAssinados,
   });
 
   Map<String, dynamic> toMap() {
@@ -30,6 +32,7 @@ class Usuario {
       idPerfis: map['id_perfis'],
       idTipoUtilizadores: map['id_tipo_utilizadores'],
       token: map['token'],
+      termosAssinados: map['termos_assinados'],
     );
   }
 }

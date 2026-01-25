@@ -21,10 +21,19 @@ import 'package:mobile/login/EsqueceuPasseEmailPage.dart';
 import 'package:mobile/login/EsqueceuPasse.dart';
 import 'package:mobile/login/TermosCondicoesPage.dart';
 import 'package:mobile/login/AlterarPassePage.dart';
+import 'package:mobile/services/api_service.dart';
 
+final ApiService _apiService = ApiService();
+
+Future<String> verificarRotaInicial(int idPerfis) async {
+  if (await _apiService.verificarConsentimentoLocal(idPerfis)) {
+    return '/inicio';
+  }
+  return '/termos_condicoes_login';
+}
 
 final GoRouter rotas = GoRouter(
-  initialLocation: '/logininicio',  //TESTAR MAIN
+  initialLocation: '/logininicio',
   routes: [
     GoRoute(
       path: '/login',
@@ -52,7 +61,10 @@ final GoRouter rotas = GoRouter(
     GoRoute(
       path: '/termos_condicoes_login',
       name: 'termos_condicoes_login',
-      builder: (context, state) => const TermosCondicoesPage(),
+      builder: (context, state) {
+        final idPerfis = state.extra as int?;
+        return TermosCondicoesPage(idPerfis: idPerfis);
+      },
     ),
     GoRoute(
       path: '/alterar_passe_recuperacao',
@@ -65,16 +77,16 @@ final GoRouter rotas = GoRouter(
         );
       },
     ),
-            GoRoute(
+    GoRoute(
       path: '/',
-      name: 'login',
+      name: 'home',
       builder: (context, state) => const Definicoes(title: 'Login'),
     ),
-        GoRoute(
+    GoRoute(
       path: '/definicoes',
       name: 'definicoes',
       builder: (context, state) => const Definicoes(title: 'Apl. HomePage'),
-    ),  
+    ),
     GoRoute(
       name: 'Alterar Idioma',
       path: '/idioma',
@@ -132,19 +144,19 @@ final GoRouter rotas = GoRouter(
       path: '/dadosresponsavel',
       builder: (context, state) => const DadosPessoaisResponsavel(title: 'Dadospessoais_Responsavel'),
     ),
-     GoRoute(
+    GoRoute(
       name: 'notificacoes',
       path: '/notificacoes',
       builder: (context, state) => const NotificacoesDados(title: 'Notificações'),
     ),
 
-     GoRoute(
+    GoRoute(
       name: 'exames_clinicos',
       path: '/exames_clinicos',
       builder: (context, state) => const ExamesClinicos(title: 'Exames_Clínicos'),
     ),
 
-     GoRoute(
+    GoRoute(
       name: 'historico_declaracoes',
       path: '/historico_declaracoes',
       builder: (context, state) => const HistoricoDeclaracoes(title: 'Historico_Declarações'),
@@ -154,6 +166,11 @@ final GoRouter rotas = GoRouter(
       name: 'plano_tratamento',
       path: '/plano_tratamento',
       builder: (context, state) => const PlanoTratamento(title: 'Plano_Tratamento'),
+    ),
+    GoRoute(
+      path: '/logininicio',
+      name: 'logininicio',
+      builder: (context, state) => const LoginPage(),
     ),
   ],
 );
