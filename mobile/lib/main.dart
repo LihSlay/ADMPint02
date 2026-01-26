@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'app_route.dart';
+import 'package:sqflite/sqflite.dart';
+import 'database/database_helper.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Inicializar a base de dados antes de arrancar a app
+  await DatabaseHelper().database;
+  
   runApp(const MyApp());
 }
 
