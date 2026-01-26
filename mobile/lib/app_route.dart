@@ -5,7 +5,6 @@ import 'package:mobile/dadospessoais_notificacoes_perfil/notificacoes.dart';
 import 'package:mobile/dadospessoais_notificacoes_perfil/perfil_com_dependentes.dart';
 import 'package:mobile/dadospessoais_notificacoes_perfil/perfil_dependente.dart';
 import 'package:mobile/dadospessoais_notificacoes_perfil/perfil_sem_dependentes.dart';
-import 'definicoes_sobreconsultas/alteraridioma.dart';
 import 'definicoes_sobreconsultas/definicoes.dart';
 import 'definicoes_sobreconsultas/definicoesTermoseCondicoes.dart';
 import 'definicoes_sobreconsultas/palavrapasse.dart';
@@ -33,7 +32,7 @@ Future<String> verificarRotaInicial(int idPerfis) async {
 }
 
 final GoRouter rotas = GoRouter(
-  initialLocation: '/logininicio',
+  initialLocation: '/login',
   routes: [
     GoRoute(
       path: '/login',
@@ -86,11 +85,6 @@ final GoRouter rotas = GoRouter(
       path: '/definicoes',
       name: 'definicoes',
       builder: (context, state) => const Definicoes(title: 'Apl. HomePage'),
-    ),
-    GoRoute(
-      name: 'Alterar Idioma',
-      path: '/idioma',
-      builder: (context, state) => const Idioma(title: 'Apl. Route2'),
     ),
     GoRoute(
       name: 'Alterar Palavra-passe',

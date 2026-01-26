@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../services/api_service.dart';
+import '../database/database_helper.dart';
 
 class Palavrapasse extends StatefulWidget {
   final String title;
@@ -12,6 +14,143 @@ class Palavrapasse extends StatefulWidget {
 
 class _PalavrapasseState extends State<Palavrapasse> {
   int currentPageIndex = 3; // Definições
+  
+  late TextEditingController _currentPasswordController;
+  late TextEditingController _newPasswordController;
+  late TextEditingController _confirmPasswordController;
+  final ApiService _apiService = ApiService();
+  final DatabaseHelper _dbHelper = DatabaseHelper();
+  
+  bool _isLoading = false;
+  bool _showCurrentPassword = false;
+  bool _showNewPassword = false;
+  bool _showConfirmPassword = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentPasswordController = TextEditingController();
+    _newPasswordController = TextEditingController();
+    _confirmPasswordController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<String?> _getUserEmail() async {
+    final db = await _dbHelper.database;
+    final List<Map<String, dynamic>> result = await db.query('utilizadores');
+    if (result.isNotEmpty) {
+      return result.first['email'];
+    }
+    return null;
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Erro'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showSuccessDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Sucesso'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                // Limpar campos após sucesso
+                _currentPasswordController.clear();
+                _newPasswordController.clear();
+                _confirmPasswordController.clear();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _changePassword() async {
+    final currentPassword = _currentPasswordController.text.trim();
+    final newPassword = _newPasswordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
+
+    // Validações
+    if (currentPassword.isEmpty) {
+      _showErrorDialog('Por favor, insira a palavra-passe atual');
+      return;
+    }
+    if (newPassword.isEmpty) {
+      _showErrorDialog('Por favor, insira a nova palavra-passe');
+      return;
+    }
+    if (confirmPassword.isEmpty) {
+      _showErrorDialog('Por favor, confirme a nova palavra-passe');
+      return;
+    }
+    if (newPassword.length < 6) {
+      _showErrorDialog('A nova palavra-passe deve ter pelo menos 6 caracteres');
+      return;
+    }
+    if (newPassword != confirmPassword) {
+      _showErrorDialog('A nova palavra-passe e a confirmação não coincidem');
+      return;
+    }
+    if (currentPassword == newPassword) {
+      _showErrorDialog('A nova palavra-passe não pode ser igual à atual');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final userEmail = await _getUserEmail();
+      if (userEmail == null) {
+        _showErrorDialog('Erro: Utilizador não encontrado. Por favor, faça login novamente.');
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      final success = await _apiService.changePassword(
+        userEmail,
+        currentPassword,
+        newPassword,
+      );
+
+      if (success) {
+        _showSuccessDialog('Palavra-passe alterada com sucesso!');
+      }
+    } catch (e) {
+      _showErrorDialog('Erro ao alterar a palavra-passe: ${e.toString()}');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +158,7 @@ class _PalavrapasseState extends State<Palavrapasse> {
       appBar: AppBar(
         title: Text(
           widget.title,
-          style: TextStyle(color: Colors.white), // título branco
+          style: const TextStyle(color: Colors.white), // título branco
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -29,70 +168,104 @@ class _PalavrapasseState extends State<Palavrapasse> {
         ),
         elevation: 0,
         flexibleSpace: Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             gradient: LinearGradient(
               colors: [Color(0xFF907041), Color(0xFF97774D), Color(0xFFA68A69)],
             ),
           ),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(
-          20,
-        ), // aplica 20 pixels de espaço em todas as direções
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Palavra-passe atual",
-              style: TextStyle(fontWeight: FontWeight.bold),
+      body: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Palavra-passe atual",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 5),
+                TextField(
+                  controller: _currentPasswordController,
+                  obscureText: !_showCurrentPassword,
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _showCurrentPassword ? Icons.visibility : Icons.visibility_off,
+                      ),
+                      onPressed: () {
+                        setState(() => _showCurrentPassword = !_showCurrentPassword);
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  "Palavra-passe nova",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 5),
+                TextField(
+                  controller: _newPasswordController,
+                  obscureText: !_showNewPassword,
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _showNewPassword ? Icons.visibility : Icons.visibility_off,
+                      ),
+                      onPressed: () {
+                        setState(() => _showNewPassword = !_showNewPassword);
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  "Confirmar palavra-passe nova",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 5),
+                TextField(
+                  controller: _confirmPasswordController,
+                  obscureText: !_showConfirmPassword,
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _showConfirmPassword ? Icons.visibility : Icons.visibility_off,
+                      ),
+                      onPressed: () {
+                        setState(() => _showConfirmPassword = !_showConfirmPassword);
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 30),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _changePassword,
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Text("Continuar"),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 5),
-
-            // caixas de texto
-            TextField(
-              decoration: InputDecoration(border: OutlineInputBorder()),
-            ),
-
-            const SizedBox(height: 20),
-
-            const Text(
-              "Palavra-passe nova",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 5),
-
-            // caixas de texto
-            TextField(
-              decoration: InputDecoration(border: OutlineInputBorder()),
-            ),
-
-            const SizedBox(height: 20),
-
-            const Text(
-              "Confirmar palavra-passe nova",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 5),
-
-            // caixas de texto
-            TextField(
-              decoration: InputDecoration(border: OutlineInputBorder()),
-            ),
-
-            const SizedBox(height: 30),
-
-            SizedBox(
-              width: double.infinity, // o botão fica no comprimento da tela
-              child: ElevatedButton(
-                onPressed: () {},
-                child: const Text("Continuar"),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
-
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentPageIndex,
         indicatorColor: Colors.transparent,

@@ -298,4 +298,41 @@ class ApiService {
       }
     }
   }
+
+  // ALTERAR PALAVRA-PASSE: Para utilizadores autenticados
+  Future<bool> changePassword(
+      String email, String currentPassword, String newPassword) async {
+    try {
+      final requestBody = {
+        'email': email,
+        'palavra_passe_atual': currentPassword,
+        'palavra_passe': newPassword,
+        'nova_palavra_passe': newPassword,
+        'password': newPassword,
+        'new_password': newPassword,
+      };
+      
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/change-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(requestBody),
+      ).timeout(const Duration(seconds: 30));
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return true;
+      }
+      
+      try {
+        final data = json.decode(response.body);
+        final msg = data['message'] ?? data['error'] ?? 'Falha ao alterar a palavra-passe.';
+        debugPrint("Falha changePassword: $msg");
+        throw Exception(msg);
+      } catch (_) {
+        throw Exception('Falha ao alterar a palavra-passe.');
+      }
+    } catch (e) {
+      debugPrint("Erro changePassword: $e");
+      rethrow;
+    }
+  }
 }
