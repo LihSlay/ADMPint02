@@ -3,29 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile/inicio_calendario/calendario.dart';
 import 'package:mobile/dadospessoais_notificacoes_perfil/notificacoes.dart';
 import 'package:mobile/definicoes_sobreconsultas/definicoes.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-
-void main() {
-  sqfliteFfiInit();
-  databaseFactory = databaseFactoryFfi;
-
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const Inicio(),
-    );
-  }
-}
 
 class Inicio extends StatefulWidget {
   const Inicio({super.key});
