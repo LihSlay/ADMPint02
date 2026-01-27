@@ -78,6 +78,8 @@ class _DefinicoesState extends State<Definicoes> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        centerTitle: false,
+        titleSpacing: 0,
         title: Text(widget.title, style: const TextStyle(color: Colors.white)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -103,14 +105,6 @@ class _DefinicoesState extends State<Definicoes> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _SettingsCard(
-            icon: Icons.language,
-            text: "Alterar Idioma",
-            onTap: () => context.go('/idioma'),
-          ),
-
-          const SizedBox(height: 16),
-
           _SettingsCard(
             icon: Icons.key,
             text: "Alterar Palavra-passe",
