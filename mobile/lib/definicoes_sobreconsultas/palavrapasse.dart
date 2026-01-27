@@ -111,8 +111,8 @@ class _PalavrapasseState extends State<Palavrapasse> {
       _showErrorDialog('Por favor, confirme a nova palavra-passe');
       return;
     }
-    if (newPassword.length < 6) {
-      _showErrorDialog('A nova palavra-passe deve ter pelo menos 6 caracteres');
+    if (newPassword.length < 3) {
+      _showErrorDialog('A nova palavra-passe deve ter pelo menos 3 caracteres');
       return;
     }
     if (newPassword != confirmPassword) {

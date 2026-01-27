@@ -303,20 +303,42 @@ class ApiService {
   Future<bool> changePassword(
       String email, String currentPassword, String newPassword) async {
     try {
+      // Obter token do utilizador autenticado
+      final db = await _dbHelper.database;
+      final List<Map<String, dynamic>> userResult = await db.query('utilizadores');
+      String? token;
+      if (userResult.isNotEmpty) {
+        token = userResult.first['token'];
+      }
+
       final requestBody = {
         'email': email,
         'palavra_passe_atual': currentPassword,
+        'password_atual': currentPassword,
+        'current_password': currentPassword,
         'palavra_passe': newPassword,
         'nova_palavra_passe': newPassword,
         'password': newPassword,
         'new_password': newPassword,
+        'password_confirmation': newPassword,
+        'confirm_password': newPassword,
+      };
+      
+      debugPrint("Request changePassword body: ${json.encode(requestBody)}");
+      
+      // Headers com autenticação (token) se disponível
+      final headers = {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
       };
       
       final response = await http.post(
         Uri.parse('$baseUrl/auth/change-password'),
-        headers: {'Content-Type': 'application/json'},
+        headers: headers,
         body: json.encode(requestBody),
       ).timeout(const Duration(seconds: 30));
+
+      debugPrint("Resposta changePassword: Status ${response.statusCode}, Body: ${response.body}");
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return true;

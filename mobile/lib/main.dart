@@ -22,6 +22,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp.router(
       debugShowCheckedModeBanner: false, // remove a barra de debug
       routerConfig: rotas,
+      theme: ThemeData(
+        useMaterial3: true,
+        scaffoldBackgroundColor: Colors.white,
+      ),
     );
   }
 }
