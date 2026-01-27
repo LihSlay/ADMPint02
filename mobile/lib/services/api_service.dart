@@ -33,19 +33,31 @@ class ApiService {
         final data = json.decode(response.body);
         debugPrint("Dados do login: $data");
         
+        // Tentar extrair token de diferentes localizações possíveis
+        String? extractedToken = data['user']?['token'] ?? 
+                                 data['token'] ?? 
+                                 data['access_token'] ??
+                                 data['accessToken'] ??
+                                 data['user']?['access_token'] ??
+                                 data['user']?['accessToken'];
+        
+        debugPrint("Token extraído do login: ${extractedToken != null ? 'SIM (${extractedToken.substring(0, 10).padRight(10, '.')})' : 'NÃO ENCONTRADO'}");
+        
         // Mapeamento flexível para aceitar diferentes formatos de resposta do backend
         Usuario usuario = Usuario(
           idUtilizadores: data['user']?['id_utilizadores'] ?? data['id_utilizadores'] ?? 0,
           email: email,
           idPerfis: data['user']?['id_perfis'] ?? data['id_perfis'] ?? 0,
           idTipoUtilizadores: data['user']?['id_tipo_utilizadores'] ?? data['id_tipo_utilizadores'] ?? 0,
-          token: data['user']?['token'],
+          token: extractedToken,
           termosAssinados: data['user']?['termos_assinados'] ?? data['termos_assinados'] ?? data['user']?['aceitou_termos'] ?? data['aceitou_termos'],
         );
 
         final db = await _dbHelper.database;
         await db.delete('utilizadores');
         await db.insert('utilizadores', usuario.toMap());
+        
+        debugPrint("Utilizador guardado na BD com token: ${usuario.token != null ? 'SIM' : 'NÃO'}");
 
         // Se o login já trouxer a informação de termos assinados (1, true ou "assinado")
         final statusTermos = usuario.termosAssinados;
