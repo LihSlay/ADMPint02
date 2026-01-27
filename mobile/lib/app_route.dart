@@ -84,23 +84,23 @@ final GoRouter rotas = GoRouter(
     GoRoute(
       path: '/definicoes',
       name: 'definicoes',
-      builder: (context, state) => const Definicoes(title: 'Apl. HomePage'),
+      builder: (context, state) => const Definicoes(title: 'Definições'),
     ),
     GoRoute(
       name: 'Alterar Palavra-passe',
       path: '/palavra_passe',
-      builder: (context, state) => const Palavrapasse(title: 'Apl. Route3'),
+      builder: (context, state) => const Palavrapasse(title: 'Alterar Palavra-passe'),
     ),
     GoRoute(
       name: 'Termos e condições',
       path: '/termos_condicoes',
-      builder: (context, state) => const TermosCondicoes(title: 'Apl. Route3'),
+      builder: (context, state) => const TermosCondicoes(title: 'Termos e Condições'),
     ),
     GoRoute(
       name: 'Sobre consultas',
       path: '/sobre_consultas',
       builder: (context, state) =>
-          const SobreConsultasPage(title: 'Apl. Route3'),
+          const SobreConsultasPage(title: 'Sobre ConsultasS'),
     ),
     GoRoute(
       name: 'inicio',
