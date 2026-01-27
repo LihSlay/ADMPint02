@@ -309,6 +309,9 @@ class ApiService {
       String? token;
       if (userResult.isNotEmpty) {
         token = userResult.first['token'];
+        debugPrint("Token obtido: ${token != null ? 'SIM (${token.substring(0, 10)}...)' : 'NÃO'}");
+      } else {
+        debugPrint("Nenhum utilizador encontrado na base de dados");
       }
 
       final requestBody = {
@@ -322,15 +325,20 @@ class ApiService {
         'new_password': newPassword,
         'password_confirmation': newPassword,
         'confirm_password': newPassword,
+        if (token != null) 'token': token, // Incluir token no body também
       };
       
       debugPrint("Request changePassword body: ${json.encode(requestBody)}");
       
-      // Headers com autenticação (token) se disponível
+      // Headers com autenticação (token) em múltiplos formatos
       final headers = {
         'Content-Type': 'application/json',
         if (token != null) 'Authorization': 'Bearer $token',
+        if (token != null) 'token': token, // Algumas APIs usam header customizado
+        if (token != null) 'x-auth-token': token,
       };
+      
+      debugPrint("Headers: ${headers.toString()}");
       
       final response = await http.post(
         Uri.parse('$baseUrl/auth/change-password'),

@@ -175,9 +175,7 @@ class _PalavrapasseState extends State<Palavrapasse> {
           ),
         ),
       ),
-      body: Stack(
-        children: [
-          Padding(
+      body: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,8 +262,6 @@ class _PalavrapasseState extends State<Palavrapasse> {
               ],
             ),
           ),
-        ],
-      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentPageIndex,
         indicatorColor: Colors.transparent,
