@@ -20,79 +20,154 @@ class ApiService {
     return true;
   }
 
-  // LOGIN: Autentica e guarda UTILIZADOR + PERFIL
+  // LOGIN: Autentica e guarda UTILIZADOR + PERFIL (Offline-First)
   Future<Usuario?> login(String email, String password) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'email': email, 'palavra_passe': password}),
-      ).timeout(const Duration(seconds: 30));
+    final db = await _dbHelper.database;
+    bool online = await hasInternet();
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        debugPrint("Dados do login: $data");
-        
-        // Tentar extrair token de diferentes localizações possíveis
-        String? extractedToken = data['user']?['token'] ?? 
-                                 data['token'] ?? 
-                                 data['access_token'] ??
-                                 data['accessToken'] ??
-                                 data['user']?['access_token'] ??
-                                 data['user']?['accessToken'];
-        
-        debugPrint("Token extraído do login: ${extractedToken != null ? 'SIM (${extractedToken.substring(0, 10).padRight(10, '.')})' : 'NÃO ENCONTRADO'}");
-        
-        // Mapeamento flexível para aceitar diferentes formatos de resposta do backend
-        Usuario usuario = Usuario(
-          idUtilizadores: data['user']?['id_utilizadores'] ?? data['id_utilizadores'] ?? 0,
-          email: email,
-          idPerfis: data['user']?['id_perfis'] ?? data['id_perfis'] ?? 0,
-          idTipoUtilizadores: data['user']?['id_tipo_utilizadores'] ?? data['id_tipo_utilizadores'] ?? 0,
-          token: extractedToken,
-          termosAssinados: data['user']?['termos_assinados'] ?? data['termos_assinados'] ?? data['user']?['aceitou_termos'] ?? data['aceitou_termos'],
-        );
+    // Tentar login online primeiro
+    if (online) {
+      try {
+        final response = await http.post(
+          Uri.parse('$baseUrl/auth/login'),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode({'email': email, 'palavra_passe': password}),
+        ).timeout(const Duration(seconds: 30));
 
-        final db = await _dbHelper.database;
-        await db.delete('utilizadores');
-        await db.insert('utilizadores', usuario.toMap());
-        
-        debugPrint("Utilizador guardado na BD com token: ${usuario.token != null ? 'SIM' : 'NÃO'}");
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          debugPrint("Dados do login: $data");
+          
+          // Tentar extrair token de diferentes localizações possíveis
+          String? extractedToken = data['user']?['token'] ?? 
+                                   data['token'] ?? 
+                                   data['access_token'] ??
+                                   data['accessToken'] ??
+                                   data['user']?['access_token'] ??
+                                   data['user']?['accessToken'];
+          
+          debugPrint("Token extraído do login: ${extractedToken != null ? 'SIM (${extractedToken.substring(0, 10).padRight(10, '.')})' : 'NÃO ENCONTRADO'}");
+          
+          // Mapeamento flexível para aceitar diferentes formatos de resposta do backend
+          // Extrair estado de consentimento de várias localizações possíveis
+          var consentimentoEstado = data['consentimento_estado'] ?? 
+                                   data['user']?['consentimento_estado'] ??
+                                   data['user']?['termos_assinados'] ?? 
+                                   data['termos_assinados'] ?? 
+                                   data['user']?['aceitou_termos'] ?? 
+                                   data['aceitou_termos'];
+          
+          Usuario usuario = Usuario(
+            idUtilizadores: data['user']?['id_utilizadores'] ?? data['id_utilizadores'] ?? 0,
+            email: email,
+            idPerfis: data['user']?['id_perfis'] ?? data['id_perfis'] ?? 0,
+            idTipoUtilizadores: data['user']?['id_tipo_utilizadores'] ?? data['id_tipo_utilizadores'] ?? 0,
+            token: extractedToken,
+            termosAssinados: consentimentoEstado,
+          );
 
-        // Se o login já trouxer a informação de termos assinados (1, true ou "assinado")
-        final statusTermos = usuario.termosAssinados;
-        if (statusTermos == 1 || statusTermos == true || statusTermos == 'assinado') {
+          // Guardar credenciais para login offline
+          await db.delete('utilizadores');
+          await db.insert('utilizadores', usuario.toMap());
+          
+          // Guardar hash da password para validação offline (simples, apenas para demo)
           await db.insert(
-            'consentimentos',
+            'credenciais_offline',
             {
-              'id_perfis': usuario.idPerfis,
-              'estado': 'assinado',
-              'data_assinatura': DateTime.now().toIso8601String(),
+              'email': email,
+              'password_hash': password.hashCode.toString(), // Em produção, usar bcrypt ou similar
+              'data_atualizacao': DateTime.now().toIso8601String(),
             },
             conflictAlgorithm: ConflictAlgorithm.replace,
           );
-        }
+          
+          debugPrint("Utilizador guardado na BD com token: ${usuario.token != null ? 'SIM' : 'NÃO'}");
 
-        if (data['perfil'] != null) {
-          Perfil perfil = Perfil.fromMap(data['perfil']);
-          await db.delete('perfis');
-          await db.insert('perfis', perfil.toMap());
+          // Se o login já trouxer a informação de termos assinados
+          final statusTermos = usuario.termosAssinados;
+          if (statusTermos == 1 || statusTermos == true || statusTermos == 'assinado') {
+            await db.insert(
+              'consentimentos',
+              {
+                'id_perfis': usuario.idPerfis,
+                'estado': 'assinado',
+                'data_assinatura': DateTime.now().toIso8601String(),
+              },
+              conflictAlgorithm: ConflictAlgorithm.replace,
+            );
+          }
+
+          if (data['perfil'] != null) {
+            Perfil perfil = Perfil.fromMap(data['perfil']);
+            await db.delete('perfis');
+            await db.insert('perfis', perfil.toMap());
+          }
+          
+          // Sincronizar operações pendentes após login bem-sucedido
+          sincronizarOperacoesPendentes().catchError((e) {
+            debugPrint("Erro ao sincronizar após login: $e");
+          });
+          
+          return usuario;
+        } else {
+          // Credenciais inválidas online - não tentar offline
+          String msg;
+          try {
+            final errorData = json.decode(response.body);
+            msg = errorData['message'] ?? errorData['error'] ?? "Erro (${response.statusCode})";
+          } catch (_) {
+            msg = "Erro ${response.statusCode}: ${response.body}";
+          }
+          throw Exception(msg);
         }
-        
-        return usuario;
-      } else {
-        // Se não for 200, tentamos ler a mensagem, mas com cuidado para não crashar se não for JSON
-        String msg;
-        try {
-          final errorData = json.decode(response.body);
-          msg = errorData['message'] ?? errorData['error'] ?? "Erro (${response.statusCode})";
-        } catch (_) {
-          msg = "Erro ${response.statusCode}: ${response.body}";
+      } catch (e) {
+        debugPrint("Erro no login online: $e");
+        // Se falhou por timeout/conexão, tentar offline
+        if (!e.toString().contains('Erro 4')) { // Não é erro 401/403/etc
+          debugPrint("Tentando login offline...");
+          return await _loginOffline(email, password, db);
         }
-        throw Exception(msg);
+        rethrow;
       }
+    } else {
+      // Sem internet: login offline
+      debugPrint("SEM INTERNET: Tentando login offline");
+      return await _loginOffline(email, password, db);
+    }
+  }
+
+  // Login offline: Verificar credenciais guardadas localmente
+  Future<Usuario?> _loginOffline(String email, String password, Database db) async {
+    try {
+      // Verificar credenciais guardadas
+      final credenciais = await db.query(
+        'credenciais_offline',
+        where: 'email = ?',
+        whereArgs: [email],
+      );
+
+      if (credenciais.isEmpty) {
+        throw Exception('Nenhuma sessão anterior encontrada. É necessário internet para o primeiro login.');
+      }
+
+      final passwordHashGuardado = credenciais.first['password_hash'];
+      final passwordHashAtual = password.hashCode.toString();
+
+      if (passwordHashGuardado != passwordHashAtual) {
+        throw Exception('Credenciais inválidas');
+      }
+
+      // Carregar utilizador da BD local
+      final usuarioData = await db.query('utilizadores', where: 'email = ?', whereArgs: [email]);
+      
+      if (usuarioData.isEmpty) {
+        throw Exception('Dados do utilizador não encontrados');
+      }
+
+      debugPrint("Login offline bem-sucedido para $email");
+      return Usuario.fromMap(usuarioData.first);
     } catch (e) {
-      debugPrint("Erro no login: $e");
+      debugPrint("Erro no login offline: $e");
       rethrow;
     }
   }
@@ -311,43 +386,58 @@ class ApiService {
     }
   }
 
-  // ALTERAR PALAVRA-PASSE: Para utilizadores autenticados
-  Future<bool> changePassword(
+  // ALTERAR PALAVRA-PASSE: Para utilizadores autenticados (Offline-First)
+  Future<Map<String, dynamic>> changePassword(
       String email, String currentPassword, String newPassword) async {
     try {
-      // Obter token do utilizador autenticado
       final db = await _dbHelper.database;
       final List<Map<String, dynamic>> userResult = await db.query('utilizadores');
-      String? token;
-      if (userResult.isNotEmpty) {
-        token = userResult.first['token'];
-        debugPrint("Token obtido: ${token != null ? 'SIM (${token.substring(0, 10)}...)' : 'NÃO'}");
-      } else {
+      
+      if (userResult.isEmpty) {
         debugPrint("Nenhum utilizador encontrado na base de dados");
+        throw Exception('Utilizador não encontrado. Por favor, faça login novamente.');
       }
 
+      String? token = userResult.first['token'];
+      debugPrint("Token obtido: ${token != null ? 'SIM (${token.substring(0, 10)}...)' : 'NÃO'}");
+
+      // Verificar conectividade
+      bool online = await hasInternet();
+      
+      if (!online) {
+        // Modo Offline: Guardar operação pendente
+        debugPrint("SEM INTERNET: Guardando operação pendente");
+        
+        final operacaoDados = json.encode({
+          'email': email,
+          'current_password': currentPassword,
+          'new_password': newPassword,
+          'token': token,
+        });
+        
+        await _dbHelper.inserirOperacaoPendente('change_password', operacaoDados);
+        
+        return {
+          'success': true,
+          'offline': true,
+          'message': 'Alteração guardada. Será sincronizada quando houver internet.',
+        };
+      }
+
+      // Modo Online: Tentar alterar na API
+      debugPrint("COM INTERNET: Tentando alterar password na API");
+      
       final requestBody = {
         'email': email,
-        'palavra_passe_atual': currentPassword,
-        'password_atual': currentPassword,
         'current_password': currentPassword,
-        'palavra_passe': newPassword,
-        'nova_palavra_passe': newPassword,
-        'password': newPassword,
         'new_password': newPassword,
-        'password_confirmation': newPassword,
-        'confirm_password': newPassword,
-        if (token != null) 'token': token, // Incluir token no body também
       };
       
       debugPrint("Request changePassword body: ${json.encode(requestBody)}");
       
-      // Headers com autenticação (token) em múltiplos formatos
       final headers = {
         'Content-Type': 'application/json',
         if (token != null) 'Authorization': 'Bearer $token',
-        if (token != null) 'token': token, // Algumas APIs usam header customizado
-        if (token != null) 'x-auth-token': token,
       };
       
       debugPrint("Headers: ${headers.toString()}");
@@ -361,9 +451,17 @@ class ApiService {
       debugPrint("Resposta changePassword: Status ${response.statusCode}, Body: ${response.body}");
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        return true;
+        // Sucesso: Atualizar localmente (se necessário guardar hash, etc.)
+        debugPrint("Password alterada com sucesso na API");
+        
+        return {
+          'success': true,
+          'offline': false,
+          'message': 'Palavra-passe alterada com sucesso!',
+        };
       }
       
+      // Falha na API
       try {
         final data = json.decode(response.body);
         final msg = data['message'] ?? data['error'] ?? 'Falha ao alterar a palavra-passe.';
@@ -375,6 +473,57 @@ class ApiService {
     } catch (e) {
       debugPrint("Erro changePassword: $e");
       rethrow;
+    }
+  }
+
+  // SINCRONIZAR OPERAÇÕES PENDENTES: Processa alterações feitas offline
+  Future<void> sincronizarOperacoesPendentes() async {
+    if (!await hasInternet()) {
+      debugPrint("Sem internet, sincronização adiada");
+      return;
+    }
+
+    final operacoes = await _dbHelper.obterOperacoesPendentes();
+    debugPrint("Sincronizando ${operacoes.length} operações pendentes");
+
+    for (var operacao in operacoes) {
+      final int id = operacao['id'];
+      final String tipo = operacao['tipo_operacao'];
+      final Map<String, dynamic> dados = json.decode(operacao['dados']);
+
+      try {
+        if (tipo == 'change_password') {
+          debugPrint("Processando mudança de password pendente (ID: $id)");
+          
+          final headers = {
+            'Content-Type': 'application/json',
+            if (dados['token'] != null) 'Authorization': 'Bearer ${dados['token']}',
+          };
+
+          final requestBody = {
+            'email': dados['email'],
+            'current_password': dados['current_password'],
+            'new_password': dados['new_password'],
+          };
+
+          final response = await http.post(
+            Uri.parse('$baseUrl/auth/change-password'),
+            headers: headers,
+            body: json.encode(requestBody),
+          ).timeout(const Duration(seconds: 30));
+
+          if (response.statusCode >= 200 && response.statusCode < 300) {
+            debugPrint("Operação pendente ID $id sincronizada com sucesso");
+            await _dbHelper.removerOperacaoPendente(id);
+          } else {
+            debugPrint("Falha na sincronização da operação ID $id: ${response.statusCode}");
+            await _dbHelper.incrementarTentativasOperacao(id);
+          }
+        }
+      } catch (e) {
+        debugPrint("Erro ao sincronizar operação ID $id: $e");
+        await _dbHelper.incrementarTentativasOperacao(id);
+      }
     }
   }
 }

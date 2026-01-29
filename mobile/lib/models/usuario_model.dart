@@ -4,7 +4,7 @@ class Usuario {
   final int? idPerfis;
   final int idTipoUtilizadores;
   final String? token;
-  final int? termosAssinados;
+  final dynamic termosAssinados; // Pode ser int, bool ou String ('assinado')
 
   Usuario({
     required this.idUtilizadores,

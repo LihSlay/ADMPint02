@@ -19,7 +19,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'clinica_database.db');
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -32,6 +32,24 @@ class DatabaseHelper {
           id_perfis INTEGER PRIMARY KEY,
           estado TEXT,
           data_assinatura TEXT
+        )
+      ''');
+    }
+    if (oldVersion < 3) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS operacoes_pendentes(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          tipo_operacao TEXT NOT NULL,
+          dados TEXT NOT NULL,
+          data_criacao TEXT NOT NULL,
+          tentativas INTEGER DEFAULT 0
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS credenciais_offline(
+          email TEXT PRIMARY KEY,
+          password_hash TEXT NOT NULL,
+          data_atualizacao TEXT NOT NULL
         )
       ''');
     }
@@ -132,6 +150,55 @@ class DatabaseHelper {
         data_assinatura TEXT
       )
     ''');
+
+    // Tabela Operações Pendentes (para sincronização offline-first)
+    await db.execute('''
+      CREATE TABLE operacoes_pendentes(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tipo_operacao TEXT NOT NULL,
+        dados TEXT NOT NULL,
+        data_criacao TEXT NOT NULL,
+        tentativas INTEGER DEFAULT 0
+      )
+    ''');
+
+    // Tabela Credenciais Offline (para login sem internet)
+    await db.execute('''
+      CREATE TABLE credenciais_offline(
+        email TEXT PRIMARY KEY,
+        password_hash TEXT NOT NULL,
+        data_atualizacao TEXT NOT NULL
+      )
+    ''');
+  }
+
+  // Métodos para gestão de operações pendentes (offline-first)
+  Future<int> inserirOperacaoPendente(String tipoOperacao, String dados) async {
+    final db = await database;
+    return await db.insert('operacoes_pendentes', {
+      'tipo_operacao': tipoOperacao,
+      'dados': dados,
+      'data_criacao': DateTime.now().toIso8601String(),
+      'tentativas': 0,
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> obterOperacoesPendentes() async {
+    final db = await database;
+    return await db.query('operacoes_pendentes', orderBy: 'data_criacao ASC');
+  }
+
+  Future<void> removerOperacaoPendente(int id) async {
+    final db = await database;
+    await db.delete('operacoes_pendentes', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> incrementarTentativasOperacao(int id) async {
+    final db = await database;
+    await db.rawUpdate(
+      'UPDATE operacoes_pendentes SET tentativas = tentativas + 1 WHERE id = ?',
+      [id],
+    );
   }
 
   // Métodos CRUD genéricos podem ser adicionados aqui

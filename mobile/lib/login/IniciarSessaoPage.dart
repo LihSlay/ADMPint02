@@ -100,15 +100,15 @@ class _IniciarSessaoPageState extends State<IniciarSessaoPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 40),
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.08),
                   Center(
                     child: Image.asset(
                       'assets/images/logoclinica.png',
-                      width: 200,
+                      width: MediaQuery.of(context).size.width * 0.50,
                       fit: BoxFit.contain,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.03),
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 24.0),
                     child: Text(
@@ -125,7 +125,7 @@ class _IniciarSessaoPageState extends State<IniciarSessaoPage> {
                   Expanded(
                     child: Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
                       decoration: const BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.centerLeft,
@@ -145,7 +145,7 @@ class _IniciarSessaoPageState extends State<IniciarSessaoPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const SizedBox(height: 5),
+                          const SizedBox(height: 2),
                           const Text(
                             "Email",
                             style: TextStyle(
@@ -285,7 +285,7 @@ class _IniciarSessaoPageState extends State<IniciarSessaoPage> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 35),
+                          const SizedBox(height: 24),
                           Container(
                             width: double.infinity,
                             decoration: BoxDecoration(

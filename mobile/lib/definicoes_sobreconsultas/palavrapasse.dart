@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import '../services/api_service.dart';
 import '../database/database_helper.dart';
@@ -136,14 +137,27 @@ class _PalavrapasseState extends State<Palavrapasse> {
         return;
       }
 
-      final success = await _apiService.changePassword(
+      final result = await _apiService.changePassword(
         userEmail,
         currentPassword,
         newPassword,
       );
 
-      if (success) {
-        _showSuccessDialog('Palavra-passe alterada com sucesso!');
+      if (result['success'] == true) {
+        if (result['offline'] == true) {
+          // Operação offline
+          _showSuccessDialog(
+            'Sem internet. A alteração será sincronizada automaticamente quando houver conexão.',
+          );
+        } else {
+          // Operação online bem-sucedida
+          _showSuccessDialog('Palavra-passe alterada com sucesso!');
+        }
+        
+        // Tentar sincronizar operações pendentes em background
+        _apiService.sincronizarOperacoesPendentes().catchError((e) {
+          debugPrint("Erro ao sincronizar operações pendentes: $e");
+        });
       }
     } catch (e) {
       _showErrorDialog('Erro ao alterar a palavra-passe: ${e.toString()}');
