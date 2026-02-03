@@ -169,7 +169,7 @@ class _CalendarioState extends State<Calendario> {
               context.go('/calendario');
               break;
             case 2:
-              context.go('/notificacao');
+              context.go('/notificacoes');
               break;
             case 3:
               context.go('/definicoes');

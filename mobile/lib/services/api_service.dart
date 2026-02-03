@@ -9,7 +9,7 @@ import '../models/usuario_model.dart';
 import '../models/perfil_model.dart';
 
 class ApiService {
-  final String baseUrl = "https://pi4backend.onrender.com"; 
+  final String baseUrl = "https://pi4backend.onrender.com";
   final DatabaseHelper _dbHelper = DatabaseHelper();
 
   Future<bool> hasInternet() async {
@@ -25,119 +25,148 @@ class ApiService {
     final db = await _dbHelper.database;
     bool online = await hasInternet();
 
-    // Tentar login online primeiro
     if (online) {
       try {
-        final response = await http.post(
-          Uri.parse('$baseUrl/auth/login'),
-          headers: {'Content-Type': 'application/json'},
-          body: json.encode({'email': email, 'palavra_passe': password}),
-        ).timeout(const Duration(seconds: 30));
+        final response = await http
+            .post(
+              Uri.parse('$baseUrl/auth/login'),
+              headers: {'Content-Type': 'application/json'},
+              body: json.encode({'email': email, 'palavra_passe': password}),
+            )
+            .timeout(const Duration(seconds: 30));
 
         if (response.statusCode == 200) {
           final data = json.decode(response.body);
-          debugPrint("Dados do login: $data");
-          
-          // Tentar extrair token de diferentes localizações possíveis
-          String? extractedToken = data['user']?['token'] ?? 
-                                   data['token'] ?? 
-                                   data['access_token'] ??
-                                   data['accessToken'] ??
-                                   data['user']?['access_token'] ??
-                                   data['user']?['accessToken'];
-          
-          debugPrint("Token extraído do login: ${extractedToken != null ? 'SIM (${extractedToken.substring(0, 10).padRight(10, '.')})' : 'NÃO ENCONTRADO'}");
-          
-          // Mapeamento flexível para aceitar diferentes formatos de resposta do backend
-          // Extrair estado de consentimento de várias localizações possíveis
-          var consentimentoEstado = data['consentimento_estado'] ?? 
-                                   data['user']?['consentimento_estado'] ??
-                                   data['user']?['termos_assinados'] ?? 
-                                   data['termos_assinados'] ?? 
-                                   data['user']?['aceitou_termos'] ?? 
-                                   data['aceitou_termos'];
-          
+          debugPrint('LOGIN response: $data');
+
+          // ---- TOKEN (flexível)
+          String? token =
+              data['user']?['token'] ??
+              data['token'] ??
+              data['access_token'] ??
+              data['accessToken'];
+
+          // ---- UTILIZADOR
           Usuario usuario = Usuario(
-            idUtilizadores: data['user']?['id_utilizadores'] ?? data['id_utilizadores'] ?? 0,
+            idUtilizadores:
+                data['user']?['id_utilizadores'] ?? data['id_utilizadores'],
             email: email,
-            idPerfis: data['user']?['id_perfis'] ?? data['id_perfis'] ?? 0,
-            idTipoUtilizadores: data['user']?['id_tipo_utilizadores'] ?? data['id_tipo_utilizadores'] ?? 0,
-            token: extractedToken,
-            termosAssinados: consentimentoEstado,
+            idPerfis: data['user']?['id_perfis'] ?? data['id_perfis'],
+            idTipoUtilizadores:
+                data['user']?['id_tipo_utilizadores'] ??
+                data['id_tipo_utilizadores'],
+            token: token,
+            termosAssinados:
+                data['user']?['termos_assinados'] ?? data['termos_assinados'],
           );
 
-          // Guardar credenciais para login offline
+          // ---- guardar utilizador
           await db.delete('utilizadores');
           await db.insert('utilizadores', usuario.toMap());
-          
-          // Guardar hash da password para validação offline (simples, apenas para demo)
-          await db.insert(
-            'credenciais_offline',
-            {
-              'email': email,
-              'password_hash': password.hashCode.toString(), // Em produção, usar bcrypt ou similar
-              'data_atualizacao': DateTime.now().toIso8601String(),
-            },
-            conflictAlgorithm: ConflictAlgorithm.replace,
-          );
-          
-          debugPrint("Utilizador guardado na BD com token: ${usuario.token != null ? 'SIM' : 'NÃO'}");
 
-          // Se o login já trouxer a informação de termos assinados
-          final statusTermos = usuario.termosAssinados;
-          if (statusTermos == 1 || statusTermos == true || statusTermos == 'assinado') {
-            await db.insert(
-              'consentimentos',
-              {
-                'id_perfis': usuario.idPerfis,
-                'estado': 'assinado',
-                'data_assinatura': DateTime.now().toIso8601String(),
-              },
-              conflictAlgorithm: ConflictAlgorithm.replace,
-            );
-          }
+          // ---- credenciais offline
+          await db.insert('credenciais_offline', {
+            'email': email,
+            'password_hash': password.hashCode.toString(),
+            'data_atualizacao': DateTime.now().toIso8601String(),
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
 
+          // ---- PERFIL
           if (data['perfil'] != null) {
-            Perfil perfil = Perfil.fromMap(data['perfil']);
+            // veio no login
+            final perfil = Perfil.fromMap(data['perfil']);
             await db.delete('perfis');
             await db.insert('perfis', perfil.toMap());
-          }
-          
-          // Sincronizar operações pendentes após login bem-sucedido
-          sincronizarOperacoesPendentes().catchError((e) {
-            debugPrint("Erro ao sincronizar após login: $e");
-          });
-          
+            debugPrint('Perfil guardado a partir do login');
+          } else if (token != null) {
+  debugPrint(
+    'Perfil não veio no login, a ir buscar /pacientes/meu-perfil...',
+  );
+  await fetchAndSaveMeuPerfil(usuario.idPerfis ?? 0, token);
+}
+
           return usuario;
         } else {
-          // Credenciais inválidas online - não tentar offline
-          String msg;
-          try {
-            final errorData = json.decode(response.body);
-            msg = errorData['message'] ?? errorData['error'] ?? "Erro (${response.statusCode})";
-          } catch (_) {
-            msg = "Erro ${response.statusCode}: ${response.body}";
-          }
-          throw Exception(msg);
+          throw Exception('Credenciais inválidas');
         }
       } catch (e) {
-        debugPrint("Erro no login online: $e");
-        // Se falhou por timeout/conexão, tentar offline
-        if (!e.toString().contains('Erro 4')) { // Não é erro 401/403/etc
-          debugPrint("Tentando login offline...");
-          return await _loginOffline(email, password, db);
-        }
-        rethrow;
+        debugPrint('Erro no login online: $e');
+        return await _loginOffline(email, password, db);
       }
     } else {
-      // Sem internet: login offline
-      debugPrint("SEM INTERNET: Tentando login offline");
+      debugPrint('Sem internet → login offline');
       return await _loginOffline(email, password, db);
     }
   }
 
+Future<void> fetchAndSaveMeuPerfil(int idPerfis, String? token) async {
+  if (token == null) throw Exception("Token ausente");
+
+  final db = await _dbHelper.database;
+
+  try {
+    final response = await http.get(
+      Uri.parse('$baseUrl/pacientes/meu-perfil'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    debugPrint(" fetchMeuPerfil response.statusCode: ${response.statusCode}");
+    debugPrint(" fetchMeuPerfil response.body: ${response.body}");
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+
+      final pacienteData = data['paciente'];
+      if (pacienteData == null) throw Exception("Paciente ausente");
+
+
+      Perfil perfil = Perfil(
+        idPerfis: pacienteData['id_perfis'] ?? idPerfis,
+        idUtilizadores: pacienteData['id_utilizadores'] ?? 0,
+        nome: pacienteData['nome'] ?? '',
+        nUtente: pacienteData['n_utente'] != null
+            ? int.tryParse(pacienteData['n_utente'].toString())
+            : null,
+        dataNasc: pacienteData['data_nasc'] ?? '',
+        contactoTel: pacienteData['contacto_tel'] ?? '',
+        profissao: pacienteData['profissao'] ?? '',
+        morada: pacienteData['morada'] ?? '',
+        codPostal: pacienteData['cod_postal'] ?? '',
+        nif: pacienteData['nif'] ?? '',
+        responsavel: pacienteData['responsavel'] ?? '',
+        notas: pacienteData['notas'] ?? '',
+        idSubsistemasSaude: pacienteData['id_subsistemas_saude'] ?? 0,
+        idParentesco: pacienteData['id_parentesco'] ?? 0,
+        alcunhas: pacienteData['alcunhas'] ?? '',
+        ativo: pacienteData['ativo'] ?? 1,
+      );
+
+      debugPrint("Perfil construído: ${perfil.toMap()}");
+
+      // Substituir dados existentes
+      await db.delete('perfis');
+      await db.insert('perfis', perfil.toMap());
+
+      debugPrint("✅ Perfil do utilizador guardado localmente");
+    } else {
+      throw Exception("Erro ao obter perfil: ${response.statusCode}");
+    }
+  } catch (e) {
+    debugPrint("Erro fetchMeuPerfil: $e");
+    rethrow;
+  }
+}
+
+
   // Login offline: Verificar credenciais guardadas localmente
-  Future<Usuario?> _loginOffline(String email, String password, Database db) async {
+  Future<Usuario?> _loginOffline(
+    String email,
+    String password,
+    Database db,
+  ) async {
     try {
       // Verificar credenciais guardadas
       final credenciais = await db.query(
@@ -147,7 +176,9 @@ class ApiService {
       );
 
       if (credenciais.isEmpty) {
-        throw Exception('Nenhuma sessão anterior encontrada. É necessário internet para o primeiro login.');
+        throw Exception(
+          'Nenhuma sessão anterior encontrada. É necessário internet para o primeiro login.',
+        );
       }
 
       final passwordHashGuardado = credenciais.first['password_hash'];
@@ -158,8 +189,12 @@ class ApiService {
       }
 
       // Carregar utilizador da BD local
-      final usuarioData = await db.query('utilizadores', where: 'email = ?', whereArgs: [email]);
-      
+      final usuarioData = await db.query(
+        'utilizadores',
+        where: 'email = ?',
+        whereArgs: [email],
+      );
+
       if (usuarioData.isEmpty) {
         throw Exception('Dados do utilizador não encontrados');
       }
@@ -181,7 +216,9 @@ class ApiService {
             headers: {'Content-Type': 'application/json'},
             body: json.encode({'email': email}),
           )
-          .timeout(const Duration(seconds: 45)); // Timeout maior para wake-up do Render
+          .timeout(
+            const Duration(seconds: 45),
+          ); // Timeout maior para wake-up do Render
       return response.statusCode == 200;
     } catch (e) {
       debugPrint("Erro forgotPassword: $e");
@@ -210,7 +247,8 @@ class ApiService {
           .timeout(const Duration(seconds: 20));
 
       debugPrint(
-          "Resposta Verify: Status ${response.statusCode}, Body: ${response.body}");
+        "Resposta Verify: Status ${response.statusCode}, Body: ${response.body}",
+      );
       // Alguns backends respondem 201/204 para operações válidas.
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return true;
@@ -218,7 +256,10 @@ class ApiService {
       // Se falhar, tentar obter mensagem clara do backend.
       try {
         final data = json.decode(response.body);
-        final msg = data['message'] ?? data['error'] ?? 'Falha na verificação do código.';
+        final msg =
+            data['message'] ??
+            data['error'] ??
+            'Falha na verificação do código.';
         debugPrint("Falha Verify: $msg");
         throw Exception(msg);
       } catch (_) {
@@ -233,7 +274,10 @@ class ApiService {
 
   // RECUPERAR PASSE 3: Definir nova password
   Future<bool> resetPassword(
-      String email, String code, String newPassword) async {
+    String email,
+    String code,
+    String newPassword,
+  ) async {
     try {
       final requestBody = {
         'email': email.trim(),
@@ -259,13 +303,18 @@ class ApiService {
             body: json.encode(requestBody),
           )
           .timeout(const Duration(seconds: 45));
-      debugPrint("Resposta Reset: Status ${response.statusCode}, Body: ${response.body}");
+      debugPrint(
+        "Resposta Reset: Status ${response.statusCode}, Body: ${response.body}",
+      );
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return true;
       }
       try {
         final data = json.decode(response.body);
-        final msg = data['message'] ?? data['error'] ?? 'Falha ao alterar a palavra‑passe.';
+        final msg =
+            data['message'] ??
+            data['error'] ??
+            'Falha ao alterar a palavra‑passe.';
         debugPrint("Falha Reset: $msg");
         throw Exception(msg);
       } catch (_) {
@@ -284,10 +333,12 @@ class ApiService {
     if (await hasInternet()) {
       try {
         final response = await http.get(Uri.parse('$baseUrl/consultas'));
-        
+
         if (response.statusCode == 200) {
           List<dynamic> data = json.decode(response.body);
-          List<Consulta> consultas = data.map((json) => Consulta.fromMap(json)).toList();
+          List<Consulta> consultas = data
+              .map((json) => Consulta.fromMap(json))
+              .toList();
 
           // Sincronização
           await db.delete('consultas');
@@ -313,7 +364,7 @@ class ApiService {
 
     // Nota: Removida a chamada GET /consentimentos porque exige permissões de admin/gestor.
     // O estado de consentimento deve vir preferencialmente no objeto Usuario durante o login.
-    
+
     return false;
   }
 
@@ -321,24 +372,24 @@ class ApiService {
     try {
       // 1. Guardar logo localmente
       final db = await _dbHelper.database;
-      await db.insert(
-        'consentimentos',
-        {
-          'id_perfis': idPerfis,
-          'estado': 'assinado',
-          'data_assinatura': DateTime.now().toIso8601String(),
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      await db.insert('consentimentos', {
+        'id_perfis': idPerfis,
+        'estado': 'assinado',
+        'data_assinatura': DateTime.now().toIso8601String(),
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
 
       // 2. Enviar para o servidor usando a rota correta do backend: PUT /consentimentos/:id_perfis/assinar
       if (await hasInternet()) {
-        final response = await http.put(
-          Uri.parse('$baseUrl/consentimentos/$idPerfis/assinar'),
-          headers: {'Content-Type': 'application/json'},
-        ).timeout(const Duration(seconds: 30));
-        
-        debugPrint("Atualizar consentimento ($idPerfis): ${response.statusCode}");
+        final response = await http
+            .put(
+              Uri.parse('$baseUrl/consentimentos/$idPerfis/assinar'),
+              headers: {'Content-Type': 'application/json'},
+            )
+            .timeout(const Duration(seconds: 30));
+
+        debugPrint(
+          "Atualizar consentimento ($idPerfis): ${response.statusCode}",
+        );
       }
     } catch (e) {
       debugPrint("Erro ao atualizar consentimento: $e");
@@ -363,22 +414,20 @@ class ApiService {
     if (await hasInternet()) {
       final db = await _dbHelper.database;
       try {
-        final response = await http.get(
-          Uri.parse('$baseUrl/consentimentos/$idPerfis'),
-          headers: {'Content-Type': 'application/json'},
-        ).timeout(const Duration(seconds: 30));
+        final response = await http
+            .get(
+              Uri.parse('$baseUrl/consentimentos/$idPerfis'),
+              headers: {'Content-Type': 'application/json'},
+            )
+            .timeout(const Duration(seconds: 30));
 
         if (response.statusCode == 200) {
           final data = json.decode(response.body);
-          await db.insert(
-            'consentimentos',
-            {
-              'id_perfis': idPerfis,
-              'estado': data['estado'],
-              'data_assinatura': data['data_assinatura'],
-            },
-            conflictAlgorithm: ConflictAlgorithm.replace,
-          );
+          await db.insert('consentimentos', {
+            'id_perfis': idPerfis,
+            'estado': data['estado'],
+            'data_assinatura': data['data_assinatura'],
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
         }
       } catch (e) {
         debugPrint('Erro ao sincronizar consentimento: $e');
@@ -388,83 +437,103 @@ class ApiService {
 
   // ALTERAR PALAVRA-PASSE: Para utilizadores autenticados (Offline-First)
   Future<Map<String, dynamic>> changePassword(
-      String email, String currentPassword, String newPassword) async {
+    String email,
+    String currentPassword,
+    String newPassword,
+  ) async {
     try {
       final db = await _dbHelper.database;
-      final List<Map<String, dynamic>> userResult = await db.query('utilizadores');
-      
+      final List<Map<String, dynamic>> userResult = await db.query(
+        'utilizadores',
+      );
+
       if (userResult.isEmpty) {
         debugPrint("Nenhum utilizador encontrado na base de dados");
-        throw Exception('Utilizador não encontrado. Por favor, faça login novamente.');
+        throw Exception(
+          'Utilizador não encontrado. Por favor, faça login novamente.',
+        );
       }
 
       String? token = userResult.first['token'];
-      debugPrint("Token obtido: ${token != null ? 'SIM (${token.substring(0, 10)}...)' : 'NÃO'}");
+      debugPrint(
+        "Token obtido: ${token != null ? 'SIM (${token.substring(0, 10)}...)' : 'NÃO'}",
+      );
 
       // Verificar conectividade
       bool online = await hasInternet();
-      
+
       if (!online) {
         // Modo Offline: Guardar operação pendente
         debugPrint("SEM INTERNET: Guardando operação pendente");
-        
+
         final operacaoDados = json.encode({
           'email': email,
           'current_password': currentPassword,
           'new_password': newPassword,
           'token': token,
         });
-        
-        await _dbHelper.inserirOperacaoPendente('change_password', operacaoDados);
-        
+
+        await _dbHelper.inserirOperacaoPendente(
+          'change_password',
+          operacaoDados,
+        );
+
         return {
           'success': true,
           'offline': true,
-          'message': 'Alteração guardada. Será sincronizada quando houver internet.',
+          'message':
+              'Alteração guardada. Será sincronizada quando houver internet.',
         };
       }
 
       // Modo Online: Tentar alterar na API
       debugPrint("COM INTERNET: Tentando alterar password na API");
-      
+
       final requestBody = {
         'email': email,
         'current_password': currentPassword,
         'new_password': newPassword,
       };
-      
+
       debugPrint("Request changePassword body: ${json.encode(requestBody)}");
-      
+
       final headers = {
         'Content-Type': 'application/json',
         if (token != null) 'Authorization': 'Bearer $token',
       };
-      
-      debugPrint("Headers: ${headers.toString()}");
-      
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/change-password'),
-        headers: headers,
-        body: json.encode(requestBody),
-      ).timeout(const Duration(seconds: 30));
 
-      debugPrint("Resposta changePassword: Status ${response.statusCode}, Body: ${response.body}");
+      debugPrint("Headers: ${headers.toString()}");
+
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/auth/change-password'),
+            headers: headers,
+            body: json.encode(requestBody),
+          )
+          .timeout(const Duration(seconds: 30));
+
+      debugPrint(
+        "Resposta changePassword: Status ${response.statusCode}, Body: ${response.body}",
+      );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         // Sucesso: Atualizar localmente (se necessário guardar hash, etc.)
         debugPrint("Password alterada com sucesso na API");
-        
+
         return {
           'success': true,
           'offline': false,
           'message': 'Palavra-passe alterada com sucesso!',
         };
       }
-      
+
       // Falha na API
       try {
         final data = json.decode(response.body);
-        final msg = data['message'] ?? data['error'] ?? 'Falha ao alterar a palavra-passe.';
+        final msg =
+            data['message'] ??
+            data['error'] ??
+            'Falha ao alterar a palavra-passe.';
         debugPrint("Falha changePassword: $msg");
         throw Exception(msg);
       } catch (_) {
@@ -494,10 +563,11 @@ class ApiService {
       try {
         if (tipo == 'change_password') {
           debugPrint("Processando mudança de password pendente (ID: $id)");
-          
+
           final headers = {
             'Content-Type': 'application/json',
-            if (dados['token'] != null) 'Authorization': 'Bearer ${dados['token']}',
+            if (dados['token'] != null)
+              'Authorization': 'Bearer ${dados['token']}',
           };
 
           final requestBody = {
@@ -506,17 +576,21 @@ class ApiService {
             'new_password': dados['new_password'],
           };
 
-          final response = await http.post(
-            Uri.parse('$baseUrl/auth/change-password'),
-            headers: headers,
-            body: json.encode(requestBody),
-          ).timeout(const Duration(seconds: 30));
+          final response = await http
+              .post(
+                Uri.parse('$baseUrl/auth/change-password'),
+                headers: headers,
+                body: json.encode(requestBody),
+              )
+              .timeout(const Duration(seconds: 30));
 
           if (response.statusCode >= 200 && response.statusCode < 300) {
             debugPrint("Operação pendente ID $id sincronizada com sucesso");
             await _dbHelper.removerOperacaoPendente(id);
           } else {
-            debugPrint("Falha na sincronização da operação ID $id: ${response.statusCode}");
+            debugPrint(
+              "Falha na sincronização da operação ID $id: ${response.statusCode}",
+            );
             await _dbHelper.incrementarTentativasOperacao(id);
           }
         }

@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile/inicio_calendario/calendario.dart';
 import 'package:mobile/dadospessoais_notificacoes_perfil/notificacoes.dart';
 import 'package:mobile/definicoes_sobreconsultas/definicoes.dart';
+import 'package:mobile/database/database_helper.dart';
+import 'package:mobile/models/perfil_model.dart';
 
 class Inicio extends StatefulWidget {
   const Inicio({super.key});
@@ -13,103 +15,37 @@ class Inicio extends StatefulWidget {
 
 class _InicioState extends State<Inicio> {
   int currentPageIndex = 0;
+  String nome = "";
+  String nUtente = "";
+
+  final DatabaseHelper _dbHelper = DatabaseHelper();
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarPerfil();
+  }
+
+  Future<void> _carregarPerfil() async {
+    try {
+      final db = await _dbHelper.database;
+      final perfis = await db.query('perfis', limit: 1); // Pega o perfil do utilizador logado
+      if (perfis.isNotEmpty) {
+        Perfil perfil = Perfil.fromMap(perfis.first);
+        setState(() {
+          nome = perfil.nome ?? "";
+          nUtente = perfil.nUtente?.toString() ?? "";
+        });
+      }
+    } catch (e) {
+      debugPrint("Erro ao carregar perfil: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: currentPageIndex == 0
-          ? PreferredSize(
-              preferredSize: const Size.fromHeight(30),
-              child: AppBar(
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                flexibleSpace: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Color(0xFF907041),
-                        Color(0xFF97774D),
-                        Color(0xFFA68A69),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                ),
-                actions: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 10, bottom: 5), // Afasta o botão do lado direito
-                    child: MenuAnchor(
-                      builder: (context, controller, child) {
-                        return GestureDetector(
-                          onTap: () {
-                            controller.isOpen ? controller.close() : controller.open();
-                          },
-                          child: Container(
-                            width: 36,
-                            height: 36,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            alignment: Alignment.center,
-                            child: const Text(
-                              "AM",
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                      menuChildren: [
-                        Theme(
-                          data: Theme.of(context).copyWith(cardColor: Colors.white),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              MenuItemButton(
-                                onPressed: () => context.go('/perfilcomdependentes'),
-                                child: const Row(
-                                  children: [
-                                    Icon(Icons.person, size: 20),
-                                    SizedBox(width: 8),
-                                    Text("Perfil"),
-                                  ],
-                                ),
-                              ),
-                              MenuItemButton(
-                                onPressed: () => context.go('/sobre_consultas'),
-                                child: const Row(
-                                  children: [
-                                    Icon(Icons.info_outline, size: 20),
-                                    SizedBox(width: 8),
-                                    Text("Sobre Consultas"),
-                                  ],
-                                ),
-                              ),
-                              MenuItemButton(
-                                onPressed: () => context.go('/terminar_sessao'),
-                                child: const Row(
-                                  children: [
-                                    Icon(Icons.logout, size: 20),
-                                    SizedBox(width: 8),
-                                    Text("Terminar Sessão"),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : null,
+      appBar: currentPageIndex == 0 ? _buildAppBar(context) : null,
       body: IndexedStack(
         index: currentPageIndex,
         children: [
@@ -117,9 +53,8 @@ class _InicioState extends State<Inicio> {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                // Gradiente atrás do dashboard só até metade
                 Container(
-                  height: 60, // metade do container dashboard 
+                  height: 60,
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -132,83 +67,92 @@ class _InicioState extends State<Inicio> {
                     ),
                   ),
                 ),
-                Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: _cardDashboard(
-                        nome: "António Manuel Pereira",
-                        nUtente: "283740538",
-                        clinica: "Clinimolelos",
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Botoes(),
-                    ),
-                    const SizedBox(height: 18),
-                    Container(
-                      width: double.infinity,
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Color(0xFF907041),
-                            Color(0xFF97774D),
-                            Color(0xFFA68A69),
-                          ],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  "Consultas marcadas",
-                                  style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white24,
-                                    borderRadius: BorderRadius.circular(24),
-                                  ),
-                                  child: const Text(
-                                    "2",
-                                    style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            _cardConsulta(
-                              tipoConsulta: "Consulta de rotina",
-                              data: "16/12/2025",
-                              horario: "10:30",
-                            ),
-                            _cardConsulta(
-                              tipoConsulta: "Consulta de revisão",
-                              data: "20/12/2025",
-                              horario: "14:00",
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+
+Column(
+  children: [
+    // Dashboard do utilizador
+    Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: _cardDashboard(
+        nome: nome.isNotEmpty ? nome : "Carregando...",
+        nUtente: nUtente.isNotEmpty ? nUtente : "-",
+        clinica: "Clinimolelos",
+      ),
+    ),
+    const SizedBox(height: 18),
+
+    // Botões
+    const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16),
+      child: Botoes(),
+    ),
+    const SizedBox(height: 18),
+
+    // Consultas marcadas
+    Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Color(0xFF907041),
+            Color(0xFF97774D),
+            Color(0xFFA68A69),
+          ],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  "Consultas marcadas",
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: const Text(
+                    "2",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            _cardConsulta(
+              tipoConsulta: "Consulta de rotina",
+              data: "16/12/2025",
+              horario: "10:30",
+            ),
+            _cardConsulta(
+              tipoConsulta: "Consulta de revisão",
+              data: "20/12/2025",
+              horario: "14:00",
+            ),
+          ],
+        ),
+      ),
+    ),
+  ],
+),
+
               ],
             ),
           ),
@@ -217,80 +161,92 @@ class _InicioState extends State<Inicio> {
           const Definicoes(title: 'Definições'),
         ],
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: currentPageIndex,
-        indicatorColor: Colors.transparent,
-        onDestinationSelected: (index) {
-          setState(() => currentPageIndex = index);
-          switch (index) {
-            case 0:
-              context.go('/inicio');
-              break;
-            case 1:
-              context.go('/calendario');
-              break;
-            case 2:
-              context.go('/notificacoes');
-              break;
-            case 3:
-              context.go('/definicoes');
-              break;
-          }
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Início',
+      bottomNavigationBar: _buildBottomNavigation(context),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(30),
+      child: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFF907041),
+                Color(0xFF97774D),
+                Color(0xFFA68A69),
+              ],
+            ),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.calendar_month_outlined),
-            selectedIcon: Icon(Icons.calendar_month),
-            label: 'Calendário',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.notifications_outlined),
-            selectedIcon: Icon(Icons.notifications),
-            label: 'Notificações',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings),
-            label: 'Definições',
-          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNavigation(BuildContext context) {
+    return NavigationBar(
+      selectedIndex: currentPageIndex,
+      indicatorColor: Colors.transparent,
+      onDestinationSelected: (index) {
+        setState(() => currentPageIndex = index);
+        switch (index) {
+          case 0:
+            context.go('/inicio');
+            break;
+          case 1:
+            context.go('/calendario');
+            break;
+          case 2:
+            context.go('/notificacoes');
+            break;
+          case 3:
+            context.go('/definicoes');
+            break;
+        }
+      },
+      destinations: const [
+        NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Início'),
+        NavigationDestination(icon: Icon(Icons.calendar_month_outlined), selectedIcon: Icon(Icons.calendar_month), label: 'Calendário'),
+        NavigationDestination(icon: Icon(Icons.notifications_outlined), selectedIcon: Icon(Icons.notifications), label: 'Notificações'),
+        NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: 'Definições'),
+      ],
+    );
+  }
+}
+
+
+                Widget _cardDashboard({
+    required String nome,
+    required String nUtente,
+    required String clinica,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(4),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(nome, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 6),
+          Text('Nº Utente $nUtente', style: const TextStyle(fontSize: 12)),
+          const SizedBox(height: 6),
+          const Text('Clínica Dentária', style: TextStyle(fontSize: 12)),
+          Text(clinica, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
         ],
       ),
     );
   }
 
-Widget _cardDashboard({
-  required String nome,
-  required String nUtente,
-  required String clinica,
-}) {
-  return Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(4),
-      boxShadow: const [
-        BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4)),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(nome, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 6),
-        Text('Nº Utente $nUtente', style: const TextStyle(fontSize: 12)),
-        const SizedBox(height: 6),
-        const Text('Clínica Dentária', style: TextStyle(fontSize: 12)),
-        Text(clinica, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-      ],
-    ),
-  );
-}
 
 
 Widget _cardConsulta({
@@ -346,7 +302,7 @@ Widget _cardConsulta({
   );
 }
 
-}
+
 
 // -------------------- BOTOES --------------------
 class Botoes extends StatelessWidget {
