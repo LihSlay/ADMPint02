@@ -94,16 +94,20 @@ class _InicioState extends State<Inicio> {
                               shape: BoxShape.circle,
                             ),
                             alignment: Alignment.center,
-                            child: Text(
-                              alcunhas.isNotEmpty
-                                  ? alcunhas
-                                  : "", 
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+child: alcunhas.isNotEmpty
+    ? Text(
+        alcunhas,
+        style: const TextStyle(
+          fontSize: 12,
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+        ),
+      )
+    : const Icon(
+        Icons.person, 
+        size: 16,
+        color: Colors.black,
+      ),
                           ),
                         );
                       },
