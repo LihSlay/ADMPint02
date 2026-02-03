@@ -326,36 +326,57 @@ Future<void> fetchAndSaveMeuPerfil(int idPerfis, String? token) async {
     }
   }
 
-  // BUSCA CONSULTAS: Offline-First
-  Future<List<Consulta>> getConsultas() async {
-    final db = await _dbHelper.database;
+ // BUSCA CONSULTAS: Offline-First
+Future<List<Consulta>> getConsultas() async {
+  final db = await _dbHelper.database;
 
-    if (await hasInternet()) {
-      try {
-        final response = await http.get(Uri.parse('$baseUrl/consultas'));
+  debugPrint("A verificar ligação à Internet...");
+  if (await hasInternet()) {
+    debugPrint("Internet disponível, a tentar buscar consultas da API...");
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/consultas'));
+      debugPrint("Status code da API: ${response.statusCode}");
 
-        if (response.statusCode == 200) {
-          List<dynamic> data = json.decode(response.body);
-          List<Consulta> consultas = data
-              .map((json) => Consulta.fromMap(json))
-              .toList();
+      if (response.statusCode == 200) {
+        List<dynamic> data = json.decode(response.body);
+        debugPrint("Dados recebidos da API: $data");
 
-          // Sincronização
-          await db.delete('consultas');
-          for (var consulta in consultas) {
-            await db.insert('consultas', consulta.toMap());
-          }
-          return consultas;
+        List<Consulta> consultas = data
+            .map((json) {
+              final c = Consulta.fromMap(json);
+              debugPrint("Consulta parseada: ${c.toMap()}");
+              return c;
+            })
+            .toList();
+
+        // Sincronização local
+        await db.delete('consultas');
+        debugPrint("Base de dados local limpa.");
+
+        for (var consulta in consultas) {
+          await db.insert('consultas', consulta.toMap());
+          debugPrint("Consulta inserida na base local: ${consulta.toMap()}");
         }
-      } catch (e) {
-        debugPrint("Erro API: $e");
-      }
-    }
 
-    // Fallback Local
-    final List<Map<String, dynamic>> maps = await db.query('consultas');
-    return maps.map((m) => Consulta.fromMap(m)).toList();
+        debugPrint("Total de consultas retornadas da API: ${consultas.length}");
+        return consultas;
+      } else {
+        debugPrint("Erro na API: status code diferente de 200");
+      }
+    } catch (e) {
+      debugPrint("Erro ao buscar consultas da API: $e");
+    }
+  } else {
+    debugPrint("Sem Internet, a usar fallback local...");
   }
+
+  // Fallback Local
+  final List<Map<String, dynamic>> maps = await db.query('consultas');
+  debugPrint("Consultas carregadas da base local: $maps");
+  final localConsultas = maps.map((m) => Consulta.fromMap(m)).toList();
+  debugPrint("Total de consultas retornadas do local: ${localConsultas.length}");
+  return localConsultas;
+}
 
   Future<bool> verificarConsentimento(int idPerfis) async {
     // 1. Verificar primeiro localmente (mais rápido e seguro)

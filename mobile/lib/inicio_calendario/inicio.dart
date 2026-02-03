@@ -5,6 +5,8 @@ import 'package:mobile/dadospessoais_notificacoes_perfil/notificacoes.dart';
 import 'package:mobile/definicoes_sobreconsultas/definicoes.dart';
 import 'package:mobile/database/database_helper.dart';
 import 'package:mobile/models/perfil_model.dart';
+import 'package:mobile/models/consulta_model.dart';
+import 'package:mobile/services/api_service.dart';
 
 class Inicio extends StatefulWidget {
   const Inicio({super.key});
@@ -20,11 +22,13 @@ class _InicioState extends State<Inicio> {
   String alcunhas = "";
 
   final DatabaseHelper _dbHelper = DatabaseHelper();
+  List<Consulta> consultas = []; // Lista de consultas
 
   @override
   void initState() {
     super.initState();
     _carregarPerfil();
+    _carregarConsultas(); // Carregar consultas
   }
 
   Future<void> _carregarPerfil() async {
@@ -44,6 +48,22 @@ class _InicioState extends State<Inicio> {
       }
     } catch (e) {
       debugPrint("Erro ao carregar perfil: $e");
+    }
+  }
+
+  Future<void> _carregarConsultas() async {
+    try {
+      debugPrint("A carregar consultas...");
+      List<Consulta> list = await ApiService().getConsultas();
+      debugPrint("Consultas recebidas: ${list.length}");
+      for (var c in list) {
+        debugPrint("Consulta: ${c.toMap()}");
+      }
+      setState(() {
+        consultas = list;
+      });
+    } catch (e) {
+      debugPrint("Erro ao carregar consultas: $e");
     }
   }
 
@@ -94,20 +114,20 @@ class _InicioState extends State<Inicio> {
                               shape: BoxShape.circle,
                             ),
                             alignment: Alignment.center,
-child: alcunhas.isNotEmpty
-    ? Text(
-        alcunhas,
-        style: const TextStyle(
-          fontSize: 12,
-          color: Colors.black,
-          fontWeight: FontWeight.bold,
-        ),
-      )
-    : const Icon(
-        Icons.person, 
-        size: 16,
-        color: Colors.black,
-      ),
+                            child: alcunhas.isNotEmpty
+                                ? Text(
+                                    alcunhas,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.person,
+                                    size: 16,
+                                    color: Colors.black,
+                                  ),
                           ),
                         );
                       },
@@ -186,13 +206,11 @@ child: alcunhas.isNotEmpty
                     ),
                   ),
                   const SizedBox(height: 18),
-
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16),
                     child: Botoes(),
                   ),
                   const SizedBox(height: 18),
-
                   // Consultas ocupam o resto do espaço
                   Expanded(
                     child: Container(
@@ -213,7 +231,7 @@ child: alcunhas.isNotEmpty
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Título fixo, não scrolla
+                            // Cabeçalho com título e número de consultas
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -234,9 +252,9 @@ child: alcunhas.isNotEmpty
                                     color: Colors.white24,
                                     borderRadius: BorderRadius.circular(24),
                                   ),
-                                  child: const Text(
-                                    "2",
-                                    style: TextStyle(
+                                  child: Text(
+                                    "${consultas.length}", // Mostra o número real de consultas
+                                    style: const TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
@@ -246,23 +264,23 @@ child: alcunhas.isNotEmpty
                               ],
                             ),
                             const SizedBox(height: 10),
-
                             // Lista das consultas scrollável
                             Expanded(
-                              child: ListView(
+                              child: ListView.builder(
                                 padding: EdgeInsets.zero,
-                                children: [
-                                  _cardConsulta(
-                                    tipoConsulta: "Consulta de rotina",
-                                    data: "16/12/2025",
-                                    horario: "10:30",
-                                  ),
-                                  _cardConsulta(
-                                    tipoConsulta: "Consulta de revisão",
-                                    data: "20/12/2025",
-                                    horario: "14:00",
-                                  ),
-                                ],
+                                itemCount: consultas.length,
+                                itemBuilder: (context, index) {
+                                  final c = consultas[index];
+                                  return _cardConsulta(
+                                    tipoConsulta:
+                                        c.especialidadeNome ??
+                                        c.medicoNome ??
+                                        "Consulta",
+                                    data: c.dataConsulta ?? "2025-01-01",
+                                    horario:
+                                        "${c.horarioInicio ?? "--:--"} - ${c.horarioFim ?? "--:--"}",
+                                  );
+                                },
                               ),
                             ),
                           ],
@@ -276,24 +294,19 @@ child: alcunhas.isNotEmpty
           ),
           const Calendario(title: ''),
           const NotificacoesDados(title: ''),
-          const Definicoes(title: 'Definições'),
+          const Definicoes(title: ''),
         ],
       ),
 
-      bottomNavigationBar: _buildBottomNavigation(context),
-    );
-  }
 
-  Widget _buildBottomNavigation(BuildContext context) {
-    return Container(
-      color: Colors.white, // Fundo branco
-      child: NavigationBar(
-        backgroundColor:
-            Colors.white, // Garantir fundo branco também na NavigationBar
+      bottomNavigationBar: NavigationBar(
         selectedIndex: currentPageIndex,
         indicatorColor: Colors.transparent,
+        backgroundColor: Colors.white,
         onDestinationSelected: (index) {
-          setState(() => currentPageIndex = index);
+          setState(() {
+            currentPageIndex = index;
+          });
           switch (index) {
             case 0:
               context.go('/inicio');
@@ -333,8 +346,12 @@ child: alcunhas.isNotEmpty
         ],
       ),
     );
+  }    
   }
-}
+
+
+
+//// -------------------- card dashboard --------------------
 
 Widget _cardDashboard({
   required String nome,
@@ -371,6 +388,8 @@ Widget _cardDashboard({
   );
 }
 
+
+//// -------------------- card consulta --------------------
 Widget _cardConsulta({
   required String tipoConsulta,
   required String data,

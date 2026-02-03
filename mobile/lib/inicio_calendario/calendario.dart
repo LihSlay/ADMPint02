@@ -157,6 +157,7 @@ class _CalendarioState extends State<Calendario> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentPageIndex,
         indicatorColor: Colors.transparent,
+        backgroundColor: Colors.white,
         onDestinationSelected: (index) {
           setState(() {
             currentPageIndex = index;
