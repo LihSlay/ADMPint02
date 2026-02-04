@@ -41,20 +41,65 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detalhes das Consultas'),
-        backgroundColor: Colors.blue,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF907041), Color(0xFF97774D), Color(0xFFA68A69)],
+            ),
+          ),
+        ),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : consultas.isEmpty
-              ? const Center(child: Text('Nenhuma consulta encontrada'))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16.0),
-                  itemCount: consultas.length,
-                  itemBuilder: (context, index) {
-                    final consulta = consultas[index];
-                    return _buildConsultaDetailCard(consulta);
-                  },
-                ),
+          ? const Center(child: Text('Nenhuma consulta encontrada'))
+          : Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildConsultaDetailCard(consultas.first),
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  const SizedBox(height: 12),
+                  _buildAviso(),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _buildAviso() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.brown.shade300),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info_outline, color: Colors.black54),
+          const SizedBox(width: 8),
+          Expanded(
+            child: RichText(
+              text: const TextSpan(
+                style: TextStyle(color: Colors.black87, fontSize: 13),
+                children: [
+                  TextSpan(
+                    text:
+                        'Para desmarcar uma consulta é necessário contactar a clínica via contacto telefónico. ',
+                  ),
+                  TextSpan(
+                    text: '232 823 220',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -75,8 +120,18 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
     final mesNumero = dataParsed.month;
     final ano = dataParsed.year.toString();
     const meses = [
-      'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
-      'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
+      'Jan',
+      'Fev',
+      'Mar',
+      'Abr',
+      'Mai',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Set',
+      'Out',
+      'Nov',
+      'Dez',
     ];
     final mesTexto = meses[mesNumero - 1];
     final dataFormatada = '$dia $mesTexto $ano';
@@ -91,7 +146,9 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
         return '--:--';
       }
     }
-    final horarioFormatado = '${formatarHora(consulta.horarioInicio)} - ${formatarHora(consulta.horarioFim)}';
+
+    final horarioFormatado =
+        '${formatarHora(consulta.horarioInicio)} - ${formatarHora(consulta.horarioFim)}';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16.0),
@@ -105,10 +162,10 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
+            _buildDetailRow('Tipo de Consulta', consulta.especialidadeNome ?? 'Não informado'),
+            _buildDetailRow('Médico', consulta.medicoNome ?? 'Não informado'),
             _buildDetailRow('Data', dataFormatada),
             _buildDetailRow('Horário', horarioFormatado),
-            _buildDetailRow('Médico', consulta.medicoNome ?? 'Não informado'),
-            _buildDetailRow('Especialidade', consulta.especialidadeNome ?? 'Não informado'),
             _buildDetailRow('Estado', consulta.estado ?? 'Não informado'),
             const SizedBox(height: 16),
             const Text(
@@ -136,12 +193,7 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
             '$label: ',
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 14),
-            ),
-          ),
+          Expanded(child: Text(value, style: const TextStyle(fontSize: 14))),
         ],
       ),
     );
