@@ -20,13 +20,20 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
   }
 
   Future<void> _loadConsultas() async {
-    final dbHelper = DatabaseHelper();
-    final db = await dbHelper.database;
-    final maps = await db.query('consultas');
-    setState(() {
-      consultas = maps.map((m) => Consulta.fromMap(m)).toList();
-      _loading = false;
-    });
+    try {
+      final dbHelper = DatabaseHelper();
+      final db = await dbHelper.database;
+      final maps = await db.query('consultas');
+      setState(() {
+        consultas = maps.map((m) => Consulta.fromMap(m)).toList();
+        _loading = false;
+      });
+    } catch (e) {
+      debugPrint('Erro ao carregar consultas: $e');
+      setState(() {
+        _loading = false;
+      });
+    }
   }
 
   @override
@@ -55,7 +62,12 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
     // Formatar data
     DateTime dataParsed;
     try {
-      dataParsed = DateTime.parse(consulta.dataConsulta ?? '');
+      final dataStr = consulta.dataConsulta;
+      if (dataStr != null && dataStr.isNotEmpty) {
+        dataParsed = DateTime.parse(dataStr);
+      } else {
+        dataParsed = DateTime.now();
+      }
     } catch (_) {
       dataParsed = DateTime.now();
     }
