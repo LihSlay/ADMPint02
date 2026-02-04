@@ -141,7 +141,7 @@ Future<void> fetchAndSaveMeuPerfil(int idPerfis, String? token) async {
         idSubsistemasSaude: pacienteData['id_subsistemas_saude'] ?? 0,
         idParentesco: pacienteData['id_parentesco'] ?? 0,
         alcunhas: pacienteData['alcunhas'] ?? '',
-        ativo: pacienteData['ativo'] ?? 1,
+        ativo: (pacienteData['ativo'] == true || pacienteData['ativo'] == 1) ? 1 : 0, 
       );
 
       debugPrint("Perfil construído: ${perfil.toMap()}");
