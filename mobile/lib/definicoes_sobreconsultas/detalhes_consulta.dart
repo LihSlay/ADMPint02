@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/database/database_helper.dart';
 import 'package:mobile/models/consulta_model.dart';
+import 'package:go_router/go_router.dart';
 
 class DetalhesConsulta extends StatefulWidget {
   const DetalhesConsulta({super.key});
@@ -40,6 +41,10 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => context.go('/inicio'),
+        ),
         title: const Text('Detalhes das Consultas'),
         flexibleSpace: Container(
           decoration: const BoxDecoration(
@@ -59,9 +64,7 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildConsultaDetailCard(consultas.first),
-                  const SizedBox(height: 16),
-                  const Divider(),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 20),
                   _buildAviso(),
                 ],
               ),
@@ -70,12 +73,8 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
   }
 
   Widget _buildAviso() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.brown.shade300),
-        borderRadius: BorderRadius.circular(8),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -162,7 +161,10 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            _buildDetailRow('Tipo de Consulta', consulta.especialidadeNome ?? 'Não informado'),
+            _buildDetailRow(
+              'Tipo de Consulta',
+              consulta.especialidadeNome ?? 'Não informado',
+            ),
             _buildDetailRow('Médico', consulta.medicoNome ?? 'Não informado'),
             _buildDetailRow('Data', dataFormatada),
             _buildDetailRow('Horário', horarioFormatado),
