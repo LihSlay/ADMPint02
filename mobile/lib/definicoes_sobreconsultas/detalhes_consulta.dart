@@ -1,0 +1,137 @@
+import 'package:flutter/material.dart';
+import 'package:mobile/database/database_helper.dart';
+import 'package:mobile/models/consulta_model.dart';
+
+class DetalhesConsulta extends StatefulWidget {
+  const DetalhesConsulta({super.key});
+
+  @override
+  State<DetalhesConsulta> createState() => _DetalhesConsultaState();
+}
+
+class _DetalhesConsultaState extends State<DetalhesConsulta> {
+  List<Consulta> consultas = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadConsultas();
+  }
+
+  Future<void> _loadConsultas() async {
+    final dbHelper = DatabaseHelper();
+    final db = await dbHelper.database;
+    final maps = await db.query('consultas');
+    setState(() {
+      consultas = maps.map((m) => Consulta.fromMap(m)).toList();
+      _loading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Detalhes das Consultas'),
+        backgroundColor: Colors.blue,
+      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : consultas.isEmpty
+              ? const Center(child: Text('Nenhuma consulta encontrada'))
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16.0),
+                  itemCount: consultas.length,
+                  itemBuilder: (context, index) {
+                    final consulta = consultas[index];
+                    return _buildConsultaDetailCard(consulta);
+                  },
+                ),
+    );
+  }
+
+  Widget _buildConsultaDetailCard(Consulta consulta) {
+    // Formatar data
+    DateTime dataParsed;
+    try {
+      dataParsed = DateTime.parse(consulta.dataConsulta ?? '');
+    } catch (_) {
+      dataParsed = DateTime.now();
+    }
+    final dia = dataParsed.day.toString().padLeft(2, '0');
+    final mesNumero = dataParsed.month;
+    final ano = dataParsed.year.toString();
+    const meses = [
+      'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
+      'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
+    ];
+    final mesTexto = meses[mesNumero - 1];
+    final dataFormatada = '$dia $mesTexto $ano';
+
+    // Formatar horário
+    String formatarHora(String? hora) {
+      if (hora == null || hora.isEmpty) return '--:--';
+      try {
+        final partes = hora.split(':');
+        return '${partes[0].padLeft(2, '0')}:${partes[1].padLeft(2, '0')}';
+      } catch (_) {
+        return '--:--';
+      }
+    }
+    final horarioFormatado = '${formatarHora(consulta.horarioInicio)} - ${formatarHora(consulta.horarioFim)}';
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16.0),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Consulta',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            _buildDetailRow('Data', dataFormatada),
+            _buildDetailRow('Horário', horarioFormatado),
+            _buildDetailRow('Médico', consulta.medicoNome ?? 'Não informado'),
+            _buildDetailRow('Especialidade', consulta.especialidadeNome ?? 'Não informado'),
+            _buildDetailRow('Estado', consulta.estado ?? 'Não informado'),
+            const SizedBox(height: 16),
+            const Text(
+              'Observações',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              consulta.observacoes ?? 'Sem observações',
+              style: const TextStyle(fontSize: 14),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$label: ',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
