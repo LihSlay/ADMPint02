@@ -16,20 +16,23 @@ class Inicio extends StatefulWidget {
 }
 
 class _InicioState extends State<Inicio> {
-  int currentPageIndex = 0;
+  int currentPageIndex = 0; // Guarda página atual no navbar
   String nome = "";
   String nUtente = "";
   String alcunhas = "";
 
-  final DatabaseHelper _dbHelper = DatabaseHelper();
-  List<Consulta> consultas = []; // Lista de consultas
+  final DatabaseHelper _dbHelper = DatabaseHelper(); // Acesso à bd local
+  List<Consulta> consultas = [];
+  bool _aCarregar = true; // Roda enquanto se espera
 
   @override
   void initState() {
     super.initState();
     _carregarPerfil();
-    _carregarConsultas(); // Carregar consultas
+    _carregarConsultas();
   }
+
+  // ================= CARREGAR DADOS PERFIL PACIENTE =================
 
   Future<void> _carregarPerfil() async {
     try {
@@ -37,9 +40,9 @@ class _InicioState extends State<Inicio> {
       final perfis = await db.query(
         'perfis',
         limit: 1,
-      ); // Pega o perfil do utilizador logado
+      ); // Usa o perfil do utilizador logado
       if (perfis.isNotEmpty) {
-        Perfil perfil = Perfil.fromMap(perfis.first);
+        Perfil perfil = Perfil.fromMap(perfis.first); // Converte o primeiro elemento do map para objeto
         setState(() {
           nome = perfil.nome ?? "";
           nUtente = perfil.nUtente?.toString() ?? "";
@@ -51,19 +54,20 @@ class _InicioState extends State<Inicio> {
     }
   }
 
+  // ================= CARREGAR CONSULTAS PACIENTE  =================
   Future<void> _carregarConsultas() async {
+    setState(() => _aCarregar = true);
     try {
       debugPrint("A carregar consultas...");
-      List<Consulta> list = await ApiService().getConsultas();
+      List<Consulta> list = await ApiService().getConsultas(); // Chama a api para obter as consultas
       debugPrint("Consultas recebidas: ${list.length}");
-      for (var c in list) {
-        debugPrint("Consulta: ${c.toMap()}");
-      }
-      setState(() {
+      setState(() { // Atualiza e mostra as consultas que obteve
         consultas = list;
       });
     } catch (e) {
       debugPrint("Erro ao carregar consultas: $e");
+    } finally {
+      setState(() => _aCarregar = false);
     }
   }
 
@@ -90,6 +94,7 @@ class _InicioState extends State<Inicio> {
                   ),
                 ),
                 actions: [
+                  // ================= MENU POP-UP =================
                   Padding(
                     padding: const EdgeInsets.only(right: 10, bottom: 5),
                     child: MenuAnchor(
@@ -97,7 +102,7 @@ class _InicioState extends State<Inicio> {
                         backgroundColor: MaterialStateProperty.all(
                           Colors.white,
                         ), // fundo branco
-                        elevation: MaterialStateProperty.all(4), // sombra suave
+                        elevation: MaterialStateProperty.all(4),
                       ),
                       builder: (context, controller, child) {
                         return GestureDetector(
@@ -195,6 +200,7 @@ class _InicioState extends State<Inicio> {
                   ),
                 ),
               ),
+              // ================= DASHBOARD PACIENTE  =================
               Column(
                 children: [
                   Padding(
@@ -208,10 +214,10 @@ class _InicioState extends State<Inicio> {
                   const SizedBox(height: 18),
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16),
+                      // ================= BOTÕES =================
                     child: Botoes(),
                   ),
                   const SizedBox(height: 18),
-                  // Consultas ocupam o resto do espaço
                   Expanded(
                     child: Container(
                       width: double.infinity,
@@ -226,6 +232,8 @@ class _InicioState extends State<Inicio> {
                           end: Alignment.centerRight,
                         ),
                       ),
+
+                      // ================= CONSULTAS =================
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Column(
@@ -253,7 +261,7 @@ class _InicioState extends State<Inicio> {
                                     borderRadius: BorderRadius.circular(24),
                                   ),
                                   child: Text(
-                                    "${consultas.length}", // Mostra o número real de consultas
+                                    "${consultas.length}",
                                     style: const TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.bold,
@@ -264,24 +272,32 @@ class _InicioState extends State<Inicio> {
                               ],
                             ),
                             const SizedBox(height: 10),
-                            // Lista das consultas scrollável
+                            // Lista das consultas
                             Expanded(
-                              child: ListView.builder(
-                                padding: EdgeInsets.zero,
-                                itemCount: consultas.length,
-                                itemBuilder: (context, index) {
-                                  final c = consultas[index];
-                                  return _cardConsulta(
-                                    tipoConsulta:
-                                        c.especialidadeNome ??
-                                        c.medicoNome ??
-                                        "Consulta",
-                                    data: c.dataConsulta ?? "2025-01-01",
-                                    horario:
-                                        "${c.horarioInicio ?? "--:--"} - ${c.horarioFim ?? "--:--"}",
-                                  );
-                                },
-                              ),
+                              child: _aCarregar
+                                  ? const Center(
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : consultas.isEmpty 
+                                  ? const _SemConsultas() // se não tiver consulta mostra isto
+                                  : ListView.builder(
+                                      padding: EdgeInsets.zero,
+                                      itemCount: consultas.length,
+                                      itemBuilder: (context, index) {
+                                        final c = consultas[index];
+                                        return _cardConsulta(
+                                          tipoConsulta:
+                                              c.especialidadeNome ??
+                                              c.medicoNome ??
+                                              "Consulta",
+                                          data: c.dataConsulta ?? "2025-01-01",
+                                          horario:
+                                              "${c.horarioInicio ?? "--:--"} - ${c.horarioFim ?? "--:--"}",
+                                        );
+                                      },
+                                    ),
                             ),
                           ],
                         ),
@@ -298,7 +314,7 @@ class _InicioState extends State<Inicio> {
         ],
       ),
 
-
+      // ================= BARRA NAVEGAÇÃO (botnavbar) =================
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentPageIndex,
         indicatorColor: Colors.transparent,
@@ -346,13 +362,12 @@ class _InicioState extends State<Inicio> {
         ],
       ),
     );
-  }    
   }
+}
 
+// ================= WIDGETS  =================
 
-
-//// -------------------- card dashboard --------------------
-
+// Card dashboard
 Widget _cardDashboard({
   required String nome,
   required String nUtente,
@@ -388,18 +403,24 @@ Widget _cardDashboard({
   );
 }
 
-
-//// -------------------- card consulta --------------------
+// Card consulta
 Widget _cardConsulta({
   required String tipoConsulta,
   required String data,
   required String horario,
 }) {
-  final partesData = data.split('/'); // [dd, MM, yyyy]
-  final dia = partesData[0];
-  final mesNumero = int.parse(partesData[1]);
-  final ano = partesData[2];
+  DateTime dataParsed;
 
+  try {
+    dataParsed = DateTime.parse(data); // Converte string para DateTime
+  } catch (_) {
+    dataParsed = DateTime.now(); // Fallback de segurança
+  }
+
+  final dia = dataParsed.day.toString().padLeft(2, '0');
+  final mesNumero = dataParsed.month;
+  final ano = dataParsed.year.toString();
+// Para aparecer as 3 iniciais do mês em vez do número
   const meses = [
     'Jan',
     'Fev',
@@ -416,15 +437,30 @@ Widget _cardConsulta({
   ];
   final mesTexto = meses[mesNumero - 1];
 
+  // Deixar hora formato hh:mm em vez de hh:mm:ss
+  String formatarHora(String hora) {
+    try {
+      final partes = hora.split(':');
+      final h = partes[0].padLeft(2, '0');
+      final m = partes[1].padLeft(2, '0');
+      return '$h:$m';
+    } catch (_) {
+      return '--:--';
+    }
+  }
+
+  String horarioFormatado = horario;
+
+  if (horario.contains('-')) {
+    final partes = horario.split('-');
+    final inicio = formatarHora(partes[0].trim());
+    final fim = formatarHora(partes[1].trim());
+    horarioFormatado = '$inicio - $fim';
+  }
   return Container(
     constraints: const BoxConstraints(minHeight: 70),
     margin: const EdgeInsets.only(bottom: 10),
-    padding: const EdgeInsets.fromLTRB(
-      20,
-      10,
-      10,
-      10,
-    ), // mais espaço à esquerda
+    padding: const EdgeInsets.fromLTRB(20, 10, 10, 10),
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(8),
       color: Colors.white,
@@ -458,7 +494,7 @@ Widget _cardConsulta({
               const SizedBox(height: 2),
               Text(tipoConsulta, style: const TextStyle(fontSize: 12)),
               const SizedBox(height: 2),
-              Text(horario, style: const TextStyle(fontSize: 12)),
+              Text(horarioFormatado, style: const TextStyle(fontSize: 12)),
             ],
           ),
         ),
@@ -467,7 +503,33 @@ Widget _cardConsulta({
   );
 }
 
-// -------------------- BOTOES --------------------
+// Sem Consultas
+class _SemConsultas extends StatelessWidget {
+  const _SemConsultas();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          Icon(Icons.event_busy, size: 60, color: Colors.white),
+          SizedBox(height: 12),
+          Text(
+            'Não tem consultas marcadas.',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Botões
 class Botoes extends StatelessWidget {
   const Botoes({super.key});
 

@@ -334,60 +334,98 @@ Future<List<Consulta>> getConsultas() async {
   if (await hasInternet()) {
     debugPrint("Internet disponível, a tentar buscar consultas da API...");
     try {
-      final response = await http.get(Uri.parse('$baseUrl/consultas'));
+      // 🔐 obter token guardado
+      final user = await db.query('utilizadores', limit: 1);
+      final token = user.isNotEmpty ? user.first['token'] as String? : null;
+
+      if (token == null) {
+        throw Exception("Token inexistente");
+      }
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/consultas/paciente'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
       debugPrint("Status code da API: ${response.statusCode}");
+      debugPrint("Body: ${response.body}");
 
       if (response.statusCode == 200) {
-        List<dynamic> data = json.decode(response.body);
-        debugPrint("Dados recebidos da API: $data");
+        final decoded = json.decode(response.body);
 
-        List<Consulta> consultas = data
-            .map((json) {
-              final c = Consulta.fromMap(json);
-              debugPrint("Consulta parseada: ${c.toMap()}");
-              return c;
-            })
-            .toList();
+        // 🔑 vem dentro de "consultas"
+        final List<dynamic> lista = decoded['consultas'];
 
-        // Sincronização local
+        final consultas = lista.map((json) {
+          return Consulta.fromMap({
+            'id_consultas': json['id_consultas'],
+            'data_consulta': json['data_consulta'],
+            'horario_inicio': json['horario_inicio'],
+            'horario_fim': json['horario_fim'],
+            'estado': json['estado'],
+            'id_perfis': json['id_perfis'],
+            'id_medicos': json['id_medicos'],
+            'id_tipo_consultas': json['id_tipo_consultas'],
+
+            // 👇 dados vindos dos includes
+            'medico_nome': json['Medico']?['nome_med'],
+            'especialidade_nome':
+                json['TipoConsulta']?['designacao'],
+          });
+        }).toList();
+
+        // ===============================
+        // ✅ FILTRO: só hoje e futuras
+        // ===============================
+        final hoje = DateTime.now();
+        final hojeSemHoras = DateTime(
+          hoje.year,
+          hoje.month,
+          hoje.day,
+        );
+
+        final consultasFuturas = consultas.where((c) {
+          if (c.dataConsulta == null) return false;
+
+          try {
+            final dataConsulta = DateTime.parse(c.dataConsulta!);
+            final dataSemHoras = DateTime(
+              dataConsulta.year,
+              dataConsulta.month,
+              dataConsulta.day,
+            );
+
+            // mantém hoje e futuro
+            return !dataSemHoras.isBefore(hojeSemHoras);
+          } catch (_) {
+            return false;
+          }
+        }).toList();
+
+        // 💾 sincronizar local (já filtradas)
         await db.delete('consultas');
-        debugPrint("Base de dados local limpa.");
-
-        for (var consulta in consultas) {
-          await db.insert('consultas', consulta.toMap());
-          debugPrint("Consulta inserida na base local: ${consulta.toMap()}");
+        for (var c in consultasFuturas) {
+          await db.insert('consultas', c.toMap());
         }
 
-        debugPrint("Total de consultas retornadas da API: ${consultas.length}");
-        return consultas;
-      } else {
-        debugPrint("Erro na API: status code diferente de 200");
+        return consultasFuturas;
       }
     } catch (e) {
       debugPrint("Erro ao buscar consultas da API: $e");
     }
-  } else {
-    debugPrint("Sem Internet, a usar fallback local...");
   }
 
-  // Fallback Local
-  final List<Map<String, dynamic>> maps = await db.query('consultas');
-  debugPrint("Consultas carregadas da base local: $maps");
-  final localConsultas = maps.map((m) => Consulta.fromMap(m)).toList();
-  debugPrint("Total de consultas retornadas do local: ${localConsultas.length}");
-  return localConsultas;
+  // ===============================
+  // 📦 Fallback offline
+  // ===============================
+  debugPrint("Sem Internet ou erro → usar base local");
+  final maps = await db.query('consultas');
+  return maps.map((m) => Consulta.fromMap(m)).toList();
 }
 
-  Future<bool> verificarConsentimento(int idPerfis) async {
-    // 1. Verificar primeiro localmente (mais rápido e seguro)
-    bool assinadoLocal = await verificarConsentimentoLocal(idPerfis);
-    if (assinadoLocal) return true;
-
-    // Nota: Removida a chamada GET /consentimentos porque exige permissões de admin/gestor.
-    // O estado de consentimento deve vir preferencialmente no objeto Usuario durante o login.
-
-    return false;
-  }
 
   Future<void> atualizarConsentimento(int idPerfis) async {
     try {
