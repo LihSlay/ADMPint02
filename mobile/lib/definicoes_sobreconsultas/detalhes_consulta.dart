@@ -45,7 +45,10 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => context.go('/inicio'),
         ),
-        title: const Text('Detalhes das Consultas'),
+        title: const Text(
+          'Detalhes das Consultas',
+          style: TextStyle(color: Colors.white),
+        ),
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -149,38 +152,43 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
     final horarioFormatado =
         '${formatarHora(consulta.horarioInicio)} - ${formatarHora(consulta.horarioFim)}';
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 16.0),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Consulta',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            _buildDetailRow(
-              'Tipo de Consulta',
-              consulta.especialidadeNome ?? 'Não informado',
-            ),
-            _buildDetailRow('Médico', consulta.medicoNome ?? 'Não informado'),
-            _buildDetailRow('Data', dataFormatada),
-            _buildDetailRow('Horário', horarioFormatado),
-            _buildDetailRow('Estado', consulta.estado ?? 'Não informado'),
-            const SizedBox(height: 16),
-            const Text(
-              'Observações',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              consulta.observacoes ?? 'Sem observações',
-              style: const TextStyle(fontSize: 14),
-            ),
-          ],
+      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: Colors.brown.shade300, // cor do stroke
+          width: 1.2,
         ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Consulta',
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          _buildDetailRow(
+            'Tipo de Consulta',
+            consulta.especialidadeNome ?? 'Não informado',
+          ),
+          _buildDetailRow('Médico', consulta.medicoNome ?? 'Não informado'),
+          _buildDetailRow('Data', dataFormatada),
+          _buildDetailRow('Horário', horarioFormatado),
+          _buildDetailRow('Estado', consulta.estado ?? 'Não informado'),
+          const SizedBox(height: 16),
+          const Text(
+            'Observações',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            consulta.observacoes ?? 'Sem observações',
+            style: const TextStyle(fontSize: 14),
+          ),
+        ],
       ),
     );
   }
