@@ -79,7 +79,7 @@ final GoRouter rotas = GoRouter(
     GoRoute(
       path: '/',
       name: 'home',
-      builder: (context, state) => const Definicoes(title: 'Login'),
+      builder: (context, state) => const Inicio(),
     ),
     GoRoute(
       path: '/definicoes',
@@ -166,5 +166,11 @@ final GoRouter rotas = GoRouter(
       name: 'logininicio',
       builder: (context, state) => const LoginPage(),
     ),
+       /** GoRoute(
+      path: '/detalhes_consulta',
+      name: 'detealhes_consulta',
+      builder: (context, state) => const (), 
+    ),*/
   ],
 );
+  

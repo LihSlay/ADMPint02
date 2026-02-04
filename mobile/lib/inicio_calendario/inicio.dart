@@ -7,6 +7,7 @@ import 'package:mobile/database/database_helper.dart';
 import 'package:mobile/models/perfil_model.dart';
 import 'package:mobile/models/consulta_model.dart';
 import 'package:mobile/services/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Inicio extends StatefulWidget {
   const Inicio({super.key});
@@ -42,7 +43,9 @@ class _InicioState extends State<Inicio> {
         limit: 1,
       ); // Usa o perfil do utilizador logado
       if (perfis.isNotEmpty) {
-        Perfil perfil = Perfil.fromMap(perfis.first); // Converte o primeiro elemento do map para objeto
+        Perfil perfil = Perfil.fromMap(
+          perfis.first,
+        ); // Converte o primeiro elemento do map para objeto
         setState(() {
           nome = perfil.nome ?? "";
           nUtente = perfil.nUtente?.toString() ?? "";
@@ -59,9 +62,11 @@ class _InicioState extends State<Inicio> {
     setState(() => _aCarregar = true);
     try {
       debugPrint("A carregar consultas...");
-      List<Consulta> list = await ApiService().getConsultas(); // Chama a api para obter as consultas
+      List<Consulta> list = await ApiService()
+          .getConsultas(); // Chama a api para obter as consultas
       debugPrint("Consultas recebidas: ${list.length}");
-      setState(() { // Atualiza e mostra as consultas que obteve
+      setState(() {
+        // Atualiza e mostra as consultas que obteve
         consultas = list;
       });
     } catch (e) {
@@ -162,7 +167,15 @@ class _InicioState extends State<Inicio> {
                               ),
                             ),
                             MenuItemButton(
-                              onPressed: () => context.go('/terminar_sessao'),
+                              onPressed: () async {
+                                // Limpar token ou dados de sessão
+                                final prefs =
+                                    await SharedPreferences.getInstance();
+                                await prefs.remove('token'); // remove o token
+
+                                // Depois navega para a rota original
+                                context.go('/login');
+                              },
                               child: const Row(
                                 children: [
                                   Icon(Icons.logout, size: 20),
@@ -214,7 +227,7 @@ class _InicioState extends State<Inicio> {
                   const SizedBox(height: 18),
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16),
-                      // ================= BOTÕES =================
+                    // ================= BOTÕES =================
                     child: Botoes(),
                   ),
                   const SizedBox(height: 18),
@@ -280,7 +293,7 @@ class _InicioState extends State<Inicio> {
                                         color: Colors.white,
                                       ),
                                     )
-                                  : consultas.isEmpty 
+                                  : consultas.isEmpty
                                   ? const _SemConsultas() // se não tiver consulta mostra isto
                                   : ListView.builder(
                                       padding: EdgeInsets.zero,
@@ -288,6 +301,7 @@ class _InicioState extends State<Inicio> {
                                       itemBuilder: (context, index) {
                                         final c = consultas[index];
                                         return _cardConsulta(
+                                          context: context,
                                           tipoConsulta:
                                               c.especialidadeNome ??
                                               c.medicoNome ??
@@ -405,6 +419,7 @@ Widget _cardDashboard({
 
 // Card consulta
 Widget _cardConsulta({
+  required BuildContext context, // precisa do context para navegar
   required String tipoConsulta,
   required String data,
   required String horario,
@@ -412,15 +427,14 @@ Widget _cardConsulta({
   DateTime dataParsed;
 
   try {
-    dataParsed = DateTime.parse(data); // Converte string para DateTime
+    dataParsed = DateTime.parse(data);
   } catch (_) {
-    dataParsed = DateTime.now(); // Fallback de segurança
+    dataParsed = DateTime.now();
   }
 
   final dia = dataParsed.day.toString().padLeft(2, '0');
   final mesNumero = dataParsed.month;
   final ano = dataParsed.year.toString();
-// Para aparecer as 3 iniciais do mês em vez do número
   const meses = [
     'Jan',
     'Fev',
@@ -437,68 +451,69 @@ Widget _cardConsulta({
   ];
   final mesTexto = meses[mesNumero - 1];
 
-  // Deixar hora formato hh:mm em vez de hh:mm:ss
   String formatarHora(String hora) {
     try {
       final partes = hora.split(':');
-      final h = partes[0].padLeft(2, '0');
-      final m = partes[1].padLeft(2, '0');
-      return '$h:$m';
+      return '${partes[0].padLeft(2, '0')}:${partes[1].padLeft(2, '0')}';
     } catch (_) {
       return '--:--';
     }
   }
 
   String horarioFormatado = horario;
-
   if (horario.contains('-')) {
     final partes = horario.split('-');
-    final inicio = formatarHora(partes[0].trim());
-    final fim = formatarHora(partes[1].trim());
-    horarioFormatado = '$inicio - $fim';
+    horarioFormatado =
+        '${formatarHora(partes[0].trim())} - ${formatarHora(partes[1].trim())}';
   }
-  return Container(
-    constraints: const BoxConstraints(minHeight: 70),
-    margin: const EdgeInsets.only(bottom: 10),
-    padding: const EdgeInsets.fromLTRB(20, 10, 10, 10),
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(8),
-      color: Colors.white,
-    ),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(mesTexto, style: const TextStyle(fontSize: 12)),
-            Text(
-              dia,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Text(ano, style: const TextStyle(fontSize: 12)),
-          ],
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
+
+  return GestureDetector(
+    onTap: () {
+      context.go('/detalhes_consulta'); // aqui redireciona
+    },
+    child: Container(
+      constraints: const BoxConstraints(minHeight: 70),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(20, 10, 10, 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: Colors.white,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Text(mesTexto, style: const TextStyle(fontSize: 12)),
               Text(
-                'Consulta',
+                dia,
                 style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(tipoConsulta, style: const TextStyle(fontSize: 12)),
-              const SizedBox(height: 2),
-              Text(horarioFormatado, style: const TextStyle(fontSize: 12)),
+              Text(ano, style: const TextStyle(fontSize: 12)),
             ],
           ),
-        ),
-      ],
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Consulta',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 2),
+                Text(tipoConsulta, style: const TextStyle(fontSize: 12)),
+                const SizedBox(height: 2),
+                Text(horarioFormatado, style: const TextStyle(fontSize: 12)),
+              ],
+            ),
+          ),
+        ],
+      ),
     ),
   );
 }
