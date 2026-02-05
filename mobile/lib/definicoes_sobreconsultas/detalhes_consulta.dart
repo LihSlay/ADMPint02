@@ -63,7 +63,7 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
           ? const Center(child: CircularProgressIndicator())
           : consultas.isEmpty
           ? const Center(child: Text('Nenhuma consulta encontrada'))
-          : Padding(
+          : SingleChildScrollView( // Scroll automático se faltar espaço
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
