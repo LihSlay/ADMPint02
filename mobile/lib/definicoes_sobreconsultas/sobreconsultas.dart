@@ -253,6 +253,7 @@ class _SobreConsultasPageState extends State<SobreConsultasPage> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentPageIndex,
         indicatorColor: Colors.transparent,
+        backgroundColor: Colors.white, 
         onDestinationSelected: (index) {
           setState(() => currentPageIndex = index);
 

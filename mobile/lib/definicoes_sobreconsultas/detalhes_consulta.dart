@@ -11,6 +11,7 @@ class DetalhesConsulta extends StatefulWidget {
 }
 
 class _DetalhesConsultaState extends State<DetalhesConsulta> {
+  int currentPageIndex = 3; // Definições
   List<Consulta> consultas = [];
   bool _loading = true;
 
@@ -73,6 +74,51 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
                 ],
               ),
             ),
+            bottomNavigationBar: NavigationBar(
+        selectedIndex: currentPageIndex,
+        indicatorColor: Colors.transparent,
+        backgroundColor: Colors.white, 
+        onDestinationSelected: (index) {
+          setState(() => currentPageIndex = index);
+
+          switch (index) {
+            case 0:
+              context.go('/inicio');
+              break;
+            case 1:
+              context.go('/calendario');
+              break;
+            case 2:
+              context.go('/notificacoes');
+              break;
+            case 3:
+              context.go('/definicoes');
+              break;
+          }
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Início',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.calendar_month_outlined),
+            selectedIcon: Icon(Icons.calendar_month),
+            label: 'Calendário',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.notifications_outlined),
+            selectedIcon: Icon(Icons.notifications),
+            label: 'Notificações',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: 'Definições',
+          ),
+        ],
+      ),
     );
   }
 

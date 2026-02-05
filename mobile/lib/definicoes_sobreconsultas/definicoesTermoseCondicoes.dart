@@ -147,6 +147,7 @@ class _TermosCondicoesState extends State<TermosCondicoes> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentPageIndex,
         indicatorColor: Colors.transparent,
+        backgroundColor: Colors.white, 
         onDestinationSelected: (index) {
           setState(() => currentPageIndex = index);
 
