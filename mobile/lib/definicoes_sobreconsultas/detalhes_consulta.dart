@@ -152,16 +152,8 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
     final horarioFormatado =
         '${formatarHora(consulta.horarioInicio)} - ${formatarHora(consulta.horarioFim)}';
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16.0),
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.brown.shade300, // cor do stroke
-          width: 1.2,
-        ),
-        borderRadius: BorderRadius.circular(12),
-      ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -178,11 +170,6 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
           _buildDetailRow('Data', dataFormatada),
           _buildDetailRow('Horário', horarioFormatado),
           _buildDetailRow('Estado', consulta.estado ?? 'Não informado'),
-          const SizedBox(height: 16),
-          const Text(
-            'Observações',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
           const SizedBox(height: 8),
           Text(
             consulta.observacoes ?? 'Sem observações',
