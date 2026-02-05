@@ -19,7 +19,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'clinica_database.db');
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -52,6 +52,27 @@ class DatabaseHelper {
           data_atualizacao TEXT NOT NULL
         )
       ''');
+    }
+
+    if (oldVersion < 4) {
+      await db.execute('''
+    CREATE TABLE IF NOT EXISTS tipo_documentos(
+      id_tipo_documentos INTEGER PRIMARY KEY AUTOINCREMENT,
+      designacao TEXT
+    )
+  ''');
+
+      await db.execute('''
+    CREATE TABLE IF NOT EXISTS documentos(
+      id_documentos INTEGER PRIMARY KEY AUTOINCREMENT,
+      titulo TEXT,
+      url TEXT,
+      id_consultas INTEGER NOT NULL,
+      id_tipo_documentos INTEGER
+        FOREIGN KEY (id_consultas) REFERENCES consultas (id_consultas),
+  FOREIGN KEY (id_tipo_documentos) REFERENCES tipo_documentos (id_tipo_documentos)
+    )
+  ''');
     }
   }
 
@@ -162,7 +183,27 @@ class DatabaseHelper {
       )
     ''');
 
-    // Tabela Credenciais Offline (para login sem internet)
+    // Tabela tipo documentos
+    await db.execute('''
+  CREATE TABLE tipo_documentos(
+    id_tipo_documentos INTEGER PRIMARY KEY AUTOINCREMENT,
+    designacao TEXT
+  )
+    ''');
+
+    // Tabela documentos
+    await db.execute('''
+  CREATE TABLE documentos(
+    id_documentos INTEGER PRIMARY KEY AUTOINCREMENT,
+    titulo TEXT,
+    url TEXT,
+    id_consultas INTEGER NOT NULL,
+    id_tipo_documentos INTEGER,
+    FOREIGN KEY (id_consultas) REFERENCES consultas (id_consultas),
+    FOREIGN KEY (id_tipo_documentos) REFERENCES tipo_documentos (id_tipo_documentos)
+    )
+    ''');
+
     await db.execute('''
       CREATE TABLE credenciais_offline(
         email TEXT PRIMARY KEY,
@@ -200,6 +241,8 @@ class DatabaseHelper {
       [id],
     );
   }
+
+
 
   // Métodos CRUD genéricos podem ser adicionados aqui
 }

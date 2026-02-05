@@ -5,9 +5,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../database/database_helper.dart';
 import '../models/consulta_model.dart';
-//import '../models/documento_model.dart';
+import '../models/documento_model.dart';
+import 'package:mobile/services/api_service.dart';
 
 class HistoricoDeclaracoes extends StatefulWidget {
   final String title;
@@ -20,11 +20,83 @@ class HistoricoDeclaracoes extends StatefulWidget {
 class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
   String filtro = "ambos"; // ambos | declaracoes | atestados
 
-  final DatabaseHelper _dbHelper = DatabaseHelper();
-
   List<Consulta> consultas = [];
-  bool aCarregar = true;
-  int? idPerfil; // vem da sessão
+  Map<int, List<Documento>> documentosPorConsulta =
+      {}; 
+  bool aCarregar = true; 
+  int? idPerfil;
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarDados();
+  }
+Future<void> _carregarDados() async {
+  final prefs = await SharedPreferences.getInstance();
+  idPerfil = prefs.getInt('id_perfis');
+
+  if (idPerfil == null) {
+    if (mounted) context.go('/login');
+    return;
+  }
+
+  setState(() => aCarregar = true);
+
+  try {
+    debugPrint("A carregar consultas da API...");
+    final listaConsultas = await ApiService().getConsultas();
+    debugPrint("Consultas recebidas: ${listaConsultas.length}");
+
+    // 1️⃣ Carregar documentos por cada consulta
+    final Map<int, List<Documento>> docsMap = {};
+    for (final c in listaConsultas) {
+      final docs = await ApiService().getDocumentosPorConsulta(c.idConsultas);
+      docsMap[c.idConsultas] = docs;
+      debugPrint(
+        "Consulta ${c.idConsultas} → documentos por consulta: ${docs.map((d) => d.idDocumento)}",
+      );
+    }
+
+    // 2️⃣ Carregar documentos do paciente (todas as consultas)
+    try {
+      debugPrint("A carregar documentos do paciente...");
+      final listaDocsPaciente = await ApiService().getDocumentosDoPaciente(idPerfil!);
+      debugPrint("Documentos do paciente recebidos: ${listaDocsPaciente.length}");
+
+      // Agrupar no mapa usando uma chave especial, ou adicionar às consultas existentes
+      for (final doc in listaDocsPaciente) {
+        final consultaId = doc.idConsultas ?? 0;
+        if (docsMap.containsKey(consultaId)) {
+          // Evita duplicados
+          final existentes = docsMap[consultaId]!;
+          if (!existentes.any((d) => d.idDocumento == doc.idDocumento)) {
+            existentes.add(doc);
+          }
+        } else {
+          docsMap[consultaId] = [doc];
+        }
+      }
+    } catch (e) {
+      debugPrint("Erro ao carregar documentos do paciente: $e");
+    }
+
+    setState(() {
+      consultas = listaConsultas;
+      documentosPorConsulta = docsMap;
+      aCarregar = false;
+    });
+  } catch (e) {
+    debugPrint("Erro ao carregar consultas/documentos da API: $e");
+    setState(() => aCarregar = false);
+  }
+}
+
+
+
+  String formatHora(String? hora) {
+    if (hora == null || hora.length < 5) return '--:--';
+    return hora.substring(0, 5); // HH:mm
+  }
 
   // ---------------- PDF DOWNLOAD ------------------
   Future<String> downloadPdf(String url, String filename) async {
@@ -115,12 +187,16 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
             icon: Icon(
               Icons.download_outlined,
               size: 26,
-              color: Colors.grey.shade700,
+              color: (url.isEmpty)
+                  ? Colors.grey.shade400
+                  : Colors.grey.shade700,
             ),
-            onPressed: () async {
-              final path = await downloadPdf(url, filename);
-              abrirPdf(context, path);
-            },
+            onPressed: (url.isEmpty)
+                ? null // desativa o botão se não houver URL
+                : () async {
+                    final path = await downloadPdf(url, filename);
+                    abrirPdf(context, path);
+                  },
           ),
         ],
       ),
@@ -176,12 +252,12 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-  padding: const EdgeInsets.only(right: 50),
-  child: Text(
-    "Horário",
-    style: TextStyle(fontWeight: FontWeight.w600),
-  ),
-),
+                    padding: const EdgeInsets.only(right: 50),
+                    child: Text(
+                      "Horário",
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
 
                   Text(horario),
                 ],
@@ -259,43 +335,6 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
     );
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _carregarDados();
-  }
-
-  Future<void> _carregarDados() async {
-    final prefs = await SharedPreferences.getInstance();
-    idPerfil = prefs.getInt('id_perfis');
-
-    if (idPerfil == null) {
-      // sessão inválida → voltar ao login
-      if (mounted) context.go('/login');
-      return;
-    }
-
-    final db = await _dbHelper.database;
-
-    final maps = await db.query(
-      'consultas',
-      where: 'id_perfis = ?',
-      whereArgs: [idPerfil],
-      orderBy: 'data_consulta DESC',
-    );
-    debugPrint("📦 CONSULTAS NA BD: ${maps.length}");
-
-    setState(() {
-      consultas = maps.map((m) => Consulta.fromMap(m)).toList();
-      aCarregar = false;
-    });
-  }
-
-  String formatHora(String? hora) {
-    if (hora == null || hora.length < 5) return '--:--';
-    return hora.substring(0, 5); // HH:mm
-  }
-
   // ------------------- BUILD PAGE -------------------
   @override
   Widget build(BuildContext context) {
@@ -313,8 +352,7 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
         // setinha
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () =>
-              context.go('/inicio'), // vai diretamente para a rota /definicoes
+          onPressed: () => context.go('/inicio'),
         ),
 
         elevation: 0,
@@ -329,81 +367,72 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
         ),
       ),
 
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            const Row(
-              children: [
-                Icon(Icons.info_outline, color: Colors.brown),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    "Declarações de presença e atestados comprovam a presença do utente numa consulta na clinimolelos.",
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-
-            Row(
-              children: [
-                _filtroButton("Ambos", "ambos"),
-                const SizedBox(width: 10),
-                _filtroButton("Declarações", "declaracoes"),
-                const SizedBox(width: 10),
-                _filtroButton("Atestados", "atestados"),
-              ],
-            ),
-
-            const SizedBox(height: 25),
-
-            if (aCarregar)
-              const Center(child: CircularProgressIndicator())
-            else if (consultas.isEmpty)
-              const Text("Não existem declarações ou atestados.")
-            else
-              Column(
-                children: consultas
-                    .where((c) {
-                      if (filtro == "ambos") return true;
-                      if (filtro == "declaracoes") return true;
-                      if (filtro == "atestados") return true;
-                      return false;
-                    })
-                    .map((c) {
-                      return _card(
-                        medico: c.medicoNome ?? '—',
-                        tipoConsulta: c.especialidadeNome ?? 'Consulta',
-                        data: c.dataConsulta ?? '',
-                        horario:
-                            '${formatHora(c.horarioInicio)} - ${formatHora(c.horarioFim)}',
-
-                        pdfs: c.documentos
-                            .map(
-                              (doc) => {
-                                "nome": (doc.titulo?.isNotEmpty == true)
-                                    ? "${doc.titulo}.pdf"
-                                    : "documento_${doc.idDocumento}.pdf",
-
-                                "url":
-                                    "$baseUrl/consultas/download-documento/${doc.idDocumento}",
-                              },
-                            )
-                            .toList(),
-                      );
-                    })
-                    .toList(),
-              ),
-          ],
-        ),
+body: SingleChildScrollView(
+  padding: const EdgeInsets.all(20),
+  child: Column(
+    children: [
+      // ---------------- FILTROS ----------------
+      Row(
+        children: [
+          _filtroButton("Ambos", "ambos"),
+          const SizedBox(width: 10),
+          _filtroButton("Declarações", "declaracoes"),
+          const SizedBox(width: 10),
+          _filtroButton("Atestados", "atestados"),
+        ],
       ),
+
+      const SizedBox(height: 20),
+
+      // ---------------- CARDS ----------------
+      ...consultas.map((c) {
+        final docs = documentosPorConsulta[c.idConsultas] ?? [];
+        debugPrint(
+          "Consulta ${c.idConsultas} → ${docs.length} documentos",
+        );
+
+        if (docs.isEmpty) {
+          return _card(
+            medico: c.medicoNome ?? '—',
+            tipoConsulta: c.especialidadeNome ?? 'Consulta',
+            data: c.dataConsulta ?? '',
+            horario:
+                '${formatHora(c.horarioInicio)} - ${formatHora(c.horarioFim)}',
+            pdfs: [
+              {"nome": "Sem documentos", "url": ""},
+            ],
+          );
+        }
+
+        return _card(
+          medico: c.medicoNome ?? '—',
+          tipoConsulta: c.especialidadeNome ?? 'Consulta',
+          data: c.dataConsulta ?? '',
+          horario:
+              '${formatHora(c.horarioInicio)} - ${formatHora(c.horarioFim)}',
+          pdfs: docs
+              .map(
+                (doc) => {
+                  "nome": (doc.titulo?.isNotEmpty == true)
+                      ? "${doc.titulo}.pdf"
+                      : "documento_${doc.idDocumento}.pdf",
+                  "url":
+                      "$baseUrl/consultas/download-documento/${doc.idDocumento}",
+                },
+              )
+              .toList(),
+        );
+      }).toList(),
+    ],
+  ),
+),
+
 
       // ---------------- BOTTOM NAV BAR ----------------
       bottomNavigationBar: NavigationBar(
         selectedIndex: 0,
         indicatorColor: Colors.transparent,
+        backgroundColor: Colors.white,
         onDestinationSelected: (index) {
           switch (index) {
             case 0:
