@@ -67,7 +67,7 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildConsultaDetailCard(consultas.first),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 10),
                   _buildAviso(),
                 ],
               ),
@@ -152,14 +152,16 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
     final horarioFormatado =
         '${formatarHora(consulta.horarioInicio)} - ${formatarHora(consulta.horarioFim)}';
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.all(16.0),
+      decoration: const BoxDecoration(color: Colors.white),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Consulta',
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           _buildDetailRow(
@@ -170,11 +172,7 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
           _buildDetailRow('Data', dataFormatada),
           _buildDetailRow('Horário', horarioFormatado),
           _buildDetailRow('Estado', consulta.estado ?? 'Não informado'),
-          const SizedBox(height: 8),
-          Text(
-            consulta.observacoes ?? 'Sem observações',
-            style: const TextStyle(fontSize: 14),
-          ),
+          const SizedBox(height: 16),
         ],
       ),
     );
@@ -182,7 +180,7 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
 
   Widget _buildDetailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(vertical: 2.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
