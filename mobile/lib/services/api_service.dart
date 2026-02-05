@@ -408,7 +408,7 @@ Future<List<Consulta>> getConsultas() async {
         // 💾 sincronizar local (já filtradas)
         await db.delete('consultas');
         for (var c in consultasFuturas) {
-          await db.insert('consultas', c.toMap());
+          await db.insert('consultas', c.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
         }
 
         return consultasFuturas;
