@@ -64,7 +64,7 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
           : consultas.isEmpty
           ? const Center(child: Text('Nenhuma consulta encontrada'))
           : SingleChildScrollView( // Scroll automático se faltar espaço
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -229,7 +229,7 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
           _buildDetailRow('Data', dataFormatada),
           _buildDetailRow('Horário', horarioFormatado),
           _buildDetailRow('Estado', consulta.estado ?? 'Não informado'),
-          const SizedBox(height: 16),
+          const SizedBox(height: 4),
         ],
       ),
     );
