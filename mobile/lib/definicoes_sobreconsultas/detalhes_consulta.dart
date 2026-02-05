@@ -74,10 +74,10 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
                 ],
               ),
             ),
-            bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: NavigationBar(
         selectedIndex: currentPageIndex,
         indicatorColor: Colors.transparent,
-        backgroundColor: Colors.white, 
+        backgroundColor: Colors.white,
         onDestinationSelected: (index) {
           setState(() => currentPageIndex = index);
 
@@ -128,7 +128,7 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline, color: Colors.black54),
+          const Icon(Icons.info_outline, color: Color(0xFF422C20)),
           const SizedBox(width: 8),
           Expanded(
             child: RichText(
@@ -237,15 +237,23 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
 
   Widget _buildDetailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2.0),
-      child: Row(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '$label: ',
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF422C20),
+            ),
           ),
-          Expanded(child: Text(value, style: const TextStyle(fontSize: 14))),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 14, color: Colors.black87),
+          ),
         ],
       ),
     );

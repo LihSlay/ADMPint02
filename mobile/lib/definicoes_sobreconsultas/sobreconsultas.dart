@@ -16,7 +16,10 @@ class _SobreConsultasPageState extends State<SobreConsultasPage> {
   int currentPageIndex = 3; // Definições
   final MapController _mapController = MapController();
   final List<Marker> _markers = [];
-  final LatLng _initial = LatLng(40.533192, -8.1033865); // Localização inicial (Tondela)
+  final LatLng _initial = LatLng(
+    40.533192,
+    -8.1033865,
+  ); // Localização inicial (Tondela)
 
   @override
   void initState() {
@@ -62,8 +65,7 @@ class _SobreConsultasPageState extends State<SobreConsultasPage> {
             point: latLng,
             width: 40,
             height: 40,
-            child:
-                const Icon(Icons.my_location, color: Colors.blue, size: 40),
+            child: const Icon(Icons.my_location, color: Colors.blue, size: 40),
           ),
         );
     });
@@ -80,16 +82,14 @@ class _SobreConsultasPageState extends State<SobreConsultasPage> {
             point: latLng,
             width: 40,
             height: 40,
-            child:
-                const Icon(Icons.location_on, color: Colors.red, size: 40),
+            child: const Icon(Icons.location_on, color: Colors.red, size: 40),
           ),
         );
     });
   }
 
   void _show(String msg) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(msg)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   @override
@@ -108,11 +108,7 @@ class _SobreConsultasPageState extends State<SobreConsultasPage> {
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Color(0xFF907041),
-                Color(0xFF97774D),
-                Color(0xFFA68A69),
-              ],
+              colors: [Color(0xFF907041), Color(0xFF97774D), Color(0xFFA68A69)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -151,16 +147,22 @@ class _SobreConsultasPageState extends State<SobreConsultasPage> {
                           Text(
                             'Clinimolelos',
                             style: TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.w700),
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                           SizedBox(height: 12),
-                          Text('Contacto telefónico',
-                              style: TextStyle(fontWeight: FontWeight.w600)),
+                          Text(
+                            'Contacto telefónico',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
                           SizedBox(height: 4),
                           Text('232 823 220'),
                           SizedBox(height: 12),
-                          Text('Correio eletrónico',
-                              style: TextStyle(fontWeight: FontWeight.w600)),
+                          Text(
+                            'Correio eletrónico',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
                           SizedBox(height: 4),
                           Text('clinimolelos@gmail.com'),
                           SizedBox(height: 16),
@@ -186,8 +188,10 @@ class _SobreConsultasPageState extends State<SobreConsultasPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: const [
-                          Text('Horário de funcionamento',
-                              style: TextStyle(fontWeight: FontWeight.w600)),
+                          Text(
+                            'Horário de funcionamento',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
                           SizedBox(height: 8),
                           Text('Segunda a sábado'),
                           SizedBox(height: 4),
@@ -201,8 +205,10 @@ class _SobreConsultasPageState extends State<SobreConsultasPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: const [
-                          Text('Localização',
-                              style: TextStyle(fontWeight: FontWeight.w600)),
+                          Text(
+                            'Localização',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
                           SizedBox(height: 8),
                           Text('3460-009 Tondela'),
                           Text('Av. Dr. Adriano Figueiredo 158'),
@@ -236,8 +242,25 @@ class _SobreConsultasPageState extends State<SobreConsultasPage> {
                       alignment: Alignment.centerRight,
                       child: ElevatedButton.icon(
                         onPressed: _goToMyLocation,
-                        icon: const Icon(Icons.my_location),
-                        label: const Text("Minha localização"),
+                        icon: const Icon(
+                          Icons.my_location,
+                          color: Color(0xFF422C20),
+                        ),
+                        label: const Text(
+                          "Minha localização",
+                          style: TextStyle(
+                            color: Color(0xFF422C20),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          elevation: 6,
+                          shadowColor: Colors.black.withOpacity(0.15),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -253,7 +276,7 @@ class _SobreConsultasPageState extends State<SobreConsultasPage> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentPageIndex,
         indicatorColor: Colors.transparent,
-        backgroundColor: Colors.white, 
+        backgroundColor: Colors.white,
         onDestinationSelected: (index) {
           setState(() => currentPageIndex = index);
 
