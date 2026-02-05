@@ -41,6 +41,7 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        titleSpacing: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => context.go('/inicio'),
@@ -67,7 +68,7 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildConsultaDetailCard(consultas.first),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 5),
                   _buildAviso(),
                 ],
               ),
@@ -155,7 +156,17 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16.0),
       padding: const EdgeInsets.all(16.0),
-      decoration: const BoxDecoration(color: Colors.white),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
