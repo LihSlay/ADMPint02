@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../services/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class IniciarSessaoPage extends StatefulWidget {
   const IniciarSessaoPage({super.key});
@@ -51,8 +52,15 @@ class _IniciarSessaoPageState extends State<IniciarSessaoPage> {
       );
 
       if (usuario != null) {
+        final prefs = await SharedPreferences.getInstance();
+
+        await prefs.setInt('id_perfis', usuario.idPerfis ?? 0);
+
+        await prefs.setInt('id_utilizadores', usuario.idUtilizadores);
+
         final idPerfis = usuario.idPerfis ?? 0;
-        bool jaAssinado = (usuario.termosAssinados == 1 ||
+        bool jaAssinado =
+            (usuario.termosAssinados == 1 ||
             usuario.termosAssinados == true ||
             usuario.termosAssinados == 'assinado');
 
@@ -92,7 +100,8 @@ class _IniciarSessaoPageState extends State<IniciarSessaoPage> {
         child: SingleChildScrollView(
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              minHeight: MediaQuery.of(context).size.height -
+              minHeight:
+                  MediaQuery.of(context).size.height -
                   MediaQuery.of(context).padding.top -
                   MediaQuery.of(context).padding.bottom,
             ),
@@ -302,7 +311,9 @@ class _IniciarSessaoPageState extends State<IniciarSessaoPage> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.white,
                                 foregroundColor: Colors.black,
-                                padding: const EdgeInsets.symmetric(vertical: 15),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 15,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
