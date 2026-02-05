@@ -229,7 +229,7 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
           _buildDetailRow('Médico', consulta.medicoNome ?? 'Não informado'),
           _buildDetailRow('Data', dataFormatada),
           _buildDetailRow('Horário', horarioFormatado),
-          _buildDetailRow('Estado', consulta.estado ?? 'Não informado'),
+          _buildDetailRow('Estado', consulta.estado),
           const SizedBox(height: 4),
         ],
       ),
