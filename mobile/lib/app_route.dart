@@ -9,6 +9,7 @@ import 'definicoes_sobreconsultas/definicoes.dart';
 import 'definicoes_sobreconsultas/definicoesTermoseCondicoes.dart';
 import 'definicoes_sobreconsultas/palavrapasse.dart';
 import 'definicoes_sobreconsultas/sobreconsultas.dart';
+import 'definicoes_sobreconsultas/detalhes_consulta.dart';
 import 'package:mobile/inicio_calendario/inicio.dart';
 import 'package:mobile/inicio_calendario/calendario.dart';
 import 'package:mobile/download_documentos/exames_clinicos.dart';
@@ -166,11 +167,11 @@ final GoRouter rotas = GoRouter(
       name: 'logininicio',
       builder: (context, state) => const LoginPage(),
     ),
-       /** GoRoute(
+    GoRoute(
       path: '/detalhes_consulta',
-      name: 'detealhes_consulta',
-      builder: (context, state) => const (), 
-    ),*/
+      name: 'detalhes_consulta',
+      builder: (context, state) => const DetalhesConsulta(),
+    ),
   ],
 );
   

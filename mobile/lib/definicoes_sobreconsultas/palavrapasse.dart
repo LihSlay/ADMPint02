@@ -304,6 +304,7 @@ class _PalavrapasseState extends State<Palavrapasse> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentPageIndex,
         indicatorColor: Colors.transparent,
+        backgroundColor: Colors.white, 
         onDestinationSelected: (index) {
           setState(() => currentPageIndex = index);
 
