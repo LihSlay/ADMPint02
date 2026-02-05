@@ -200,6 +200,7 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
         '${formatarHora(consulta.horarioInicio)} - ${formatarHora(consulta.horarioFim)}';
 
     return Container(
+      width: double.infinity,
       margin: const EdgeInsets.only(bottom: 16.0),
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
