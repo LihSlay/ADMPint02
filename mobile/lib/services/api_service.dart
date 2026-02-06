@@ -9,6 +9,7 @@ import '../models/usuario_model.dart';
 import '../models/perfil_model.dart';
 import '../models/documento_model.dart';
 
+
 class ApiService {
   final String baseUrl = "https://pi4backend.onrender.com";
   final DatabaseHelper _dbHelper = DatabaseHelper();
@@ -659,4 +660,70 @@ class ApiService {
       }
     }
   }
+  /// PERFIL + DEPENDENTES (rota usada na web)
+Future<void> fetchAndSaveMeuPerfilComDependentes(String token) async {
+  final db = await _dbHelper.database;
+
+  final response = await http.get(
+    Uri.parse('$baseUrl/pacientes/meu-perfil-com-dependentes'),
+    headers: {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    },
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception('Erro ao obter perfil com dependentes');
+  }
+
+  final data = json.decode(response.body);
+
+  final paciente = data['paciente'];
+  final List dependentes = data['dependentes'] ?? [];
+
+  // limpar perfis locais
+  await db.delete('perfis');
+
+  // ---------- PERFIL PRINCIPAL (RESPONSÁVEL) ----------
+  await db.insert('perfis', {
+    'id_perfis': paciente['id_perfis'],
+    'id_utilizadores': paciente['id_utilizadores'],
+    'nome': paciente['nome'],
+    'n_utente': paciente['n_utente'],
+    'data_nasc': paciente['data_nasc'],
+    'contacto_tel': paciente['contacto_tel'],
+    'profissao': paciente['profissao'],
+    'morada': paciente['morada'],
+    'cod_postal': paciente['cod_postal'],
+    'nif': paciente['nif'],
+    'responsavel': '', 
+    'notas': paciente['notas'],
+    'id_subsistemas_saude': paciente['id_subsistemas_saude'],
+    'id_parentesco': paciente['id_parentesco'],
+    'alcunhas': paciente['alcunhas'],
+    'ativo': (paciente['ativo'] == true || paciente['ativo'] == 1) ? 1 : 0,
+  });
+
+  // ---------- DEPENDENTES ----------
+  for (final dep in dependentes) {
+    await db.insert('perfis', {
+      'id_perfis': dep['id_perfis'],
+      'id_utilizadores': dep['id_utilizadores'],
+      'nome': dep['nome'],
+      'n_utente': dep['n_utente'],
+      'data_nasc': dep['data_nasc'],
+      'contacto_tel': dep['contacto_tel'],
+      'profissao': dep['profissao'],
+      'morada': dep['morada'],
+      'cod_postal': dep['cod_postal'],
+      'nif': dep['nif'],
+      'responsavel': paciente['id_perfis'].toString(), 
+      'notas': dep['notas'],
+      'id_subsistemas_saude': dep['id_subsistemas_saude'],
+      'id_parentesco': dep['id_parentesco'],
+      'alcunhas': dep['alcunhas'],
+      'ativo': (dep['ativo'] == true || dep['ativo'] == 1) ? 1 : 0,
+    });
+  }
+}
 }

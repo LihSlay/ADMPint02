@@ -33,7 +33,7 @@ Future<String> verificarRotaInicial(int idPerfis) async {
 }
 
 final GoRouter rotas = GoRouter(
-  initialLocation: '/PerfilComDep',
+  initialLocation: '/login',
   routes: [
     GoRoute(
       path: '/login',
