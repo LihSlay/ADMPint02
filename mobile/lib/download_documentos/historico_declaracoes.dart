@@ -4,6 +4,10 @@ import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../database/database_helper.dart';
+import '../models/consulta_model.dart';
+//import '../models/documento_model.dart';
 
 class HistoricoDeclaracoes extends StatefulWidget {
   final String title;
@@ -15,6 +19,12 @@ class HistoricoDeclaracoes extends StatefulWidget {
 
 class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
   String filtro = "ambos"; // ambos | declaracoes | atestados
+
+  final DatabaseHelper _dbHelper = DatabaseHelper();
+
+  List<Consulta> consultas = [];
+  bool aCarregar = true;
+  int? idPerfil; // vem da sessão
 
   // ---------------- PDF DOWNLOAD ------------------
   Future<String> downloadPdf(String url, String filename) async {
@@ -165,10 +175,14 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Horário",
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
+                  Padding(
+  padding: const EdgeInsets.only(right: 50),
+  child: Text(
+    "Horário",
+    style: TextStyle(fontWeight: FontWeight.w600),
+  ),
+),
+
                   Text(horario),
                 ],
               ),
@@ -245,9 +259,48 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
     );
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _carregarDados();
+  }
+
+  Future<void> _carregarDados() async {
+    final prefs = await SharedPreferences.getInstance();
+    idPerfil = prefs.getInt('id_perfis');
+
+    if (idPerfil == null) {
+      // sessão inválida → voltar ao login
+      if (mounted) context.go('/login');
+      return;
+    }
+
+    final db = await _dbHelper.database;
+
+    final maps = await db.query(
+      'consultas',
+      where: 'id_perfis = ?',
+      whereArgs: [idPerfil],
+      orderBy: 'data_consulta DESC',
+    );
+    debugPrint("📦 CONSULTAS NA BD: ${maps.length}");
+
+    setState(() {
+      consultas = maps.map((m) => Consulta.fromMap(m)).toList();
+      aCarregar = false;
+    });
+  }
+
+  String formatHora(String? hora) {
+    if (hora == null || hora.length < 5) return '--:--';
+    return hora.substring(0, 5); // HH:mm
+  }
+
   // ------------------- BUILD PAGE -------------------
   @override
   Widget build(BuildContext context) {
+    final String baseUrl = "https://pi4backend.onrender.com";
+
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
 
@@ -306,46 +359,42 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
 
             const SizedBox(height: 25),
 
-            if (filtro == "ambos" || filtro == "declaracoes")
-              _card(
-                medico: "Dt. Melissa Pinto",
-                tipoConsulta: "Clareamento dentário",
-                data: "13 out 2025",
-                horario: "15:00 - 15:30",
-                pdfs: [
-                  {
-                    "nome": "declaracao.pdf",
-                    "url": "https://www.africau.edu/images/default/sample.pdf",
-                  },
-                ],
-              ),
+            if (aCarregar)
+              const Center(child: CircularProgressIndicator())
+            else if (consultas.isEmpty)
+              const Text("Não existem declarações ou atestados.")
+            else
+              Column(
+                children: consultas
+                    .where((c) {
+                      if (filtro == "ambos") return true;
+                      if (filtro == "declaracoes") return true;
+                      if (filtro == "atestados") return true;
+                      return false;
+                    })
+                    .map((c) {
+                      return _card(
+                        medico: c.medicoNome ?? '—',
+                        tipoConsulta: c.especialidadeNome ?? 'Consulta',
+                        data: c.dataConsulta ?? '',
+                        horario:
+                            '${formatHora(c.horarioInicio)} - ${formatHora(c.horarioFim)}',
 
-            if (filtro == "ambos" || filtro == "atestados")
-              _card(
-                medico: "Dt. Melissa Pinto",
-                tipoConsulta: "Clareamento dentário",
-                data: "13 out 2025",
-                horario: "15:00 - 15:30",
-                pdfs: [
-                  {
-                    "nome": "atestado.pdf",
-                    "url": "https://www.africau.edu/images/default/sample.pdf",
-                  },
-                ],
-              ),
+                        pdfs: c.documentos
+                            .map(
+                              (doc) => {
+                                "nome": (doc.titulo?.isNotEmpty == true)
+                                    ? "${doc.titulo}.pdf"
+                                    : "documento_${doc.idDocumento}.pdf",
 
-            if (filtro == "ambos" || filtro == "declaracoes")
-              _card(
-                medico: "Dt. Sílvia Coimbra",
-                tipoConsulta: "Remoção de Cárie",
-                data: "02 out 2025",
-                horario: "10:00 - 10:45",
-                pdfs: [
-                  {
-                    "nome": "declaracao.pdf",
-                    "url": "https://www.africau.edu/images/default/sample.pdf",
-                  },
-                ],
+                                "url":
+                                    "$baseUrl/consultas/download-documento/${doc.idDocumento}",
+                              },
+                            )
+                            .toList(),
+                      );
+                    })
+                    .toList(),
               ),
           ],
         ),

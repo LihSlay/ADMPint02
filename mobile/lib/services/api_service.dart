@@ -7,6 +7,7 @@ import '../database/database_helper.dart';
 import '../models/consulta_model.dart';
 import '../models/usuario_model.dart';
 import '../models/perfil_model.dart';
+import '../models/documento_model.dart';
 
 class ApiService {
   final String baseUrl = "https://pi4backend.onrender.com";
@@ -79,11 +80,11 @@ class ApiService {
             await db.insert('perfis', perfil.toMap());
             debugPrint('Perfil guardado a partir do login');
           } else if (token != null) {
-  debugPrint(
-    'Perfil não veio no login, a ir buscar /pacientes/meu-perfil...',
-  );
-  await fetchAndSaveMeuPerfil(usuario.idPerfis ?? 0, token);
-}
+            debugPrint(
+              'Perfil não veio no login, a ir buscar /pacientes/meu-perfil...',
+            );
+            await fetchAndSaveMeuPerfil(usuario.idPerfis ?? 0, token);
+          }
 
           return usuario;
         } else {
@@ -99,67 +100,67 @@ class ApiService {
     }
   }
 
-Future<void> fetchAndSaveMeuPerfil(int idPerfis, String? token) async {
-  if (token == null) throw Exception("Token ausente");
+  Future<void> fetchAndSaveMeuPerfil(int idPerfis, String? token) async {
+    if (token == null) throw Exception("Token ausente");
 
-  final db = await _dbHelper.database;
+    final db = await _dbHelper.database;
 
-  try {
-    final response = await http.get(
-      Uri.parse('$baseUrl/pacientes/meu-perfil'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-    );
-
-    debugPrint(" fetchMeuPerfil response.statusCode: ${response.statusCode}");
-    debugPrint(" fetchMeuPerfil response.body: ${response.body}");
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-
-      final pacienteData = data['paciente'];
-      if (pacienteData == null) throw Exception("Paciente ausente");
-
-
-      Perfil perfil = Perfil(
-        idPerfis: pacienteData['id_perfis'] ?? idPerfis,
-        idUtilizadores: pacienteData['id_utilizadores'] ?? 0,
-        nome: pacienteData['nome'] ?? '',
-        nUtente: pacienteData['n_utente'] != null
-            ? int.tryParse(pacienteData['n_utente'].toString())
-            : null,
-        dataNasc: pacienteData['data_nasc'] ?? '',
-        contactoTel: pacienteData['contacto_tel'] ?? '',
-        profissao: pacienteData['profissao'] ?? '',
-        morada: pacienteData['morada'] ?? '',
-        codPostal: pacienteData['cod_postal'] ?? '',
-        nif: pacienteData['nif'] ?? '',
-        responsavel: pacienteData['responsavel'] ?? '',
-        notas: pacienteData['notas'] ?? '',
-        idSubsistemasSaude: pacienteData['id_subsistemas_saude'] ?? 0,
-        idParentesco: pacienteData['id_parentesco'] ?? 0,
-        alcunhas: pacienteData['alcunhas'] ?? '',
-        ativo: pacienteData['ativo'] ?? 1,
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/pacientes/meu-perfil'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
       );
 
-      debugPrint("Perfil construído: ${perfil.toMap()}");
+      debugPrint(" fetchMeuPerfil response.statusCode: ${response.statusCode}");
+      debugPrint(" fetchMeuPerfil response.body: ${response.body}");
 
-      // Substituir dados existentes
-      await db.delete('perfis');
-      await db.insert('perfis', perfil.toMap());
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
 
-      debugPrint("✅ Perfil do utilizador guardado localmente");
-    } else {
-      throw Exception("Erro ao obter perfil: ${response.statusCode}");
+        final pacienteData = data['paciente'];
+        if (pacienteData == null) throw Exception("Paciente ausente");
+
+        Perfil perfil = Perfil(
+          idPerfis: pacienteData['id_perfis'] ?? idPerfis,
+          idUtilizadores: pacienteData['id_utilizadores'] ?? 0,
+          nome: pacienteData['nome'] ?? '',
+          nUtente: pacienteData['n_utente'] != null
+              ? int.tryParse(pacienteData['n_utente'].toString())
+              : null,
+          dataNasc: pacienteData['data_nasc'] ?? '',
+          contactoTel: pacienteData['contacto_tel'] ?? '',
+          profissao: pacienteData['profissao'] ?? '',
+          morada: pacienteData['morada'] ?? '',
+          codPostal: pacienteData['cod_postal'] ?? '',
+          nif: pacienteData['nif'] ?? '',
+          responsavel: pacienteData['responsavel'] ?? '',
+          notas: pacienteData['notas'] ?? '',
+          idSubsistemasSaude: pacienteData['id_subsistemas_saude'] ?? 0,
+          idParentesco: pacienteData['id_parentesco'] ?? 0,
+          alcunhas: pacienteData['alcunhas'] ?? '',
+          ativo: (pacienteData['ativo'] == true || pacienteData['ativo'] == 1)
+              ? 1
+              : 0,
+        );
+
+        debugPrint("Perfil construído: ${perfil.toMap()}");
+
+        // Substituir dados existentes
+        await db.delete('perfis');
+        await db.insert('perfis', perfil.toMap());
+
+        debugPrint("✅ Perfil do utilizador guardado localmente");
+      } else {
+        throw Exception("Erro ao obter perfil: ${response.statusCode}");
+      }
+    } catch (e) {
+      debugPrint("Erro fetchMeuPerfil: $e");
+      rethrow;
     }
-  } catch (e) {
-    debugPrint("Erro fetchMeuPerfil: $e");
-    rethrow;
   }
-}
-
 
   // Login offline: Verificar credenciais guardadas localmente
   Future<Usuario?> _loginOffline(
@@ -326,106 +327,105 @@ Future<void> fetchAndSaveMeuPerfil(int idPerfis, String? token) async {
     }
   }
 
- // BUSCA CONSULTAS: Offline-First
-Future<List<Consulta>> getConsultas() async {
-  final db = await _dbHelper.database;
+  // BUSCA CONSULTAS: Offline-First
+  Future<List<Consulta>> getConsultas() async {
+    final db = await _dbHelper.database;
 
-  debugPrint("A verificar ligação à Internet...");
-  if (await hasInternet()) {
-    debugPrint("Internet disponível, a tentar buscar consultas da API...");
-    try {
-      // 🔐 obter token guardado
-      final user = await db.query('utilizadores', limit: 1);
-      final token = user.isNotEmpty ? user.first['token'] as String? : null;
+    debugPrint("A verificar ligação à Internet...");
+    if (await hasInternet()) {
+      debugPrint("Internet disponível, a tentar buscar consultas da API...");
+      try {
+        // 🔐 obter token guardado
+        final user = await db.query('utilizadores', limit: 1);
+        final token = user.isNotEmpty ? user.first['token'] as String? : null;
 
-      if (token == null) {
-        throw Exception("Token inexistente");
-      }
-
-      final response = await http.get(
-        Uri.parse('$baseUrl/consultas/paciente'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      debugPrint("Status code da API: ${response.statusCode}");
-      debugPrint("Body: ${response.body}");
-
-      if (response.statusCode == 200) {
-        final decoded = json.decode(response.body);
-
-        // 🔑 vem dentro de "consultas"
-        final List<dynamic> lista = decoded['consultas'];
-
-        final consultas = lista.map((json) {
-          return Consulta.fromMap({
-            'id_consultas': json['id_consultas'],
-            'data_consulta': json['data_consulta'],
-            'horario_inicio': json['horario_inicio'],
-            'horario_fim': json['horario_fim'],
-            'estado': json['estado'],
-            'id_perfis': json['id_perfis'],
-            'id_medicos': json['id_medicos'],
-            'id_tipo_consultas': json['id_tipo_consultas'],
-
-            // 👇 dados vindos dos includes
-            'medico_nome': json['Medico']?['nome_med'],
-            'especialidade_nome':
-                json['TipoConsulta']?['designacao'],
-          });
-        }).toList();
-
-        // ===============================
-        // ✅ FILTRO: só hoje e futuras
-        // ===============================
-        final hoje = DateTime.now();
-        final hojeSemHoras = DateTime(
-          hoje.year,
-          hoje.month,
-          hoje.day,
-        );
-
-        final consultasFuturas = consultas.where((c) {
-          if (c.dataConsulta == null) return false;
-
-          try {
-            final dataConsulta = DateTime.parse(c.dataConsulta!);
-            final dataSemHoras = DateTime(
-              dataConsulta.year,
-              dataConsulta.month,
-              dataConsulta.day,
-            );
-
-            // mantém hoje e futuro
-            return !dataSemHoras.isBefore(hojeSemHoras);
-          } catch (_) {
-            return false;
-          }
-        }).toList();
-
-        // 💾 sincronizar local (já filtradas)
-        await db.delete('consultas');
-        for (var c in consultasFuturas) {
-          await db.insert('consultas', c.toMap());
+        if (token == null) {
+          throw Exception("Token inexistente");
         }
 
-        return consultasFuturas;
+        final response = await http.get(
+          Uri.parse('$baseUrl/consultas/paciente'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        );
+
+        debugPrint("Status code da API: ${response.statusCode}");
+        debugPrint("Body: ${response.body}");
+
+        if (response.statusCode == 200) {
+          final decoded = json.decode(response.body);
+
+          // 🔑 vem dentro de "consultas"
+          final List<dynamic> lista = decoded['consultas'];
+
+          final consultas = lista.map((json) {
+            final documentos = (json['Documentos'] as List? ?? [])
+                .map((d) => Documento.fromMap(d))
+                .toList();
+
+            return Consulta.fromMap({
+              'id_consultas': json['id_consultas'],
+              'data_consulta': json['data_consulta'],
+              'horario_inicio': json['horario_inicio'],
+              'horario_fim': json['horario_fim'],
+              'estado': json['estado'],
+              'id_perfis': json['id_perfis'],
+              'id_medicos': json['id_medicos'],
+              'id_tipo_consultas': json['id_tipo_consultas'],
+              'documentos': documentos,
+
+              // 👇 dados vindos dos includes
+              'medico_nome': json['Medico']?['nome_med'],
+              'especialidade_nome': json['TipoConsulta']?['designacao'],
+            });
+          }).toList();
+
+          // ===============================
+          // ✅ FILTRO: só hoje e futuras
+          // ===============================
+          final hoje = DateTime.now();
+          final hojeSemHoras = DateTime(hoje.year, hoje.month, hoje.day);
+
+          final consultasFuturas = consultas.where((c) {
+            if (c.dataConsulta == null) return false;
+
+            try {
+              final dataConsulta = DateTime.parse(c.dataConsulta!);
+              final dataSemHoras = DateTime(
+                dataConsulta.year,
+                dataConsulta.month,
+                dataConsulta.day,
+              );
+
+              // mantém hoje e futuro
+              return !dataSemHoras.isBefore(hojeSemHoras);
+            } catch (_) {
+              return false;
+            }
+          }).toList();
+
+          // 💾 sincronizar local (já filtradas)
+          await db.delete('consultas');
+          for (var c in consultasFuturas) {
+            await db.insert('consultas', c.toMap());
+          }
+
+          return consultasFuturas;
+        }
+      } catch (e) {
+        debugPrint("Erro ao buscar consultas da API: $e");
       }
-    } catch (e) {
-      debugPrint("Erro ao buscar consultas da API: $e");
     }
+
+    // ===============================
+    // 📦 Fallback offline
+    // ===============================
+    debugPrint("Sem Internet ou erro → usar base local");
+    final maps = await db.query('consultas');
+    return maps.map((m) => Consulta.fromMap(m)).toList();
   }
-
-  // ===============================
-  // 📦 Fallback offline
-  // ===============================
-  debugPrint("Sem Internet ou erro → usar base local");
-  final maps = await db.query('consultas');
-  return maps.map((m) => Consulta.fromMap(m)).toList();
-}
-
 
   Future<void> atualizarConsentimento(int idPerfis) async {
     try {

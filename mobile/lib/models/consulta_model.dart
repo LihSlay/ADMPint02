@@ -1,3 +1,5 @@
+import 'documento_model.dart';
+
 class Consulta {
   final int idConsultas;
   final String? dataConsulta;
@@ -12,6 +14,7 @@ class Consulta {
   // Campos auxiliares para visualização rápida no mobile
   final String? medicoNome;
   final String? especialidadeNome;
+  final List<Documento> documentos;
 
   Consulta({
     required this.idConsultas,
@@ -26,6 +29,7 @@ class Consulta {
     this.idTipoConsultas,
     this.medicoNome,
     this.especialidadeNome,
+    this.documentos = const [],
   });
 
   Map<String, dynamic> toMap() {
@@ -44,6 +48,7 @@ class Consulta {
       'especialidade_nome': especialidadeNome,
     };
   }
+  
 
   factory Consulta.fromMap(Map<String, dynamic> map) {
     return Consulta(

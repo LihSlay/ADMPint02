@@ -14,7 +14,7 @@ class Perfil {
   final int? idSubsistemasSaude;
   final int? idParentesco;
   final String? alcunhas;
-  final int? ativo;
+  final dynamic ativo;
 
   Perfil({
     required this.idPerfis,
