@@ -68,7 +68,7 @@ class DatabaseHelper {
       titulo TEXT,
       url TEXT,
       id_consultas INTEGER NOT NULL,
-      id_tipo_documentos INTEGER
+      id_tipo_documentos INTEGER,
         FOREIGN KEY (id_consultas) REFERENCES consultas (id_consultas),
   FOREIGN KEY (id_tipo_documentos) REFERENCES tipo_documentos (id_tipo_documentos)
     )
