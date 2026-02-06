@@ -21,6 +21,8 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
   List<Map<String, dynamic>> dependentes = [];
   bool carregado = false;
 
+  int currentPageIndex = 0;
+
   @override
   void initState() {
     super.initState();
@@ -31,7 +33,6 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
   Future<void> _carregarDadosDaBase() async {
     final db = await _dbHelper.database;
 
-    // 🔹 UTILIZADOR LOGADO
     final user = await db.query('utilizadores', limit: 1);
     if (user.isEmpty) {
       if (mounted) setState(() => carregado = true);
@@ -40,7 +41,6 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
 
     final idUtilizador = user.first['id_utilizadores'];
 
-    // 🔹 PERFIL PRINCIPAL
     final perfisPrincipais = await db.query(
       'perfis',
       where: 'id_utilizadores = ?',
@@ -59,24 +59,11 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
     nomePaciente = paciente['nome'] as String? ?? '';
     numeroUtente = paciente['n_utente'] as int?;
 
-    // 🔹 DEPENDENTES = todos os outros perfis
     dependentes = await db.query(
       'perfis',
       where: 'id_perfis != ?',
       whereArgs: [idPaciente],
     );
-
-    // ================= DEBUG TEMPORÁRIO =================
-    final todosPerfis = await db.query('perfis');
-    debugPrint('================ DEBUG PERFIL =================');
-    debugPrint('ID UTILIZADOR: $idUtilizador');
-    debugPrint('ID PACIENTE: $idPaciente');
-    debugPrint('TODOS OS PERFIS NA BD:');
-    debugPrint(todosPerfis.toString());
-    debugPrint('DEPENDENTES ENCONTRADOS:');
-    debugPrint(dependentes.toString());
-    debugPrint('==============================================');
-    // ===================================================
 
     if (mounted) setState(() => carregado = true);
   }
@@ -159,8 +146,9 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const DadosPessoaisResponsavel(
+                          builder: (_) => DadosPessoaisResponsavel(
                             title: 'Dados pessoais',
+                            idPerfil: idPaciente!,
                           ),
                         ),
                       );
@@ -190,7 +178,6 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
                           style: TextStyle(color: Colors.black54),
                         )
                       : Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: dependentes.map((dep) {
                             final nomeDependente =
                                 dep['nome'] as String? ?? '';
@@ -264,14 +251,60 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
                           const Icon(Icons.logout, color: Colors.white),
                       label: const Text(
                         "Terminar Sessão",
-                        style: TextStyle(
-                            color: Colors.white, fontSize: 16),
+                        style:
+                            TextStyle(color: Colors.white, fontSize: 16),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
+
+      // ================= BARRA NAVEGAÇÃO =================
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: currentPageIndex,
+        indicatorColor: Colors.transparent,
+        backgroundColor: Colors.white,
+        onDestinationSelected: (index) {
+          setState(() => currentPageIndex = index);
+          switch (index) {
+            case 0:
+              context.go('/inicio');
+              break;
+            case 1:
+              context.go('/calendario');
+              break;
+            case 2:
+              context.go('/notificacoes');
+              break;
+            case 3:
+              context.go('/definicoes');
+              break;
+          }
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Início',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.calendar_month_outlined),
+            selectedIcon: Icon(Icons.calendar_month),
+            label: 'Calendário',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.notifications_outlined),
+            selectedIcon: Icon(Icons.notifications),
+            label: 'Notificações',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: 'Definições',
+          ),
+        ],
+      ),
     );
   }
 }

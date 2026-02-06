@@ -147,7 +147,7 @@ class _InicioState extends State<Inicio> {
                           children: [
                             MenuItemButton(
                               onPressed: () =>
-                                  context.go('/perfilcomdependentes'),
+                                  context.go('/PerfilSemDependentes'), // redireciona para o perfil
                               child: const Row(
                                 children: [
                                   Icon(Icons.person, size: 20),
