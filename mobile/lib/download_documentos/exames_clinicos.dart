@@ -2,21 +2,77 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile/services/api_service.dart';
+import '../models/exame_clinico.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class ExamesClinicos extends StatelessWidget {
+class ExamesClinicos extends StatefulWidget {
   final String title;
   const ExamesClinicos({super.key, required this.title});
 
-  // ---------------- PDF DOWNLOAD ------------------
+  @override
+  State<ExamesClinicos> createState() => _ExamesClinicosState();
+}
 
-  Future<String> downloadPdf(String url, String filename) async {
+class _ExamesClinicosState extends State<ExamesClinicos> {
+  bool aCarregar = true;
+  List<ExameClinico> exames = [];
+  int? idPerfil;
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarExames();
+  }
+
+  Future<void> _carregarExames() async {
+    final prefs = await SharedPreferences.getInstance();
+    idPerfil = prefs.getInt('id_perfis');
+
+    if (idPerfil == null) {
+      if (mounted) context.go('/login');
+      return;
+    }
+
+    try {
+      final lista = await ApiService().getExamesClinicosPaciente(idPerfil!);
+
+      debugPrint("🧪 Exames clínicos recebidos: ${lista.length}");
+
+      for (final e in lista) {
+        debugPrint(
+          "📄 Exame:"
+          " id=${e.idExamesClinicos},"
+          " tipo=${e.tipoExame},"
+          " nome=${e.nomeFicheiro},"
+          " data=${e.dataUpload},"
+          " url=${e.ficheiroUrl}",
+        );
+      }
+
+      setState(() {
+        exames = lista;
+        aCarregar = false;
+      });
+    } catch (e) {
+      debugPrint("Erro ao carregar exames clínicos: $e");
+      setState(() => aCarregar = false);
+    }
+  }
+
+  // ---------------- PDF DOWNLOAD ------------------
+  Future<String> downloadPdf(int idExame, String filename) async {
     final dir = await getApplicationDocumentsDirectory();
     final filePath = "${dir.path}/$filename";
-    await Dio().download(url, filePath);
+
+    await ApiService().downloadExameClinico(
+      idExame: idExame,
+      filePath: filePath,
+    );
+
     return filePath;
   }
 
@@ -32,21 +88,21 @@ class ExamesClinicos extends StatelessWidget {
   Widget _pdfTile({
     required BuildContext context,
     required String filename,
-    required String url,
     required String sizeInfo,
+    required int idExame,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade300),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Image.asset("assets/images/pdf_icon.png", height: 40),
-
-          const SizedBox(width: 1),
+          Image.asset("assets/images/pdf_icon.png", height: 30),
+          const SizedBox(width: 12),
 
           Expanded(
             child: Column(
@@ -55,30 +111,37 @@ class ExamesClinicos extends StatelessWidget {
                 Text(
                   filename,
                   style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w600),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+
                 const SizedBox(height: 6),
-                Row(
+
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Expanded(
-                      child: Text(
-                        sizeInfo,
-                        style: TextStyle(
-                          color: Colors.grey.shade700,
-                          fontSize: 13,
-                        ),
+                    Text(
+                      sizeInfo,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade700,
                       ),
                     ),
-                    const Icon(Icons.check_circle,
-                        color: Color(0xFF4CAF50), size: 18),
-                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.check_circle,
+                      color: Color(0xFF4CAF50),
+                      size: 16,
+                    ),
                     Text(
                       "Concluído",
                       style: TextStyle(
-                        color: Colors.grey.shade800,
                         fontSize: 13,
+                        color: Colors.grey.shade800,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -88,12 +151,17 @@ class ExamesClinicos extends StatelessWidget {
             ),
           ),
 
+          const SizedBox(width: 10),
+
           IconButton(
-            padding: EdgeInsets.zero,
-            icon: Icon(Icons.download_outlined,
-                size: 26, color: Colors.grey.shade700),
+            splashRadius: 20,
+            icon: Icon(
+              Icons.download_outlined,
+              size: 26,
+              color: Colors.grey.shade700,
+            ),
             onPressed: () async {
-              final path = await downloadPdf(url, filename);
+              final path = await downloadPdf(idExame, filename);
               abrirPdf(context, path);
             },
           ),
@@ -106,71 +174,48 @@ class ExamesClinicos extends StatelessWidget {
 
   Widget _cardExame({
     required BuildContext context,
-    required String titulo,
     required String medico,
-    required String tipoConsulta,
+    required String titulo,
     required String data,
-    required String horario,
     required String pdfNome,
-    required String pdfUrl,
+    required int idExame,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(14),
+        color: Colors.white,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             titulo,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
           ),
 
           const SizedBox(height: 8),
 
+          // -------- MÉDICO --------
           const Text("Médico", style: TextStyle(fontWeight: FontWeight.w600)),
           Text(medico),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
 
-          const Text("Tipo de consulta",
-              style: TextStyle(fontWeight: FontWeight.w600)),
-          Text(tipoConsulta),
-
-          const SizedBox(height: 14),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("Data",
-                      style: TextStyle(fontWeight: FontWeight.w600)),
-                  Text(data),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("Horário",
-                      style: TextStyle(fontWeight: FontWeight.w600)),
-                  Text(horario),
-                ],
-              ),
-            ],
-          ),
+          // -------- DATA --------
+          const Text("Data", style: TextStyle(fontWeight: FontWeight.w600)),
+          Text(data),
 
           const SizedBox(height: 16),
 
+          // -------- PDF --------
           _pdfTile(
             context: context,
             filename: pdfNome,
-            url: pdfUrl,
             sizeInfo: "60KB de 120KB",
+            idExame: idExame,
           ),
         ],
       ),
@@ -189,22 +234,18 @@ class ExamesClinicos extends StatelessWidget {
           "Exames Clínicos",
           style: TextStyle(color: Colors.white),
         ),
-       // setinha
+        // setinha
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => context.go(
-            '/inicio',
-          ), // vai diretamente para a rota /definicoes
+          onPressed: () =>
+              context.go('/inicio'), // vai diretamente para a rota /definicoes
         ),
 
         elevation: 0,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Color(0xFF907041),
-                Color(0xFFA68A69),
-              ],
+              colors: [Color(0xFF907041), Color(0xFFA68A69)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -215,6 +256,7 @@ class ExamesClinicos extends StatelessWidget {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Row(
               children: [
@@ -230,27 +272,36 @@ class ExamesClinicos extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            _cardExame(
-              context: context,
-              titulo: "Avaliação da oclusão",
-              medico: "Dt. Sílvia Coimbra",
-              tipoConsulta: "Remoção de Cárie",
-              data: "02 out 2025",
-              horario: "10:00 – 10:45",
-              pdfNome: "exame_oclusão.pdf",
-              pdfUrl: "https://www.africau.edu/images/default/sample.pdf",
-            ),
-
-            _cardExame(
-              context: context,
-              titulo: "Radiografia dentária",
-              medico: "Dt. Diogo Calçada",
-              tipoConsulta: "Check-up",
-              data: "17 set 2025",
-              horario: "17:30 – 18:00",
-              pdfNome: "exame_radiografia.pdf",
-              pdfUrl: "https://www.africau.edu/images/default/sample.pdf",
-            ),
+            if (aCarregar)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(30),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (exames.isEmpty)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(30),
+                  child: Text(
+                    "Sem exames clínicos",
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+              )
+            else
+              Column(
+                children: exames.map((e) {
+                  return _cardExame(
+                    context: context,
+                    titulo: e.tipoExame ?? 'Exame clínico',
+                    medico: e.medicoNome ?? '—',
+                    data: e.dataUpload,
+                    pdfNome: e.nomeFicheiro ?? 'exame.pdf',
+                    idExame: e.idExamesClinicos,
+                  );
+                }).toList(),
+              ),
           ],
         ),
       ),
@@ -313,16 +364,15 @@ class PdfViewerPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title:
-            const Text("Visualizar PDF", style: TextStyle(color: Colors.white)),
+        title: const Text(
+          "Visualizar PDF",
+          style: TextStyle(color: Colors.white),
+        ),
         elevation: 0,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Color(0xFF907041),
-                Color(0xFFA68A69),
-              ],
+              colors: [Color(0xFF907041), Color(0xFFA68A69)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),

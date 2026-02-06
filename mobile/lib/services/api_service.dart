@@ -8,6 +8,9 @@ import '../models/consulta_model.dart';
 import '../models/usuario_model.dart';
 import '../models/perfil_model.dart';
 import '../models/documento_model.dart';
+import '../models/exame_clinico.dart';
+import '../models/plano_tratamento.dart';
+import 'package:dio/dio.dart';
 
 class ApiService {
   final String baseUrl = "https://pi4backend.onrender.com";
@@ -327,6 +330,117 @@ class ApiService {
     }
   }
 
+  // Historico e Declarações
+  Future<void> downloadDocumento({
+    required String url,
+    required String filePath,
+  }) async {
+    // 1️⃣ obter DB
+    final db = await _dbHelper.database;
+
+    // 2️⃣ obter utilizador + token
+    final user = await db.query('utilizadores', limit: 1);
+    final token = user.isNotEmpty ? user.first['token'] as String? : null;
+
+    if (token == null) {
+      throw Exception("Token inexistente");
+    }
+
+    // 3️⃣ criar Dio autenticado
+    final dio = Dio();
+
+    // 4️⃣ fazer download com Authorization
+    await dio.download(
+      url,
+      filePath,
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+  }
+
+  // Exames Clinicos
+  Future<void> downloadExameClinico({
+    required int idExame,
+    required String filePath,
+  }) async {
+    final db = await _dbHelper.database;
+
+    final user = await db.query('utilizadores', limit: 1);
+    final token = user.isNotEmpty ? user.first['token'] as String? : null;
+
+    if (token == null) {
+      throw Exception("Token inexistente");
+    }
+
+    final dio = Dio();
+
+    await dio.download(
+      '$baseUrl/exames-clinicos/download/$idExame',
+      filePath,
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+  }
+
+  Future<List<PlanoTratamento>> getPlanosTratamentoPaciente(
+    int idPerfis,
+  ) async {
+    final db = await _dbHelper.database;
+
+    // 🔐 obter token
+    final user = await db.query('utilizadores', limit: 1);
+    final token = user.isNotEmpty ? user.first['token'] as String? : null;
+    debugPrint("🔑 TOKEN ATUAL: $token");
+
+    if (token == null) {
+      throw Exception("Token inexistente");
+    }
+
+    debugPrint("🚀 A pedir planos para id_perfis = $idPerfis");
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/planos-tratamento/paciente/$idPerfis'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    debugPrint("📦 RAW RESPONSE: ${response.body}");
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final List lista = data['planos'] ?? [];
+
+      debugPrint("📦 Planos recebidos (Flutter): ${lista.length}");
+
+      return lista.map((p) => PlanoTratamento.fromMap(p)).toList();
+    } else {
+      throw Exception('Erro ao obter planos de tratamento');
+    }
+  }
+
+  // Planos de Tratamento
+  Future<void> downloadPlanoTratamento({
+    required int idPlano,
+    required String filePath,
+  }) async {
+    final db = await _dbHelper.database;
+
+    final user = await db.query('utilizadores', limit: 1);
+    final token = user.isNotEmpty ? user.first['token'] as String? : null;
+
+    if (token == null) {
+      throw Exception("Token inexistente");
+    }
+
+    final dio = Dio();
+
+    await dio.download(
+      '$baseUrl/planos-tratamento/download/$idPlano',
+      filePath,
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+  }
+
   // BUSCA CONSULTAS: Offline-First
   Future<List<Consulta>> getConsultas() async {
     final db = await _dbHelper.database;
@@ -422,10 +536,6 @@ class ApiService {
       }
     }
 
- 
-
-
-
     // ===============================
     // 📦 Fallback offline
     // ===============================
@@ -435,21 +545,123 @@ class ApiService {
   }
 
   // Adiciona isto dentro da classe ApiService
-// Busca todos os documentos de um paciente
-Future<List<Documento>> getDocumentosPorConsulta(int idConsultas) async {
-  final db = await _dbHelper.database;
+  // Busca todos os documentos de um paciente
+  Future<List<Documento>> getDocumentosPorConsulta(int idConsultas) async {
+    final db = await _dbHelper.database;
 
-  // 🔐 Obter token
-  final user = await db.query('utilizadores', limit: 1);
-  final token = user.isNotEmpty ? user.first['token'] as String? : null;
+    // 🔐 Obter token
+    final user = await db.query('utilizadores', limit: 1);
+    final token = user.isNotEmpty ? user.first['token'] as String? : null;
 
-  if (token == null) {
-    throw Exception("Token inexistente");
+    if (token == null) {
+      throw Exception("Token inexistente");
+    }
+
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/consultas/$idConsultas/documentos'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List<dynamic> lista = data['documentos'] ?? [];
+        return lista.map((json) => Documento.fromMap(json)).toList();
+      } else {
+        throw Exception('Erro ao obter documentos: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint("Erro getDocumentosPorConsulta: $e");
+      return [];
+    }
   }
 
-  try {
+  Future<List<Documento>> getDocumentosDoPaciente(int idPerfis) async {
+    final db = await _dbHelper.database;
+
+    // 🔐 Obter token
+    final user = await db.query('utilizadores', limit: 1);
+    final token = user.isNotEmpty ? user.first['token'] as String? : null;
+
+    if (token == null) {
+      throw Exception("Token inexistente");
+    }
+
+    // Primeiro tenta obter documentos de uma consulta (exemplo: última consulta)
+    try {
+      final listaConsultas = await getConsultas(); // já tens este método
+      if (listaConsultas.isNotEmpty) {
+        final ultimaConsulta =
+            listaConsultas.first; // ou qualquer lógica que queiras
+        final docsConsulta = await getDocumentosPorConsulta(
+          ultimaConsulta.idConsultas,
+        );
+        if (docsConsulta.isNotEmpty) {
+          debugPrint(
+            "Documentos obtidos da última consulta (${ultimaConsulta.idConsultas}): ${docsConsulta.length}",
+          );
+          return docsConsulta;
+        }
+      }
+    } catch (e) {
+      debugPrint("Erro ao buscar documentos por consulta: $e");
+      // continua para tentar pegar todos os documentos do paciente
+    }
+
+    // Se não houver documentos por consulta, vai buscar todos os documentos do paciente
+    final url = '$baseUrl/paciente/$idPerfis/documentos';
+    debugPrint('URL GET Documentos do Paciente: $url');
+
+    try {
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      debugPrint('Status code da API: ${response.statusCode}');
+      debugPrint('Resposta da API: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        if (data['documentos'] == null) {
+          debugPrint('Campo "documentos" não encontrado na resposta');
+          return [];
+        }
+
+        final List<dynamic> lista = data['documentos'];
+        debugPrint(
+          'Lista de documentos do paciente recebidos: ${lista.length}',
+        );
+
+        return lista.map((json) => Documento.fromMap(json)).toList();
+      } else {
+        throw Exception('Erro ao obter documentos: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint("Erro getDocumentosDoPaciente: $e");
+      return [];
+    }
+  }
+
+  Future<List<ExameClinico>> getExamesClinicosPaciente(int idPerfis) async {
+    final db = await _dbHelper.database;
+
+    final user = await db.query('utilizadores', limit: 1);
+    final token = user.isNotEmpty ? user.first['token'] as String? : null;
+
+    if (token == null) {
+      throw Exception("Token inexistente");
+    }
+
     final response = await http.get(
-      Uri.parse('$baseUrl/consultas/$idConsultas/documentos'),
+      Uri.parse('$baseUrl/exames-clinicos/$idPerfis'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -458,81 +670,19 @@ Future<List<Documento>> getDocumentosPorConsulta(int idConsultas) async {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      final List<dynamic> lista = data['documentos'] ?? [];
-      return lista.map((json) => Documento.fromMap(json)).toList();
+      final List lista = data['exames'] ?? [];
+
+      debugPrint("📄 Exames recebidos: ${lista.length}");
+
+      return lista.map((e) {
+        debugPrint("🧾 EXAME RAW:");
+        debugPrint(e.toString());
+        return ExameClinico.fromMap(e);
+      }).toList();
     } else {
-      throw Exception('Erro ao obter documentos: ${response.statusCode}');
+      throw Exception('Erro ao obter exames clínicos');
     }
-  } catch (e) {
-    debugPrint("Erro getDocumentosPorConsulta: $e");
-    return [];
   }
-}
-
-Future<List<Documento>> getDocumentosDoPaciente(int idPerfis) async {
-  final db = await _dbHelper.database;
-
-  // 🔐 Obter token
-  final user = await db.query('utilizadores', limit: 1);
-  final token = user.isNotEmpty ? user.first['token'] as String? : null;
-
-  if (token == null) {
-    throw Exception("Token inexistente");
-  }
-
-  // Primeiro tenta obter documentos de uma consulta (exemplo: última consulta)
-  try {
-    final listaConsultas = await getConsultas(); // já tens este método
-    if (listaConsultas.isNotEmpty) {
-      final ultimaConsulta = listaConsultas.first; // ou qualquer lógica que queiras
-      final docsConsulta = await getDocumentosPorConsulta(ultimaConsulta.idConsultas);
-      if (docsConsulta.isNotEmpty) {
-        debugPrint("Documentos obtidos da última consulta (${ultimaConsulta.idConsultas}): ${docsConsulta.length}");
-        return docsConsulta;
-      }
-    }
-  } catch (e) {
-    debugPrint("Erro ao buscar documentos por consulta: $e");
-    // continua para tentar pegar todos os documentos do paciente
-  }
-
-  // Se não houver documentos por consulta, vai buscar todos os documentos do paciente
-  final url = '$baseUrl/paciente/$idPerfis/documentos';
-  debugPrint('URL GET Documentos do Paciente: $url');
-
-  try {
-    final response = await http.get(
-      Uri.parse(url),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-    );
-
-    debugPrint('Status code da API: ${response.statusCode}');
-    debugPrint('Resposta da API: ${response.body}');
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-
-      if (data['documentos'] == null) {
-        debugPrint('Campo "documentos" não encontrado na resposta');
-        return [];
-      }
-
-      final List<dynamic> lista = data['documentos'];
-      debugPrint('Lista de documentos do paciente recebidos: ${lista.length}');
-
-      return lista.map((json) => Documento.fromMap(json)).toList();
-    } else {
-      throw Exception('Erro ao obter documentos: ${response.statusCode}');
-    }
-  } catch (e) {
-    debugPrint("Erro getDocumentosDoPaciente: $e");
-    return [];
-  }
-}
-
 
   Future<void> atualizarConsentimento(int idPerfis) async {
     try {

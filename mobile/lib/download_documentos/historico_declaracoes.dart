@@ -1,6 +1,6 @@
 //import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
+
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +8,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/consulta_model.dart';
 import '../models/documento_model.dart';
 import 'package:mobile/services/api_service.dart';
+
+const int TIPO_DECLARACAO = 1;
+const int TIPO_ATESTADO = 2;
 
 class HistoricoDeclaracoes extends StatefulWidget {
   final String title;
@@ -21,9 +24,8 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
   String filtro = "ambos"; // ambos | declaracoes | atestados
 
   List<Consulta> consultas = [];
-  Map<int, List<Documento>> documentosPorConsulta =
-      {}; 
-  bool aCarregar = true; 
+  Map<int, List<Documento>> documentosPorConsulta = {};
+  bool aCarregar = true;
   int? idPerfil;
 
   @override
@@ -31,67 +33,89 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
     super.initState();
     _carregarDados();
   }
-Future<void> _carregarDados() async {
-  final prefs = await SharedPreferences.getInstance();
-  idPerfil = prefs.getInt('id_perfis');
 
-  if (idPerfil == null) {
-    if (mounted) context.go('/login');
-    return;
-  }
+  Future<void> _carregarDados() async {
+    final prefs = await SharedPreferences.getInstance();
 
-  setState(() => aCarregar = true);
+    idPerfil = prefs.getInt('id_perfis');
 
-  try {
-    debugPrint("A carregar consultas da API...");
-    final listaConsultas = await ApiService().getConsultas();
-    debugPrint("Consultas recebidas: ${listaConsultas.length}");
-
-    // 1️⃣ Carregar documentos por cada consulta
-    final Map<int, List<Documento>> docsMap = {};
-    for (final c in listaConsultas) {
-      final docs = await ApiService().getDocumentosPorConsulta(c.idConsultas);
-      docsMap[c.idConsultas] = docs;
-      debugPrint(
-        "Consulta ${c.idConsultas} → documentos por consulta: ${docs.map((d) => d.idDocumento)}",
-      );
+    if (idPerfil == null) {
+      if (mounted) context.go('/login');
+      return;
     }
 
-    // 2️⃣ Carregar documentos do paciente (todas as consultas)
+    setState(() => aCarregar = true);
+
     try {
-      debugPrint("A carregar documentos do paciente...");
-      final listaDocsPaciente = await ApiService().getDocumentosDoPaciente(idPerfil!);
-      debugPrint("Documentos do paciente recebidos: ${listaDocsPaciente.length}");
+      debugPrint("A carregar consultas da API...");
+      final listaConsultas = await ApiService().getConsultas();
+      debugPrint("Consultas recebidas: ${listaConsultas.length}");
 
-      // Agrupar no mapa usando uma chave especial, ou adicionar às consultas existentes
-      for (final doc in listaDocsPaciente) {
-        final consultaId = doc.idConsultas ?? 0;
-        if (docsMap.containsKey(consultaId)) {
-          // Evita duplicados
-          final existentes = docsMap[consultaId]!;
-          if (!existentes.any((d) => d.idDocumento == doc.idDocumento)) {
-            existentes.add(doc);
-          }
-        } else {
-          docsMap[consultaId] = [doc];
+      // 1️⃣ Carregar documentos por cada consulta
+      final Map<int, List<Documento>> docsMap = {};
+      for (final c in listaConsultas) {
+        final docs = await ApiService().getDocumentosPorConsulta(c.idConsultas);
+
+        debugPrint("📄 Documentos da consulta ${c.idConsultas}:");
+
+        if (docs.isEmpty) {
+          debugPrint("   ⚠️ Nenhum documento encontrado");
         }
+
+        for (final d in docs) {
+          debugPrint(
+            "   • Documento:"
+            " id=${d.idDocumento},"
+            " titulo=${d.titulo},"
+            " tipo=${d.idTipoDocumento},"
+            " idConsultas=${d.idConsultas},"
+            " url=${d.url}",
+          );
+        }
+
+        docsMap[c.idConsultas] = docs;
+        debugPrint(
+          "Consulta ${c.idConsultas} → documentos por consulta: ${docs.map((d) => d.idDocumento)}",
+        );
       }
+
+      // 2️⃣ Carregar documentos do paciente (todas as consultas)
+      try {
+        debugPrint("A carregar documentos do paciente...");
+        final listaDocsPaciente = await ApiService().getDocumentosDoPaciente(
+          idPerfil!,
+        );
+        debugPrint(
+          "Documentos do paciente recebidos: ${listaDocsPaciente.length}",
+        );
+
+        // Agrupar no mapa usando uma chave especial, ou adicionar às consultas existentes
+        for (final doc in listaDocsPaciente) {
+          final consultaId = doc.idConsultas ?? 0;
+          if (docsMap.containsKey(consultaId)) {
+            // Evita duplicados
+            final existentes = docsMap[consultaId]!;
+            if (!existentes.any((d) => d.idDocumento == doc.idDocumento)) {
+              existentes.add(doc);
+            }
+          } else {
+            docsMap[consultaId] = [doc];
+          }
+        }
+      } catch (e) {
+        debugPrint("Erro ao carregar documentos do paciente: $e");
+      }
+
+      setState(() {
+        consultas = listaConsultas;
+        documentosPorConsulta = docsMap;
+        aCarregar = false;
+      });
     } catch (e) {
-      debugPrint("Erro ao carregar documentos do paciente: $e");
+      debugPrint("Erro ao carregar consultas/documentos da API: $e");
+      setState(() => aCarregar = false);
     }
-
-    setState(() {
-      consultas = listaConsultas;
-      documentosPorConsulta = docsMap;
-      aCarregar = false;
-    });
-  } catch (e) {
-    debugPrint("Erro ao carregar consultas/documentos da API: $e");
-    setState(() => aCarregar = false);
   }
-}
-
-
 
   String formatHora(String? hora) {
     if (hora == null || hora.length < 5) return '--:--';
@@ -102,7 +126,9 @@ Future<void> _carregarDados() async {
   Future<String> downloadPdf(String url, String filename) async {
     final dir = await getApplicationDocumentsDirectory();
     final filePath = "${dir.path}/$filename";
-    await Dio().download(url, filePath);
+
+    await ApiService().downloadDocumento(url: url, filePath: filePath);
+
     return filePath;
   }
 
@@ -267,19 +293,35 @@ Future<void> _carregarDados() async {
 
           const SizedBox(height: 16),
 
-          Column(
-            children: pdfs.map((p) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _pdfTile(
-                  context: context,
-                  filename: p["nome"]!,
-                  url: p["url"]!,
-                  sizeInfo: "60KB de 120KB",
+          if (pdfs.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: Text(
+                  "Sem documentos",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                    fontStyle: FontStyle.italic,
+                  ),
                 ),
-              );
-            }).toList(),
-          ),
+              ),
+            )
+          else
+            Column(
+              children: pdfs.map((p) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _pdfTile(
+                    context: context,
+                    filename: p["nome"]!,
+                    url: p["url"]!,
+                    sizeInfo: "60KB de 120KB",
+                  ),
+                );
+              }).toList(),
+            ),
         ],
       ),
     );
@@ -367,66 +409,68 @@ Future<void> _carregarDados() async {
         ),
       ),
 
-body: SingleChildScrollView(
-  padding: const EdgeInsets.all(20),
-  child: Column(
-    children: [
-      // ---------------- FILTROS ----------------
-      Row(
-        children: [
-          _filtroButton("Ambos", "ambos"),
-          const SizedBox(width: 10),
-          _filtroButton("Declarações", "declaracoes"),
-          const SizedBox(width: 10),
-          _filtroButton("Atestados", "atestados"),
-        ],
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            // ---------------- FILTROS ----------------
+            Row(
+              children: [
+                _filtroButton("Ambos", "ambos"),
+                const SizedBox(width: 10),
+                _filtroButton("Declarações", "declaracoes"),
+                const SizedBox(width: 10),
+                _filtroButton("Atestados", "atestados"),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
+            // ---------------- CARDS ----------------
+            ...consultas.map((c) {
+              final todosDocs = documentosPorConsulta[c.idConsultas] ?? [];
+
+              List<Documento> docsFiltrados;
+
+              if (filtro == "declaracoes") {
+                docsFiltrados = todosDocs
+                    .where((d) => d.idTipoDocumento == TIPO_DECLARACAO)
+                    .toList();
+              } else if (filtro == "atestados") {
+                docsFiltrados = todosDocs
+                    .where((d) => d.idTipoDocumento == TIPO_ATESTADO)
+                    .toList();
+              } else {
+                docsFiltrados = todosDocs;
+              }
+
+              // 🔑 AQUI ESTÁ O SEGREDO
+              if (filtro != "ambos" && docsFiltrados.isEmpty) {
+                return const SizedBox.shrink();
+              }
+
+              return _card(
+                medico: c.medicoNome ?? '—',
+                tipoConsulta: c.especialidadeNome ?? 'Consulta',
+                data: c.dataConsulta ?? '',
+                horario:
+                    '${formatHora(c.horarioInicio)} - ${formatHora(c.horarioFim)}',
+                pdfs: docsFiltrados
+                    .map(
+                      (doc) => {
+                        "nome": (doc.titulo?.isNotEmpty == true)
+                            ? "${doc.titulo}.pdf"
+                            : "documento_${doc.idDocumento}.pdf",
+                        "url":
+                            "$baseUrl/consultas/download-documento/${doc.idDocumento}",
+                      },
+                    )
+                    .toList(),
+              );
+            }).toList(),
+          ],
+        ),
       ),
-
-      const SizedBox(height: 20),
-
-      // ---------------- CARDS ----------------
-      ...consultas.map((c) {
-        final docs = documentosPorConsulta[c.idConsultas] ?? [];
-        debugPrint(
-          "Consulta ${c.idConsultas} → ${docs.length} documentos",
-        );
-
-        if (docs.isEmpty) {
-          return _card(
-            medico: c.medicoNome ?? '—',
-            tipoConsulta: c.especialidadeNome ?? 'Consulta',
-            data: c.dataConsulta ?? '',
-            horario:
-                '${formatHora(c.horarioInicio)} - ${formatHora(c.horarioFim)}',
-            pdfs: [
-              {"nome": "Sem documentos", "url": ""},
-            ],
-          );
-        }
-
-        return _card(
-          medico: c.medicoNome ?? '—',
-          tipoConsulta: c.especialidadeNome ?? 'Consulta',
-          data: c.dataConsulta ?? '',
-          horario:
-              '${formatHora(c.horarioInicio)} - ${formatHora(c.horarioFim)}',
-          pdfs: docs
-              .map(
-                (doc) => {
-                  "nome": (doc.titulo?.isNotEmpty == true)
-                      ? "${doc.titulo}.pdf"
-                      : "documento_${doc.idDocumento}.pdf",
-                  "url":
-                      "$baseUrl/consultas/download-documento/${doc.idDocumento}",
-                },
-              )
-              .toList(),
-        );
-      }).toList(),
-    ],
-  ),
-),
-
 
       // ---------------- BOTTOM NAV BAR ----------------
       bottomNavigationBar: NavigationBar(
