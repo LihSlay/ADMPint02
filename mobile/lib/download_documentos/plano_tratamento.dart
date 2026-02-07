@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile/services/api_service.dart';
 import '../models/plano_tratamento.dart';
-import 'dart:io';
 
 class PlanoTratamentoPage extends StatefulWidget {
   final String title;
