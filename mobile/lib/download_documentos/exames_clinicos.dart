@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile/services/api_service.dart';
 import '../models/exame_clinico.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
 
 class ExamesClinicos extends StatefulWidget {
   final String title;
@@ -64,14 +65,18 @@ class _ExamesClinicosState extends State<ExamesClinicos> {
   }
 
   // ---------------- PDF DOWNLOAD ------------------
-  Future<String> downloadPdf(int idExame, String filename) async {
-    final dir = await getApplicationDocumentsDirectory();
-    final filePath = "${dir.path}/$filename";
+  Future<String> downloadPdf(String url, String filename) async {
+    Directory dir;
 
-    await ApiService().downloadExameClinico(
-      idExame: idExame,
-      filePath: filePath,
-    );
+    if (Platform.isAndroid) {
+      dir = Directory('/storage/emulated/0/Download');
+    } else {
+      dir = await getApplicationDocumentsDirectory();
+    }
+
+    final filePath = '${dir.path}/$filename';
+
+    await ApiService().downloadDocumento(url: url, filePath: filePath);
 
     return filePath;
   }
@@ -89,7 +94,7 @@ class _ExamesClinicosState extends State<ExamesClinicos> {
     required BuildContext context,
     required String filename,
     required String sizeInfo,
-    required int idExame,
+    required String url,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
@@ -154,14 +159,9 @@ class _ExamesClinicosState extends State<ExamesClinicos> {
           const SizedBox(width: 10),
 
           IconButton(
-            splashRadius: 20,
-            icon: Icon(
-              Icons.download_outlined,
-              size: 26,
-              color: Colors.grey.shade700,
-            ),
+            icon: const Icon(Icons.download_outlined),
             onPressed: () async {
-              final path = await downloadPdf(idExame, filename);
+              final path = await downloadPdf(url, filename);
               abrirPdf(context, path);
             },
           ),
@@ -178,7 +178,7 @@ class _ExamesClinicosState extends State<ExamesClinicos> {
     required String titulo,
     required String data,
     required String pdfNome,
-    required int idExame,
+    required String? ficheiroUrl,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
@@ -215,7 +215,7 @@ class _ExamesClinicosState extends State<ExamesClinicos> {
             context: context,
             filename: pdfNome,
             sizeInfo: "60KB de 120KB",
-            idExame: idExame,
+            url: ficheiroUrl ?? '',
           ),
         ],
       ),
@@ -298,7 +298,7 @@ class _ExamesClinicosState extends State<ExamesClinicos> {
                     medico: e.medicoNome ?? '—',
                     data: e.dataUpload,
                     pdfNome: e.nomeFicheiro ?? 'exame.pdf',
-                    idExame: e.idExamesClinicos,
+                    ficheiroUrl: e.ficheiroUrl,
                   );
                 }).toList(),
               ),

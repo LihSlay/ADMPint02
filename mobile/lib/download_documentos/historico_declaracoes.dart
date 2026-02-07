@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/consulta_model.dart';
 import '../models/documento_model.dart';
 import 'package:mobile/services/api_service.dart';
+import 'dart:io';
 
 const int TIPO_DECLARACAO = 1;
 const int TIPO_ATESTADO = 2;
@@ -124,8 +125,15 @@ class _HistoricoDeclaracoesState extends State<HistoricoDeclaracoes> {
 
   // ---------------- PDF DOWNLOAD ------------------
   Future<String> downloadPdf(String url, String filename) async {
-    final dir = await getApplicationDocumentsDirectory();
-    final filePath = "${dir.path}/$filename";
+    Directory dir;
+
+    if (Platform.isAndroid) {
+      dir = Directory('/storage/emulated/0/Download');
+    } else {
+      dir = await getApplicationDocumentsDirectory();
+    }
+
+    final filePath = '${dir.path}/$filename';
 
     await ApiService().downloadDocumento(url: url, filePath: filePath);
 

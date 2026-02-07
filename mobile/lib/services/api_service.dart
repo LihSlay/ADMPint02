@@ -10,6 +10,7 @@ import '../models/perfil_model.dart';
 import '../models/documento_model.dart';
 import '../models/exame_clinico.dart';
 import '../models/plano_tratamento.dart';
+import 'dart:io';
 import 'package:dio/dio.dart';
 
 class ApiService {
@@ -355,6 +356,11 @@ class ApiService {
       filePath,
       options: Options(headers: {'Authorization': 'Bearer $token'}),
     );
+    
+    final file = File(filePath);
+    print("📄 Ficheiro existe: ${await file.exists()}");
+    print("📄 Tamanho: ${await file.length()} bytes");
+    print("📁 Caminho: $filePath");
   }
 
   // Exames Clinicos

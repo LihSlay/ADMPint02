@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile/services/api_service.dart';
 import '../models/plano_tratamento.dart';
+import 'dart:io';
 
 class PlanoTratamentoPage extends StatefulWidget {
   final String title;
@@ -54,14 +55,18 @@ class _PlanoTratamentoPageState extends State<PlanoTratamentoPage> {
   }
 
   // ---------------- DOWNLOAD PDF ----------------
-  Future<String> downloadPdf(int idPlano, String filename) async {
-    final dir = await getApplicationDocumentsDirectory();
-    final filePath = "${dir.path}/$filename";
+  Future<String> downloadPdf(String url, String filename) async {
+    Directory dir;
 
-    await ApiService().downloadPlanoTratamento(
-      idPlano: idPlano,
-      filePath: filePath,
-    );
+    if (Platform.isAndroid) {
+      dir = Directory('/storage/emulated/0/Download');
+    } else {
+      dir = await getApplicationDocumentsDirectory();
+    }
+
+    final filePath = '${dir.path}/$filename';
+
+    await ApiService().downloadDocumento(url: url, filePath: filePath);
 
     return filePath;
   }
@@ -78,7 +83,7 @@ class _PlanoTratamentoPageState extends State<PlanoTratamentoPage> {
     required BuildContext context,
     required String filename,
     required String sizeInfo,
-    required int idPlano,
+    required String url,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
@@ -150,7 +155,7 @@ class _PlanoTratamentoPageState extends State<PlanoTratamentoPage> {
               color: Colors.grey.shade700,
             ),
             onPressed: () async {
-              final path = await downloadPdf(idPlano, filename);
+              final path = await downloadPdf(url, filename);
               abrirPdf(context, path);
             },
           ),
@@ -163,6 +168,7 @@ class _PlanoTratamentoPageState extends State<PlanoTratamentoPage> {
   Widget _cardPlano({
     required BuildContext context,
     required PlanoTratamento plano,
+    required String ficheiro_url,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
@@ -195,7 +201,7 @@ class _PlanoTratamentoPageState extends State<PlanoTratamentoPage> {
             _pdfTile(
               context: context,
               filename: plano.nomeFicheiro!,
-              idPlano: plano.idPlanosTratamento,
+              url: ficheiro_url,
               sizeInfo: "60KB de 120KB",
             ),
         ],
@@ -260,9 +266,13 @@ class _PlanoTratamentoPageState extends State<PlanoTratamentoPage> {
               )
             else
               Column(
-                children: planos
-                    .map((p) => _cardPlano(context: context, plano: p))
-                    .toList(),
+                children: planos.map((p) {
+                  return _cardPlano(
+                    context: context,
+                    plano: p,
+                    ficheiro_url: p.ficheiroUrl ?? '',
+                  );
+                }).toList(),
               ),
           ],
         ),
