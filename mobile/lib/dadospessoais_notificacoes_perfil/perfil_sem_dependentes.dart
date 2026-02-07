@@ -47,8 +47,8 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
       final estRes = await api.getEstadosCivis();
       if (mounted) {
         setState(() {
-          generos = genRes ?? [];
-          estadosCivis = estRes ?? [];
+          generos = genRes;
+          estadosCivis = estRes ;
         });
       }
     } catch (e) {
