@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:async';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -13,6 +15,10 @@ import '../models/documento_model.dart';
 class ApiService {
   final String baseUrl = "https://pi4backend.onrender.com";
   final DatabaseHelper _dbHelper = DatabaseHelper();
+
+  String _hashPassword(String password) {
+    return sha256.convert(utf8.encode(password)).toString();
+  }
 
   Future<bool> hasInternet() async {
     var connectivityResult = await (Connectivity().checkConnectivity());
@@ -69,7 +75,7 @@ class ApiService {
           // ---- credenciais offline
           await db.insert('credenciais_offline', {
             'email': email,
-            'password_hash': password.hashCode.toString(),
+            'password_hash': _hashPassword(password),
             'data_atualizacao': DateTime.now().toIso8601String(),
           }, conflictAlgorithm: ConflictAlgorithm.replace);
 
@@ -140,6 +146,9 @@ class ApiService {
           responsavel: pacienteData['responsavel'] ?? '',
           notas: pacienteData['notas'] ?? '',
           idSubsistemasSaude: pacienteData['id_subsistemas_saude'] ?? 0,
+          // aceitar variantes de nomes vindos do backend (id_estados_civis / id_generos)
+          idEstadoCivil: pacienteData['id_estado_civil'] ?? pacienteData['id_estados_civis'] ?? (pacienteData['EstadoCivil'] is Map ? (pacienteData['EstadoCivil']['id_estados_civis'] ?? pacienteData['EstadoCivil']['id']) : null),
+          idGenero: pacienteData['id_genero'] ?? pacienteData['id_generos'] ?? (pacienteData['Genero'] is Map ? (pacienteData['Genero']['id_generos'] ?? pacienteData['Genero']['id']) : null),
           idParentesco: pacienteData['id_parentesco'] ?? 0,
           alcunhas: pacienteData['alcunhas'] ?? '',
           ativo: (pacienteData['ativo'] == true || pacienteData['ativo'] == 1)
@@ -154,6 +163,14 @@ class ApiService {
         await db.insert('perfis', perfil.toMap());
 
         debugPrint("✅ Perfil do utilizador guardado localmente");
+        // Garantir que as tabelas de lookup existem localmente
+        try {
+          await fetchAndSaveGeneros();
+          await fetchAndSaveEstadosCivis();
+          await fetchAndSaveSubsistemas();
+        } catch (e) {
+          debugPrint('Erro ao sincronizar lookups: $e');
+        }
       } else {
         throw Exception("Erro ao obter perfil: ${response.statusCode}");
       }
@@ -161,6 +178,99 @@ class ApiService {
       debugPrint("Erro fetchMeuPerfil: $e");
       rethrow;
     }
+  }
+
+  // Tenta obter um array de possíveis endpoints (tenta várias variantes e retorna o primeiro array que encontrar)
+  Future<List<dynamic>> _tryGetListFromCandidates(List<String> candidates) async {
+    for (final p in candidates) {
+      try {
+        final response = await http.get(Uri.parse('$baseUrl$p'));
+        if (response.statusCode != 200) continue;
+        final decoded = json.decode(response.body);
+        if (decoded is List) return decoded;
+        if (decoded is Map<String, dynamic>) {
+          // procurar o primeiro valor que seja uma lista
+          for (final v in decoded.values) {
+            if (v is List) return v;
+          }
+        }
+      } catch (e) {
+        // ignorar e tentar o próximo
+        continue;
+      }
+    }
+    return [];
+  }
+
+  Future<void> fetchAndSaveGeneros() async {
+    final db = await _dbHelper.database;
+    final candidates = ['/generos', '/generos/'];
+    final List<dynamic> lista = await _tryGetListFromCandidates(candidates);
+    if (lista.isEmpty) return;
+    final batch = db.batch();
+    for (final item in lista) {
+      try {
+        final rawId = item['id_generos'] ?? item['id'] ?? item['id_genero'];
+        final id = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '0') ?? 0;
+        final designacao = item['designacao'] ?? item['nome'] ?? item['name'] ?? '';
+        if (id > 0) {
+          batch.insert('generos', {'id_generos': id, 'designacao': designacao}, conflictAlgorithm: ConflictAlgorithm.replace);
+        }
+      } catch (_) {}
+    }
+    await batch.commit(noResult: true);
+    debugPrint('Generos sincronizados: ${lista.length}');
+  }
+
+  Future<void> fetchAndSaveEstadosCivis() async {
+    final db = await _dbHelper.database;
+    final candidates = ['/estados-civis', '/estados_civis', '/estadoscivis'];
+    final List<dynamic> lista = await _tryGetListFromCandidates(candidates);
+    if (lista.isEmpty) return;
+    final batch = db.batch();
+    for (final item in lista) {
+      try {
+        final rawId = item['id_estados_civis'] ?? item['id'] ?? item['id_estado_civil'];
+        final id = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '0') ?? 0;
+        final designacao = item['designacao'] ?? item['nome'] ?? item['name'] ?? '';
+        if (id > 0) {
+          batch.insert('estados_civis', {'id_estados_civis': id, 'designacao': designacao}, conflictAlgorithm: ConflictAlgorithm.replace);
+        }
+      } catch (_) {}
+    }
+    await batch.commit(noResult: true);
+    debugPrint('Estados civis sincronizados: ${lista.length}');
+  }
+
+  Future<void> fetchAndSaveSubsistemas() async {
+    final db = await _dbHelper.database;
+    final candidates = ['/subsistemas-saude', '/subsistemas_saude', '/subsistemas'];
+    final List<dynamic> lista = await _tryGetListFromCandidates(candidates);
+    if (lista.isEmpty) return;
+    final batch = db.batch();
+    for (final item in lista) {
+      try {
+        final rawId = item['id_subsistemas_saude'] ?? item['id'] ?? item['id_subsystem'] ?? item['id_subsistema'];
+        final id = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '0') ?? 0;
+        final designacao = item['designacao'] ?? item['nome'] ?? item['name'] ?? '';
+        if (id > 0) {
+          batch.insert('subsistemas_saude', {'id_subsistemas_saude': id, 'designacao': designacao}, conflictAlgorithm: ConflictAlgorithm.replace);
+        }
+      } catch (_) {}
+    }
+    await batch.commit(noResult: true);
+    debugPrint('Subsistemas sincronizados: ${lista.length}');
+  }
+
+  // NOVO: Métodos para obter listas locais (usados em PerfilSemDependentes)
+  Future<List<Map<String, dynamic>>> getGeneros() async {
+    final db = await _dbHelper.database;
+    return await db.query('generos');
+  }
+
+  Future<List<Map<String, dynamic>>> getEstadosCivis() async {
+    final db = await _dbHelper.database;
+    return await db.query('estados_civis');
   }
 
   // Login offline: Verificar credenciais guardadas localmente
@@ -184,7 +294,7 @@ class ApiService {
       }
 
       final passwordHashGuardado = credenciais.first['password_hash'];
-      final passwordHashAtual = password.hashCode.toString();
+      final passwordHashAtual = _hashPassword(password);
 
       if (passwordHashGuardado != passwordHashAtual) {
         throw Exception('Credenciais inválidas');
@@ -316,11 +426,11 @@ class ApiService {
         final msg =
             data['message'] ??
             data['error'] ??
-            'Falha ao alterar a palavra‑passe.';
+            'Falha ao alterar a palavra-passe.';
         debugPrint("Falha Reset: $msg");
         throw Exception(msg);
       } catch (_) {
-        throw Exception('Falha ao alterar a palavra‑passe.');
+        throw Exception('Falha ao alterar a palavra-passe.');
       }
     } catch (e) {
       debugPrint("Erro resetPassword: $e");
@@ -913,6 +1023,9 @@ Future<void> fetchAndSaveDependentes(int idPerfis) async {
         'nif': d['nif'],
         'responsavel': idPerfis, // 🔑 MUITO IMPORTANTE
         'id_subsistemas_saude': d['id_subsistemas_saude'],
+        // aceitar variantes vindas do backend
+        'id_estado_civil': d['id_estado_civil'] ?? d['id_estados_civis'] ?? null,
+        'id_genero': d['id_genero'] ?? d['id_generos'] ?? null,
         'id_parentesco': d['id_parentesco'],
         'alcunhas': d['alcunhas'],
         'ativo': d['ativo'] == true ? 1 : 0,

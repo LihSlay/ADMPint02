@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:mobile/models/consulta_model.dart';
 import 'package:mobile/services/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Calendario extends StatefulWidget {
   const Calendario({super.key, required this.title});
@@ -45,6 +46,12 @@ class _CalendarioState extends State<Calendario> {
     try {
       debugPrint("A carregar consultas...");
       List<Consulta> list = await ApiService().getConsultas();
+      // Filtrar pelo perfil ativo (id_perfis) para respeitar a troca de dependente
+      final prefs = await SharedPreferences.getInstance();
+      final int? idPerfisAtivo = prefs.getInt('id_perfis');
+      if (idPerfisAtivo != null) {
+        list = list.where((c) => c.idPerfis == idPerfisAtivo).toList();
+      }
       debugPrint("Consultas recebidas: ${list.length}");
 final hoje = DateTime.now();
 

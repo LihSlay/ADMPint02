@@ -12,6 +12,8 @@ class Perfil {
   final String? responsavel;
   final String? notas;
   final int? idSubsistemasSaude;
+  final int? idEstadoCivil;
+  final int? idGenero;
   final int? idParentesco;
   final String? alcunhas;
   final dynamic ativo;
@@ -30,6 +32,8 @@ class Perfil {
     this.responsavel,
     this.notas,
     this.idSubsistemasSaude,
+    this.idEstadoCivil,
+    this.idGenero,
     this.idParentesco,
     this.alcunhas,
     this.ativo,
@@ -50,6 +54,8 @@ class Perfil {
       'responsavel': responsavel,
       'notas': notas,
       'id_subsistemas_saude': idSubsistemasSaude,
+      'id_estado_civil': idEstadoCivil,
+      'id_genero': idGenero,
       'id_parentesco': idParentesco,
       'alcunhas': alcunhas,
       'ativo': ativo,
@@ -71,6 +77,8 @@ class Perfil {
       responsavel: map['responsavel'],
       notas: map['notas'],
       idSubsistemasSaude: map['id_subsistemas_saude'],
+      idEstadoCivil: map['id_estado_civil'],
+      idGenero: map['id_genero'],
       idParentesco: map['id_parentesco'],
       alcunhas: map['alcunhas'],
       ativo: map['ativo'],

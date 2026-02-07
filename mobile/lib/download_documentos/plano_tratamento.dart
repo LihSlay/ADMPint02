@@ -1,5 +1,6 @@
 //import 'dart:io';
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
@@ -19,6 +20,11 @@ class _PlanoTratamentoState extends State<PlanoTratamento> {
   Future<String> downloadPdf(String url, String filename) async {
     final dir = await getApplicationDocumentsDirectory();
     final filePath = "${dir.path}/$filename";
+
+    final file = File(filePath);
+    if (await file.exists()) {
+      return filePath; // already downloaded
+    }
 
     await Dio().download(url, filePath);
     return filePath;

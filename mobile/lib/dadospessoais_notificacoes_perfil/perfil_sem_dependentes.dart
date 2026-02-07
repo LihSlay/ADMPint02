@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/database/database_helper.dart';
+import 'package:mobile/services/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile/dadospessoais_notificacoes_perfil/dadospessoais_responsavel.dart';
 
 class PerfilSemDependentes extends StatefulWidget {
@@ -17,9 +19,16 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
   int? idPaciente;
   String nomePaciente = '';
   int? numeroUtente;
+  int? idGenero;
+  int? idEstadoCivil;
+  int? _idPerfilAtivo;
 
   List<Map<String, dynamic>> dependentes = [];
   bool carregado = false;
+
+  // Adicionado para dropdowns
+  List<Map<String, dynamic>> generos = [];
+  List<Map<String, dynamic>> estadosCivis = [];
 
   int currentPageIndex = 0;
 
@@ -27,6 +36,24 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
   void initState() {
     super.initState();
     _carregarDadosDaBase();
+    _carregarDropdowns(); // Novo: carregar opções de género e estado civil
+  }
+
+  // Novo: Carregar opções de dropdowns via API
+  Future<void> _carregarDropdowns() async {
+    try {
+      final api = ApiService();
+      final genRes = await api.getGeneros(); // Assumindo que há métodos no ApiService
+      final estRes = await api.getEstadosCivis();
+      if (mounted) {
+        setState(() {
+          generos = genRes ?? [];
+          estadosCivis = estRes ?? [];
+        });
+      }
+    } catch (e) {
+      debugPrint('Erro ao carregar dropdowns: $e');
+    }
   }
 
   // ------------------- CARREGAR PERFIL + DEPENDENTES -------------------
@@ -58,16 +85,70 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
     final paciente = perfisPrincipais.first;
 
     idPaciente = paciente['id_perfis'] as int?;
-    nomePaciente = paciente['nome'] as String? ?? '';
-    numeroUtente = paciente['n_utente'] as int?;
 
+    // Determinar qual o perfil activo (pode ser o principal ou um dependente)
+    final prefs = await SharedPreferences.getInstance();
+    _idPerfilAtivo = prefs.getInt('id_perfis');
+
+    // Se existe um perfil activo e é diferente do principal, carregamos esse
+    if (_idPerfilAtivo != null && _idPerfilAtivo != idPaciente) {
+      final ativo = await db.query(
+        'perfis',
+        where: 'id_perfis = ?',
+        whereArgs: [_idPerfilAtivo],
+        limit: 1,
+      );
+      if (ativo.isNotEmpty) {
+        final dep = ativo.first;
+        nomePaciente = dep['nome'] as String? ?? '';
+        numeroUtente = dep['n_utente'] as int?;
+        idGenero = dep['id_generos'] as int?;
+        idEstadoCivil = dep['id_estados_civis'] as int?;
+      } else {
+        // fallback para o paciente principal
+        nomePaciente = paciente['nome'] as String? ?? '';
+        numeroUtente = paciente['n_utente'] as int?;
+        idGenero = paciente['id_generos'] as int?;
+        idEstadoCivil = paciente['id_estados_civis'] as int?;
+        _idPerfilAtivo = idPaciente;
+        await prefs.setInt('id_perfis', idPaciente!);
+      }
+    } else {
+      // Sem perfil activo definido ou é o principal → usar dados do paciente principal
+      nomePaciente = paciente['nome'] as String? ?? '';
+      numeroUtente = paciente['n_utente'] as int?;
+      idGenero = paciente['id_generos'] as int?;
+      idEstadoCivil = paciente['id_estados_civis'] as int?;
+      _idPerfilAtivo = idPaciente;
+      await prefs.setInt('id_perfis', idPaciente!);
+    }
     // 🔹 DEPENDENTES
-    // ⚠️ responsavel é STRING → comparação tem de ser STRING
-    dependentes = await db.query(
-      'perfis',
-      where: 'responsavel = ?',
-      whereArgs: [idPaciente.toString()],
-    );
+    // Primeiro tentamos sincronizar com o backend (se houver internet)
+    // para garantir que a BD local tem os dependentes mais recentes.
+    if (idPaciente == null) {
+      if (mounted) setState(() => carregado = true);
+      return;
+    }
+
+    try {
+      final api = ApiService();
+      await api.fetchAndSaveDependentes(idPaciente!);
+    } catch (e) {
+      debugPrint('Erro ao sincronizar dependentes: $e');
+      // ignorar e continuar a ler localmente
+    }
+
+    // Depois de tentar sincronizar, lemos os dependentes da BD local
+    // Só mostrar a lista de dependentes quando estivermos a ver o perfil principal
+    if (_idPerfilAtivo == idPaciente) {
+      dependentes = await db.query(
+        'perfis',
+        where: 'responsavel = ? OR responsavel = ?',
+        whereArgs: [idPaciente.toString(), idPaciente],
+      );
+    } else {
+      dependentes = [];
+    }
 
     // 🧪 DEBUG
     debugPrint('================ PERFIL DEBUG ================');
@@ -78,6 +159,12 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
       debugPrint('→ ${d['nome']} | responsavel=${d['responsavel']}');
     }
     debugPrint('==============================================');
+
+    // Se nenhum dependente for encontrado, deixamos logs para ajudar no
+    // debugging (úteis para testes em dispositivos específicos).
+    if (dependentes.isEmpty) {
+      debugPrint('Nenhum dependente encontrado para responsavel=$idPaciente');
+    }
 
     if (mounted) setState(() => carregado = true);
   }
@@ -91,6 +178,16 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
     return nome.isNotEmpty ? nome[0] : '';
   }
 
+  // Novo: Função auxiliar para obter designação por ID
+  String _getDesignacao(List<Map<String, dynamic>> lista, int? id, String keyId, String keyDesignacao) {
+    if (id == null || lista.isEmpty) return 'N/A';
+    final item = lista.firstWhere(
+      (item) => item[keyId] == id,
+      orElse: () => {},
+    );
+    return item[keyDesignacao] ?? 'N/A';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -98,7 +195,7 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
 
       // ------------------- APPBAR -------------------
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(180),
+        preferredSize: const Size.fromHeight(140), // reduzido para tamanho mais compacto
         child: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -110,38 +207,58 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
             ),
           ),
           child: SafeArea(
-            minimum: const EdgeInsets.all(20),
+            minimum: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(
               children: [
                 IconButton(
                   icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => context.go('/inicio'),
                 ),
+                const SizedBox(width: 8),
                 const SizedBox(width: 12),
                 _Avatar(texto: _iniciais(nomePaciente)),
                 const SizedBox(width: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      nomePaciente,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    if (numeroUtente != null)
+                Expanded( // Adicionado para evitar overflow
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
                       Text(
-                        'Nº de utente: $numeroUtente',
+                        nomePaciente,
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: 18,
                           color: Colors.white,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                  ],
+                      const SizedBox(height: 4),
+                      if (numeroUtente != null)
+                        Text(
+                          'Nº de utente: $numeroUtente',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.white,
+                          ),
+                        ),
+                      // Novo: Mostrar género e estado civil
+                      if (idGenero != null)
+                        Text(
+                          'Género: ${_getDesignacao(generos, idGenero, 'id_generos', 'designacao')}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.white,
+                          ),
+                        ),
+                      if (idEstadoCivil != null)
+                        Text(
+                          'Estado Civil: ${_getDesignacao(estadosCivis, idEstadoCivil, 'id_estados_civis', 'designacao')}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.white,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -161,15 +278,16 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
                     icon: Icons.person_outline,
                     label: "Dados pessoais",
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => DadosPessoaisResponsavel(
-                            title: 'Dados pessoais',
-                            idPerfil: idPaciente!,
+                        final alvo = _idPerfilAtivo ?? idPaciente!;
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => DadosPessoaisResponsavel(
+                              title: 'Dados pessoais',
+                              idPerfil: alvo,
+                            ),
                           ),
-                        ),
-                      );
+                        );
                     },
                   ),
 
@@ -183,68 +301,115 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
 
                   const SizedBox(height: 30),
 
-                  const Text(
-                    "Dependentes",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                  // Only show "Dependentes" title if viewing main profile
+                  if (_idPerfilAtivo == idPaciente)
+                    const Text(
+                      "Dependentes",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
 
                   const SizedBox(height: 15),
 
-                  dependentes.isEmpty
-                      ? const Text(
-                          "Sem dependentes associados",
-                          style: TextStyle(color: Colors.black54),
-                        )
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: dependentes.map((dep) {
-                            final nomeDependente =
-                                dep['nome'] as String? ?? '';
+                  // Se estivermos a ver um dependente, mostrar botão para voltar à conta principal
+                  if (_idPerfilAtivo != null && _idPerfilAtivo != idPaciente)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            final prefs = await SharedPreferences.getInstance();
+                            // voltar ao paciente principal
+                            await prefs.setInt('id_perfis', idPaciente!);
+                            await prefs.remove('id_perfis_prev');
+                            // recarregar dados desta página
+                            await _carregarDadosDaBase();
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Voltado à conta principal')),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.undo),
+                          label: const Text('Voltar à conta principal'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF907041),
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    ),
 
-                            return Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 8),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 70,
-                                    height: 70,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black26,
-                                          blurRadius: 6,
-                                          offset: Offset(0, 3),
+                  // Lista de dependentes apenas se estivermos a ver o perfil principal
+                  if (_idPerfilAtivo == idPaciente)
+                    dependentes.isEmpty
+                        ? const Text(
+                            "Sem dependentes associados",
+                            style: TextStyle(color: Colors.black54),
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: dependentes.map((dep) {
+                              final nomeDependente = dep['nome'] as String? ?? '';
+                              final idDep = dep['id_perfis'] as int?;
+
+                              return InkWell(
+                                onTap: idDep == null
+                                    ? null
+                                    : () async {
+                                        // Guardar id atual como prev
+                                        final prefs = await SharedPreferences.getInstance();
+                                        final current = prefs.getInt('id_perfis');
+                                        if (current != null) {
+                                          await prefs.setInt('id_perfis_prev', current);
+                                        }
+                                        await prefs.setInt('id_perfis', idDep);
+
+                                        // Navigate to initial page directly
+                                        context.go('/inicio');
+                                      },
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 70,
+                                        height: 70,
+                                        decoration: const BoxDecoration(
+                                          color: Colors.white,
+                                          shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black26,
+                                              blurRadius: 6,
+                                              offset: Offset(0, 3),
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        _iniciais(nomeDependente)
-                                            .toUpperCase(),
-                                        style: const TextStyle(
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold,
+                                        child: Center(
+                                          child: Text(
+                                            _iniciais(nomeDependente).toUpperCase(),
+                                            style: const TextStyle(
+                                              fontSize: 22,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
                                         ),
                                       ),
-                                    ),
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        nomeDependente,
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    nomeDependente,
-                                    style:
-                                        const TextStyle(fontSize: 16),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                        ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
 
                   const SizedBox(height: 40),
 
@@ -270,8 +435,7 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
                         if (!context.mounted) return;
                         context.go('/login');
                       },
-                      icon:
-                          const Icon(Icons.logout, color: Colors.white),
+                      icon: const Icon(Icons.logout, color: Colors.white),
                       label: const Text(
                         "Terminar Sessão",
                         style: TextStyle(
@@ -359,8 +523,7 @@ class _Avatar extends StatelessWidget {
       child: Center(
         child: Text(
           texto.toUpperCase(),
-          style:
-              const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
       ),
     );
@@ -385,8 +548,7 @@ class SettingsCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile/database/database_helper.dart';
 import 'package:mobile/models/notificacao_model.dart';
 import 'package:mobile/services/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificacoesDados extends StatefulWidget {
   final String title;
@@ -42,13 +43,18 @@ class _NotificacoesDadosState extends State<NotificacoesDados> {
   Future<void> _carregarNotificacoes() async {
     final db = await _dbHelper.database;
 
+    // Filtrar notificações pelo perfil ativo
+    final prefs = await SharedPreferences.getInstance();
+    final int? idPerfisAtivo = prefs.getInt('id_perfis');
+
     final result = await db.query(
       'notificacoes',
+      where: idPerfisAtivo != null ? 'id_perfis = ?' : null,
+      whereArgs: idPerfisAtivo != null ? [idPerfisAtivo] : null,
       orderBy: 'id_notificacoes DESC',
     );
 
-    notificacoes =
-        result.map((n) => NotificacaoModel.fromMap(n)).toList();
+    notificacoes = result.map((n) => NotificacaoModel.fromMap(n)).toList();
 
     if (mounted) setState(() => carregado = true);
   }
