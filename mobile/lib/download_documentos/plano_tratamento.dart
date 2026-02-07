@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:go_router/go_router.dart';
@@ -68,6 +70,12 @@ class _PlanoTratamentoPageState extends State<PlanoTratamentoPage> {
 
     await ApiService().downloadDocumento(url: url, filePath: filePath);
 
+    final file = File(filePath);
+    if (await file.exists()) {
+      return filePath; // already downloaded
+    }
+
+    await Dio().download(url, filePath);
     return filePath;
   }
 

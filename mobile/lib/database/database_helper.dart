@@ -19,7 +19,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'clinica_database.db');
     return await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -53,26 +53,37 @@ class DatabaseHelper {
         )
       ''');
     }
-
+    // Versão 4: adicionar colunas de genero/estado civil em perfis se ainda não existirem
     if (oldVersion < 4) {
+      try {
+        await db.execute('ALTER TABLE perfis ADD COLUMN id_estado_civil INTEGER');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE perfis ADD COLUMN id_genero INTEGER');
+      } catch (_) {}
+    }
+    // Versão 5: criar tabelas de lookup (generos, estados_civis, subsistemas_saude)
+    if (oldVersion < 5) {
       await db.execute('''
-    CREATE TABLE IF NOT EXISTS tipo_documentos(
-      id_tipo_documentos INTEGER PRIMARY KEY AUTOINCREMENT,
-      designacao TEXT
-    )
-  ''');
+        CREATE TABLE IF NOT EXISTS generos(
+          id_generos INTEGER PRIMARY KEY,
+          designacao TEXT
+        )
+      ''');
 
       await db.execute('''
-    CREATE TABLE IF NOT EXISTS documentos(
-      id_documentos INTEGER PRIMARY KEY AUTOINCREMENT,
-      titulo TEXT,
-      url TEXT,
-      id_consultas INTEGER NOT NULL,
-      id_tipo_documentos INTEGER,
-        FOREIGN KEY (id_consultas) REFERENCES consultas (id_consultas),
-  FOREIGN KEY (id_tipo_documentos) REFERENCES tipo_documentos (id_tipo_documentos)
-    )
-  ''');
+        CREATE TABLE IF NOT EXISTS estados_civis(
+          id_estados_civis INTEGER PRIMARY KEY,
+          designacao TEXT
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS subsistemas_saude(
+          id_subsistemas_saude INTEGER PRIMARY KEY,
+          designacao TEXT
+        )
+      ''');
     }
   }
 
@@ -102,6 +113,8 @@ class DatabaseHelper {
         cod_postal TEXT,
         nif TEXT,
         responsavel TEXT,
+        id_estado_civil INTEGER,
+        id_genero INTEGER,
         notas TEXT,
         id_subsistemas_saude INTEGER,
         id_parentesco INTEGER,
@@ -209,6 +222,28 @@ class DatabaseHelper {
         email TEXT PRIMARY KEY,
         password_hash TEXT NOT NULL,
         data_atualizacao TEXT NOT NULL
+      )
+    ''');
+
+    // Tabelas de lookup (generos, estados civis, subsistemas de saúde)
+    await db.execute('''
+      CREATE TABLE generos(
+        id_generos INTEGER PRIMARY KEY,
+        designacao TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE estados_civis(
+        id_estados_civis INTEGER PRIMARY KEY,
+        designacao TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE subsistemas_saude(
+        id_subsistemas_saude INTEGER PRIMARY KEY,
+        designacao TEXT
       )
     ''');
   }

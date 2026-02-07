@@ -30,6 +30,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   intl: ^0.20.0
+  crypto: ^3.0.2
 
 dev_dependencies:
   flutter_test:

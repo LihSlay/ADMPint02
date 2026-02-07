@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:async';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -13,9 +15,14 @@ import '../models/plano_tratamento.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
 
+
 class ApiService {
   final String baseUrl = "https://pi4backend.onrender.com";
   final DatabaseHelper _dbHelper = DatabaseHelper();
+
+  String _hashPassword(String password) {
+    return sha256.convert(utf8.encode(password)).toString();
+  }
 
   Future<bool> hasInternet() async {
     var connectivityResult = await (Connectivity().checkConnectivity());
@@ -72,7 +79,7 @@ class ApiService {
           // ---- credenciais offline
           await db.insert('credenciais_offline', {
             'email': email,
-            'password_hash': password.hashCode.toString(),
+            'password_hash': _hashPassword(password),
             'data_atualizacao': DateTime.now().toIso8601String(),
           }, conflictAlgorithm: ConflictAlgorithm.replace);
 
@@ -143,6 +150,9 @@ class ApiService {
           responsavel: pacienteData['responsavel'] ?? '',
           notas: pacienteData['notas'] ?? '',
           idSubsistemasSaude: pacienteData['id_subsistemas_saude'] ?? 0,
+          // aceitar variantes de nomes vindos do backend (id_estados_civis / id_generos)
+          idEstadoCivil: pacienteData['id_estado_civil'] ?? pacienteData['id_estados_civis'] ?? (pacienteData['EstadoCivil'] is Map ? (pacienteData['EstadoCivil']['id_estados_civis'] ?? pacienteData['EstadoCivil']['id']) : null),
+          idGenero: pacienteData['id_genero'] ?? pacienteData['id_generos'] ?? (pacienteData['Genero'] is Map ? (pacienteData['Genero']['id_generos'] ?? pacienteData['Genero']['id']) : null),
           idParentesco: pacienteData['id_parentesco'] ?? 0,
           alcunhas: pacienteData['alcunhas'] ?? '',
           ativo: (pacienteData['ativo'] == true || pacienteData['ativo'] == 1)
@@ -157,6 +167,14 @@ class ApiService {
         await db.insert('perfis', perfil.toMap());
 
         debugPrint("✅ Perfil do utilizador guardado localmente");
+        // Garantir que as tabelas de lookup existem localmente
+        try {
+          await fetchAndSaveGeneros();
+          await fetchAndSaveEstadosCivis();
+          await fetchAndSaveSubsistemas();
+        } catch (e) {
+          debugPrint('Erro ao sincronizar lookups: $e');
+        }
       } else {
         throw Exception("Erro ao obter perfil: ${response.statusCode}");
       }
@@ -164,6 +182,99 @@ class ApiService {
       debugPrint("Erro fetchMeuPerfil: $e");
       rethrow;
     }
+  }
+
+  // Tenta obter um array de possíveis endpoints (tenta várias variantes e retorna o primeiro array que encontrar)
+  Future<List<dynamic>> _tryGetListFromCandidates(List<String> candidates) async {
+    for (final p in candidates) {
+      try {
+        final response = await http.get(Uri.parse('$baseUrl$p'));
+        if (response.statusCode != 200) continue;
+        final decoded = json.decode(response.body);
+        if (decoded is List) return decoded;
+        if (decoded is Map<String, dynamic>) {
+          // procurar o primeiro valor que seja uma lista
+          for (final v in decoded.values) {
+            if (v is List) return v;
+          }
+        }
+      } catch (e) {
+        // ignorar e tentar o próximo
+        continue;
+      }
+    }
+    return [];
+  }
+
+  Future<void> fetchAndSaveGeneros() async {
+    final db = await _dbHelper.database;
+    final candidates = ['/generos', '/generos/'];
+    final List<dynamic> lista = await _tryGetListFromCandidates(candidates);
+    if (lista.isEmpty) return;
+    final batch = db.batch();
+    for (final item in lista) {
+      try {
+        final rawId = item['id_generos'] ?? item['id'] ?? item['id_genero'];
+        final id = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '0') ?? 0;
+        final designacao = item['designacao'] ?? item['nome'] ?? item['name'] ?? '';
+        if (id > 0) {
+          batch.insert('generos', {'id_generos': id, 'designacao': designacao}, conflictAlgorithm: ConflictAlgorithm.replace);
+        }
+      } catch (_) {}
+    }
+    await batch.commit(noResult: true);
+    debugPrint('Generos sincronizados: ${lista.length}');
+  }
+
+  Future<void> fetchAndSaveEstadosCivis() async {
+    final db = await _dbHelper.database;
+    final candidates = ['/estados-civis', '/estados_civis', '/estadoscivis'];
+    final List<dynamic> lista = await _tryGetListFromCandidates(candidates);
+    if (lista.isEmpty) return;
+    final batch = db.batch();
+    for (final item in lista) {
+      try {
+        final rawId = item['id_estados_civis'] ?? item['id'] ?? item['id_estado_civil'];
+        final id = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '0') ?? 0;
+        final designacao = item['designacao'] ?? item['nome'] ?? item['name'] ?? '';
+        if (id > 0) {
+          batch.insert('estados_civis', {'id_estados_civis': id, 'designacao': designacao}, conflictAlgorithm: ConflictAlgorithm.replace);
+        }
+      } catch (_) {}
+    }
+    await batch.commit(noResult: true);
+    debugPrint('Estados civis sincronizados: ${lista.length}');
+  }
+
+  Future<void> fetchAndSaveSubsistemas() async {
+    final db = await _dbHelper.database;
+    final candidates = ['/subsistemas-saude', '/subsistemas_saude', '/subsistemas'];
+    final List<dynamic> lista = await _tryGetListFromCandidates(candidates);
+    if (lista.isEmpty) return;
+    final batch = db.batch();
+    for (final item in lista) {
+      try {
+        final rawId = item['id_subsistemas_saude'] ?? item['id'] ?? item['id_subsystem'] ?? item['id_subsistema'];
+        final id = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '0') ?? 0;
+        final designacao = item['designacao'] ?? item['nome'] ?? item['name'] ?? '';
+        if (id > 0) {
+          batch.insert('subsistemas_saude', {'id_subsistemas_saude': id, 'designacao': designacao}, conflictAlgorithm: ConflictAlgorithm.replace);
+        }
+      } catch (_) {}
+    }
+    await batch.commit(noResult: true);
+    debugPrint('Subsistemas sincronizados: ${lista.length}');
+  }
+
+  // NOVO: Métodos para obter listas locais (usados em PerfilSemDependentes)
+  Future<List<Map<String, dynamic>>> getGeneros() async {
+    final db = await _dbHelper.database;
+    return await db.query('generos');
+  }
+
+  Future<List<Map<String, dynamic>>> getEstadosCivis() async {
+    final db = await _dbHelper.database;
+    return await db.query('estados_civis');
   }
 
   // Login offline: Verificar credenciais guardadas localmente
@@ -187,7 +298,7 @@ class ApiService {
       }
 
       final passwordHashGuardado = credenciais.first['password_hash'];
-      final passwordHashAtual = password.hashCode.toString();
+      final passwordHashAtual = _hashPassword(password);
 
       if (passwordHashGuardado != passwordHashAtual) {
         throw Exception('Credenciais inválidas');
@@ -319,11 +430,11 @@ class ApiService {
         final msg =
             data['message'] ??
             data['error'] ??
-            'Falha ao alterar a palavra‑passe.';
+            'Falha ao alterar a palavra-passe.';
         debugPrint("Falha Reset: $msg");
         throw Exception(msg);
       } catch (_) {
-        throw Exception('Falha ao alterar a palavra‑passe.');
+        throw Exception('Falha ao alterar a palavra-passe.');
       }
     } catch (e) {
       debugPrint("Erro resetPassword: $e");
@@ -922,4 +1033,272 @@ class ApiService {
       }
     }
   }
+  /// PERFIL + DEPENDENTES (rota usada na web)
+Future<void> fetchAndSaveMeuPerfilComDependentes(String token) async {
+  final db = await _dbHelper.database;
+
+  final response = await http.get(
+    Uri.parse('$baseUrl/pacientes/meu-perfil-com-dependentes'),
+    headers: {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    },
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception('Erro ao obter perfil com dependentes');
+  }
+
+  final data = json.decode(response.body);
+
+  final paciente = data['paciente'];
+  final List dependentes = data['dependentes'] ?? [];
+
+  // limpar perfis locais
+  await db.delete('perfis');
+
+  // ---------- PERFIL PRINCIPAL (RESPONSÁVEL) ----------
+  await db.insert('perfis', {
+    'id_perfis': paciente['id_perfis'],
+    'id_utilizadores': paciente['id_utilizadores'],
+    'nome': paciente['nome'],
+    'n_utente': paciente['n_utente'],
+    'data_nasc': paciente['data_nasc'],
+    'contacto_tel': paciente['contacto_tel'],
+    'profissao': paciente['profissao'],
+    'morada': paciente['morada'],
+    'cod_postal': paciente['cod_postal'],
+    'nif': paciente['nif'],
+    'responsavel': '', 
+    'notas': paciente['notas'],
+    'id_subsistemas_saude': paciente['id_subsistemas_saude'],
+    'id_parentesco': paciente['id_parentesco'],
+    'alcunhas': paciente['alcunhas'],
+    'ativo': (paciente['ativo'] == true || paciente['ativo'] == 1) ? 1 : 0,
+  });
+
+  // ---------- DEPENDENTES ----------
+  for (final dep in dependentes) {
+    await db.insert('perfis', {
+      'id_perfis': dep['id_perfis'],
+      'id_utilizadores': dep['id_utilizadores'],
+      'nome': dep['nome'],
+      'n_utente': dep['n_utente'],
+      'data_nasc': dep['data_nasc'],
+      'contacto_tel': dep['contacto_tel'],
+      'profissao': dep['profissao'],
+      'morada': dep['morada'],
+      'cod_postal': dep['cod_postal'],
+      'nif': dep['nif'],
+      'responsavel': paciente['id_perfis'].toString(), 
+      'notas': dep['notas'],
+      'id_subsistemas_saude': dep['id_subsistemas_saude'],
+      'id_parentesco': dep['id_parentesco'],
+      'alcunhas': dep['alcunhas'],
+      'ativo': (dep['ativo'] == true || dep['ativo'] == 1) ? 1 : 0,
+    });
+  }
+}
+// ================= NOTIFICAÇÕES (ligado ao backend da web) =================
+Future<void> fetchAndSaveNotificacoes() async {
+  final db = await _dbHelper.database;
+
+  if (!await hasInternet()) {
+    debugPrint('Sem internet → usar notificações locais');
+    return;
+  }
+
+  // obter token
+  final user = await db.query('utilizadores', limit: 1);
+  if (user.isEmpty) return;
+
+  final token = user.first['token'];
+  if (token == null) return;
+
+  final response = await http.get(
+    Uri.parse('$baseUrl/notificacoes/paciente'),
+    headers: {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    },
+  );
+
+  if (response.statusCode != 200) {
+    debugPrint('Erro ao obter notificações');
+    return;
+  }
+
+  final data = json.decode(response.body);
+  final List lista = data['notificacoes'] ?? [];
+
+  // ⚠️ NÃO APAGAR A TABELA (senão "ressuscita")
+  for (final n in lista) {
+    final int idNotificacao = n['id_notificacoes'];
+
+    // 🔎 verificar se já existe localmente
+    final local = await db.query(
+      'notificacoes',
+      where: 'id_notificacoes = ?',
+      whereArgs: [idNotificacao],
+      limit: 1,
+    );
+
+    int lidaFinal;
+
+    if (local.isNotEmpty) {
+      // 👉 mantém estado local (offline-first)
+      lidaFinal = local.first['lida'] as int;
+    } else {
+      // 👉 usa estado do backend
+      lidaFinal = (n['lida'] == true || n['lida'] == 1) ? 1 : 0;
+    }
+
+    await db.insert(
+      'notificacoes',
+      {
+        'id_notificacoes': idNotificacao,
+        'descricao': n['descricao'],
+        'designacao': n['designacao'],
+        'id_perfis': n['id_perfis'],
+        'id_utilizadores': n['id_utilizadores'],
+        'id_tipo_notificacoes': n['id_tipo_notificacoes'],
+        'lida': lidaFinal,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  debugPrint('✅ Notificações sincronizadas (offline-first)');
+}
+
+/// Marca notificações como lidas
+/// - se [idNotificacao] != null → marca só essa
+/// - se [idNotificacao] == null → marca todas
+Future<void> marcarNotificacoesComoLidas({int? idNotificacao}) async {
+  final db = await _dbHelper.database;
+
+  // ===============================
+  // 1️⃣ LOCAL (IMEDIATO)
+  // ===============================
+  if (idNotificacao != null) {
+    await db.update(
+      'notificacoes',
+      {'lida': 1},
+      where: 'id_notificacoes = ?',
+      whereArgs: [idNotificacao],
+    );
+  } else {
+    await db.update(
+      'notificacoes',
+      {'lida': 1},
+      where: 'lida = 0',
+    );
+  }
+
+  // ===============================
+  // 2️⃣ OFFLINE-FIRST
+  // ===============================
+  if (!await hasInternet()) return;
+
+  // ===============================
+  // 3️⃣ TOKEN
+  // ===============================
+  final user = await db.query('utilizadores', limit: 1);
+  if (user.isEmpty) return;
+
+  final token = user.first['token'];
+  if (token == null) return;
+
+  // ===============================
+  // 4️⃣ BACKEND (fire & forget)
+  // ===============================
+  try {
+    final uri = idNotificacao != null
+        ? Uri.parse('$baseUrl/notificacoes/$idNotificacao/lida')
+        : Uri.parse('$baseUrl/notificacoes/marcar-todas-como-lidas');
+
+    await http.put(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+  } catch (_) {
+    // offline-first → ignora
+  }
+}
+
+// ================= DEPENDENTES (sincronizado com backend web) =================
+Future<void> fetchAndSaveDependentes(int idPerfis) async {
+  final db = await _dbHelper.database;
+
+  // OFFLINE-FIRST
+  if (!await hasInternet()) {
+    debugPrint('Sem internet → usar dependentes locais');
+    return;
+  }
+
+  // TOKEN
+  final user = await db.query('utilizadores', limit: 1);
+  if (user.isEmpty) return;
+
+  final token = user.first['token'];
+  if (token == null) return;
+
+  final response = await http.get(
+    Uri.parse('$baseUrl/dependentes/$idPerfis'),
+    headers: {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    },
+  );
+
+  if (response.statusCode != 200) {
+    debugPrint('Erro ao obter dependentes');
+    return;
+  }
+
+  final data = json.decode(response.body);
+  final List lista = data['dependentes'] ?? [];
+
+  // 🔥 LIMPAR DEPENDENTES ANTIGOS DESTE RESPONSÁVEL
+  await db.delete(
+    'perfis',
+    where: 'responsavel = ?',
+    whereArgs: [idPerfis],
+  );
+
+  // 🔹 INSERIR / ATUALIZAR DEPENDENTES
+  for (final d in lista) {
+    await db.insert(
+      'perfis',
+      {
+        'id_perfis': d['id_perfis'],
+        'id_utilizadores': d['id_utilizadores'],
+        'nome': d['nome'],
+        'n_utente': d['n_utente'],
+        'data_nasc': d['data_nasc'],
+        'contacto_tel': d['contacto_tel'],
+        'profissao': d['profissao'],
+        'morada': d['morada'],
+        'cod_postal': d['cod_postal'],
+        'nif': d['nif'],
+        'responsavel': idPerfis, // 🔑 MUITO IMPORTANTE
+        'id_subsistemas_saude': d['id_subsistemas_saude'],
+        // aceitar variantes vindas do backend
+        'id_estado_civil': d['id_estado_civil'] ?? d['id_estados_civis'] ?? null,
+        'id_genero': d['id_genero'] ?? d['id_generos'] ?? null,
+        'id_parentesco': d['id_parentesco'],
+        'alcunhas': d['alcunhas'],
+        'ativo': d['ativo'] == true ? 1 : 0,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  debugPrint('✅ Dependentes sincronizados (${lista.length})');
+}
+
+
 }

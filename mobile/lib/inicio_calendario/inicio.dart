@@ -38,14 +38,26 @@ class _InicioState extends State<Inicio> {
   Future<void> _carregarPerfil() async {
     try {
       final db = await _dbHelper.database;
-      final perfis = await db.query(
-        'perfis',
-        limit: 1,
-      ); // Usa o perfil do utilizador logado
+      // Ler id_perfis activo das SharedPreferences e carregar esse perfil
+      final prefs = await SharedPreferences.getInstance();
+      final idPerfil = prefs.getInt('id_perfis');
+      List<Map<String, dynamic>> perfis;
+      if (idPerfil != null) {
+        perfis = await db.query(
+          'perfis',
+          where: 'id_perfis = ?',
+          whereArgs: [idPerfil],
+          limit: 1,
+        );
+      } else {
+        perfis = await db.query(
+          'perfis',
+          limit: 1,
+        );
+      }
+
       if (perfis.isNotEmpty) {
-        Perfil perfil = Perfil.fromMap(
-          perfis.first,
-        ); // Converte o primeiro elemento do map para objeto
+        Perfil perfil = Perfil.fromMap(perfis.first);
         setState(() {
           nome = perfil.nome ?? "";
           nUtente = perfil.nUtente?.toString() ?? "";
@@ -61,12 +73,25 @@ class _InicioState extends State<Inicio> {
   Future<void> _carregarConsultas() async {
     setState(() => _aCarregar = true);
     try {
-      debugPrint("A carregar consultas...");
-      List<Consulta> list = await ApiService()
-          .getConsultas(); // Chama a api para obter as consultas
-      debugPrint("Consultas recebidas: ${list.length}");
+      debugPrint("A carregar consultas locais para o perfil activo...");
+      final db = await _dbHelper.database;
+      final prefs = await SharedPreferences.getInstance();
+      final idPerfil = prefs.getInt('id_perfis');
+
+      List<Map<String, dynamic>> maps;
+      if (idPerfil != null) {
+        maps = await db.query(
+          'consultas',
+          where: 'id_perfis = ?',
+          whereArgs: [idPerfil],
+        );
+      } else {
+        maps = await db.query('consultas');
+      }
+
+      final list = maps.map((m) => Consulta.fromMap(m)).toList();
+      debugPrint("Consultas locais encontradas: ${list.length}");
       setState(() {
-        // Atualiza e mostra as consultas que obteve
         consultas = list;
       });
     } catch (e) {
@@ -146,8 +171,7 @@ class _InicioState extends State<Inicio> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             MenuItemButton(
-                              onPressed: () =>
-                                  context.go('/perfilcomdependentes'),
+                              onPressed: () => context.go('/PerfilSemDependentes'), // redireciona para o perfil (restored)
                               child: const Row(
                                 children: [
                                   Icon(Icons.person, size: 20),
