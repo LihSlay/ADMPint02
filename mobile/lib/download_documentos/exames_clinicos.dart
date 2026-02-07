@@ -310,6 +310,7 @@ class _ExamesClinicosState extends State<ExamesClinicos> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: 0,
         indicatorColor: Colors.transparent,
+        backgroundColor: Colors.white,
         onDestinationSelected: (index) {
           switch (index) {
             case 0:
