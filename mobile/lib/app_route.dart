@@ -1,8 +1,6 @@
 import 'package:go_router/go_router.dart';
-import 'package:mobile/dadospessoais_notificacoes_perfil/dadospessoais_dependente.dart';
 import 'package:mobile/dadospessoais_notificacoes_perfil/dadospessoais_responsavel.dart';
 import 'package:mobile/dadospessoais_notificacoes_perfil/notificacoes.dart';
-import 'package:mobile/dadospessoais_notificacoes_perfil/perfil_dependente.dart';
 import 'package:mobile/dadospessoais_notificacoes_perfil/perfil_sem_dependentes.dart';
 import 'definicoes_sobreconsultas/definicoes.dart';
 import 'definicoes_sobreconsultas/definicoesTermoseCondicoes.dart';
@@ -114,24 +112,14 @@ final GoRouter rotas = GoRouter(
       path: '/calendario',
       builder: (context, state) => const Calendario(title: 'Calendário'),
     ),
-    GoRoute(
-      name: 'perfildependente',
-      path: '/perfildependente',
-      builder: (context, state) =>
-          const PerfilDependente(title: 'PerfilDependente'),
-    ),
+  
     GoRoute(
       name: 'perfilsemdependentes',
       path: '/perfilsemdependentes',
       builder: (context, state) =>
           const PerfilSemDependentes(title: 'PerfilSemDependentes'),
     ),
-    GoRoute(
-      name: 'dadosdependente',
-      path: '/dadosdependente',
-      builder: (context, state) =>
-          const Dadospessoais_Dependente(title: 'Dadospessoais_Dependente'),
-    ),
+    
     //Dados pessoais do responsável e dependentes associados
     GoRoute(
       name: 'dadosresponsavel',
