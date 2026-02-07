@@ -13,6 +13,24 @@ class NotificacaoModel {
     this.lida = 0,
   });
 
+  // ---------- COPY WITH (NOVO) ----------
+  NotificacaoModel copyWith({
+    int? id,
+    int? idNotificacoes,
+    String? designacao,
+    String? descricao,
+    int? lida,
+  }) {
+    return NotificacaoModel(
+      id: id ?? this.id,
+      idNotificacoes: idNotificacoes ?? this.idNotificacoes,
+      designacao: designacao ?? this.designacao,
+      descricao: descricao ?? this.descricao,
+      lida: lida ?? this.lida,
+    );
+  }
+
+  // ---------- TO MAP ----------
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -23,6 +41,7 @@ class NotificacaoModel {
     };
   }
 
+  // ---------- FROM MAP ----------
   factory NotificacaoModel.fromMap(Map<String, dynamic> map) {
     return NotificacaoModel(
       id: map['id'],

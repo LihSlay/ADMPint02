@@ -726,4 +726,135 @@ Future<void> fetchAndSaveMeuPerfilComDependentes(String token) async {
     });
   }
 }
+// ================= NOTIFICAÇÕES =================
+Future<void> fetchAndSaveNotificacoes() async {
+  final db = await _dbHelper.database;
+
+  if (!await hasInternet()) {
+    debugPrint('Sem internet → usar notificações locais');
+    return;
+  }
+
+  // obter token
+  final user = await db.query('utilizadores', limit: 1);
+  if (user.isEmpty) return;
+
+  final token = user.first['token'];
+  if (token == null) return;
+
+  final response = await http.get(
+    Uri.parse('$baseUrl/notificacoes/paciente'),
+    headers: {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    },
+  );
+
+  if (response.statusCode != 200) {
+    debugPrint('Erro ao obter notificações');
+    return;
+  }
+
+  final data = json.decode(response.body);
+  final List lista = data['notificacoes'] ?? [];
+
+  // ⚠️ NÃO APAGAR A TABELA (senão "ressuscita")
+  for (final n in lista) {
+    final int idNotificacao = n['id_notificacoes'];
+
+    // 🔎 verificar se já existe localmente
+    final local = await db.query(
+      'notificacoes',
+      where: 'id_notificacoes = ?',
+      whereArgs: [idNotificacao],
+      limit: 1,
+    );
+
+    int lidaFinal;
+
+    if (local.isNotEmpty) {
+      // 👉 mantém estado local (offline-first)
+      lidaFinal = local.first['lida'] as int;
+    } else {
+      // 👉 usa estado do backend
+      lidaFinal = (n['lida'] == true || n['lida'] == 1) ? 1 : 0;
+    }
+
+    await db.insert(
+      'notificacoes',
+      {
+        'id_notificacoes': idNotificacao,
+        'descricao': n['descricao'],
+        'designacao': n['designacao'],
+        'id_perfis': n['id_perfis'],
+        'id_utilizadores': n['id_utilizadores'],
+        'id_tipo_notificacoes': n['id_tipo_notificacoes'],
+        'lida': lidaFinal,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  debugPrint('✅ Notificações sincronizadas (offline-first)');
+}
+
+/// Marca notificações como lidas
+/// - se [idNotificacao] != null → marca só essa
+/// - se [idNotificacao] == null → marca todas
+Future<void> marcarNotificacoesComoLidas({int? idNotificacao}) async {
+  final db = await _dbHelper.database;
+
+  // ===============================
+  // 1️⃣ LOCAL (IMEDIATO)
+  // ===============================
+  if (idNotificacao != null) {
+    await db.update(
+      'notificacoes',
+      {'lida': 1},
+      where: 'id_notificacoes = ?',
+      whereArgs: [idNotificacao],
+    );
+  } else {
+    await db.update(
+      'notificacoes',
+      {'lida': 1},
+      where: 'lida = 0',
+    );
+  }
+
+  // ===============================
+  // 2️⃣ OFFLINE-FIRST
+  // ===============================
+  if (!await hasInternet()) return;
+
+  // ===============================
+  // 3️⃣ TOKEN
+  // ===============================
+  final user = await db.query('utilizadores', limit: 1);
+  if (user.isEmpty) return;
+
+  final token = user.first['token'];
+  if (token == null) return;
+
+  // ===============================
+  // 4️⃣ BACKEND (fire & forget)
+  // ===============================
+  try {
+    final uri = idNotificacao != null
+        ? Uri.parse('$baseUrl/notificacoes/$idNotificacao/lida')
+        : Uri.parse('$baseUrl/notificacoes/marcar-todas-como-lidas');
+
+    await http.put(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+  } catch (_) {
+    // offline-first → ignora
+  }
+}
+
+
 }

@@ -33,6 +33,7 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
   Future<void> _carregarDadosDaBase() async {
     final db = await _dbHelper.database;
 
+    // 🔹 UTILIZADOR LOGADO
     final user = await db.query('utilizadores', limit: 1);
     if (user.isEmpty) {
       if (mounted) setState(() => carregado = true);
@@ -41,6 +42,7 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
 
     final idUtilizador = user.first['id_utilizadores'];
 
+    // 🔹 PERFIL PRINCIPAL DO UTILIZADOR
     final perfisPrincipais = await db.query(
       'perfis',
       where: 'id_utilizadores = ?',
@@ -59,11 +61,19 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
     nomePaciente = paciente['nome'] as String? ?? '';
     numeroUtente = paciente['n_utente'] as int?;
 
-    dependentes = await db.query(
+    // 🔹 DEPENDENTES
+    dependentes = await db.query( //vai buscar os dependentes associados a este perfil (onde o id do perfil é igual ao campo "responsavel" dos dependentes)
       'perfis',
-      where: 'id_perfis != ?',
-      whereArgs: [idPaciente],
+      where: 'responsavel = ?',
+      whereArgs: [idPaciente.toString()],
     );
+
+    // 🧪 DEBUG (podes apagar depois)
+    debugPrint('================ PERFIL DEBUG ================');
+    debugPrint('ID UTILIZADOR: $idUtilizador');
+    debugPrint('ID PACIENTE: $idPaciente');
+    debugPrint('DEPENDENTES: $dependentes');
+    debugPrint('==============================================');
 
     if (mounted) setState(() => carregado = true);
   }
@@ -88,7 +98,11 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
         child: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFF907041), Color(0xFF97774D), Color(0xFFA68A69)],
+              colors: [
+                Color(0xFF907041),
+                Color(0xFF97774D),
+                Color(0xFFA68A69)
+              ],
             ),
           ),
           child: SafeArea(
@@ -167,17 +181,21 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
 
                   const Text(
                     "Dependentes",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
 
                   const SizedBox(height: 15),
 
-                  dependentes.isEmpty
+                  dependentes.isEmpty //se não tiver dependentes associados, mostra esta mensagem
                       ? const Text(
                           "Sem dependentes associados",
                           style: TextStyle(color: Colors.black54),
                         )
                       : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: dependentes.map((dep) {
                             final nomeDependente =
                                 dep['nome'] as String? ?? '';
@@ -226,6 +244,7 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
 
                   const SizedBox(height: 40),
 
+                  // ---------------- LOGOUT ----------------
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -251,8 +270,10 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
                           const Icon(Icons.logout, color: Colors.white),
                       label: const Text(
                         "Terminar Sessão",
-                        style:
-                            TextStyle(color: Colors.white, fontSize: 16),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
                   ),
@@ -325,9 +346,10 @@ class _Avatar extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-              color: Colors.black26,
-              blurRadius: 6,
-              offset: Offset(0, 3)),
+            color: Colors.black26,
+            blurRadius: 6,
+            offset: Offset(0, 3),
+          ),
         ],
       ),
       child: Center(
@@ -379,8 +401,9 @@ class SettingsCard extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.brown.shade800),
+                fontSize: 16,
+                color: Colors.brown.shade800,
+              ),
             ),
           ],
         ),
