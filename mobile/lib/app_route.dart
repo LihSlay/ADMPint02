@@ -171,7 +171,7 @@ final GoRouter rotas = GoRouter(
       name: 'plano_tratamento',
       path: '/plano_tratamento',
       builder: (context, state) =>
-          const PlanoTratamento(title: 'Plano_Tratamento'),
+          const PlanoTratamentoPage(title: 'Plano_Tratamento'),
     ),
     GoRoute(
       path: '/logininicio',
