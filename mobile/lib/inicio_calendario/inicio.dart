@@ -6,7 +6,6 @@ import 'package:mobile/definicoes_sobreconsultas/definicoes.dart';
 import 'package:mobile/database/database_helper.dart';
 import 'package:mobile/models/perfil_model.dart';
 import 'package:mobile/models/consulta_model.dart';
-import 'package:mobile/services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Inicio extends StatefulWidget {

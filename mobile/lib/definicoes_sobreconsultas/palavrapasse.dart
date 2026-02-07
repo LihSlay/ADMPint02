@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import '../services/api_service.dart';
 import '../database/database_helper.dart';
 
-class Palavrapasse extends StatefulWidget {
+class Palavrapasse extends StatefulWidget { //
   final String title;
 
   const Palavrapasse({super.key, required this.title});
@@ -16,28 +15,28 @@ class Palavrapasse extends StatefulWidget {
 class _PalavrapasseState extends State<Palavrapasse> {
   int currentPageIndex = 3; // Definições
 
-  late TextEditingController _currentPasswordController;
-  late TextEditingController _newPasswordController;
-  late TextEditingController _confirmPasswordController;
-  final ApiService _apiService = ApiService();
-  final DatabaseHelper _dbHelper = DatabaseHelper();
+  late TextEditingController _currentPasswordController; // Controlador para o campo de palavra-passe atual
+  late TextEditingController _newPasswordController; // Controlador para o campo de nova palavra-passe
+  late TextEditingController _confirmPasswordController; // Controlador para o campo de confirmação da nova palavra-passe
+  final ApiService _apiService = ApiService(); // Instância do serviço de API para chamadas de rede
+  final DatabaseHelper _dbHelper = DatabaseHelper(); // Instância do helper de banco de dados para acessar dados locais
 
   bool _isLoading = false;
-  bool _showCurrentPassword = false;
+  bool _showCurrentPassword = false; // Variável para controlar a visibilidade da palavra-passe atual
   bool _showNewPassword = false;
   bool _showConfirmPassword = false;
 
   @override
   void initState() {
     super.initState();
-    _currentPasswordController = TextEditingController();
+    _currentPasswordController = TextEditingController(); // Inicializar os controladores de texto para os campos de palavra-passe
     _newPasswordController = TextEditingController();
     _confirmPasswordController = TextEditingController();
   }
 
   @override
   void dispose() {
-    _currentPasswordController.dispose();
+    _currentPasswordController.dispose(); // Liberar os recursos dos controladores de texto quando a tela for descartada
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -45,14 +44,14 @@ class _PalavrapasseState extends State<Palavrapasse> {
 
   Future<String?> _getUserEmail() async {
     final db = await _dbHelper.database;
-    final List<Map<String, dynamic>> result = await db.query('utilizadores');
+    final List<Map<String, dynamic>> result = await db.query('utilizadores'); // Consultar a tabela de utilizadores para obter o email do usuário logado
     if (result.isNotEmpty) {
       return result.first['email'];
     }
     return null;
   }
 
-  void _showErrorDialog(String message) {
+  void _showErrorDialog(String message) { // Função para exibir um erro com uma mensagem 
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -70,7 +69,7 @@ class _PalavrapasseState extends State<Palavrapasse> {
     );
   }
 
-  void _showSuccessDialog(String message) {
+  void _showSuccessDialog(String message) { // Função para exibir uma mensagem de sucesso
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -81,7 +80,7 @@ class _PalavrapasseState extends State<Palavrapasse> {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                // Limpar campos após sucesso
+                // Limpar campos após confirmar 
                 _currentPasswordController.clear();
                 _newPasswordController.clear();
                 _confirmPasswordController.clear();
@@ -94,8 +93,8 @@ class _PalavrapasseState extends State<Palavrapasse> {
     );
   }
 
-  Future<void> _changePassword() async {
-    final currentPassword = _currentPasswordController.text.trim();
+  Future<void> _changePassword() async { // Função para alterar a palavra-passe do usuário
+    final currentPassword = _currentPasswordController.text.trim(); // Obter o valor da palavra-passe atual do campo de texto
     final newPassword = _newPasswordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
 
@@ -127,7 +126,7 @@ class _PalavrapasseState extends State<Palavrapasse> {
 
     setState(() => _isLoading = true);
 
-    try {
+    try { // Obter o email do usuário logado para enviar na requisição de alteração de palavra-passe
       final userEmail = await _getUserEmail();
       if (userEmail == null) {
         _showErrorDialog(
@@ -137,7 +136,7 @@ class _PalavrapasseState extends State<Palavrapasse> {
         return;
       }
 
-      final result = await _apiService.changePassword(
+      final result = await _apiService.changePassword( // Enviar a requisição de alteração de palavra-passe para a API
         userEmail,
         currentPassword,
         newPassword,
@@ -247,19 +246,19 @@ class _PalavrapasseState extends State<Palavrapasse> {
             ),
             const SizedBox(height: 5),
             TextField(
-              controller: _confirmPasswordController,
-              obscureText: !_showConfirmPassword,
+              controller: _confirmPasswordController, // Campo para confirmar a nova palavra-passe
+              obscureText: !_showConfirmPassword, // Controla a visibilidade do texto para o campo de confirmação
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _showConfirmPassword
+                    _showConfirmPassword // Ícone de olho para mostrar a palavra-passe nova
                         ? Icons.visibility
                         : Icons.visibility_off,
                   ),
                   onPressed: () {
                     setState(
-                      () => _showConfirmPassword = !_showConfirmPassword,
+                      () => _showConfirmPassword = !_showConfirmPassword, // Alterna a visibilidade do campo de confirmação
                     );
                   },
                 ),
@@ -269,8 +268,8 @@ class _PalavrapasseState extends State<Palavrapasse> {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
-                onPressed: _isLoading ? null : _changePassword,
-                style: OutlinedButton.styleFrom(
+                onPressed: _isLoading ? null : _changePassword, // Altera a palavra-passe
+                style: OutlinedButton.styleFrom( // Estilo do botão de alteração de palavra-passe
                   side: const BorderSide(color: Color(0xFF907041), width: 1.2),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),

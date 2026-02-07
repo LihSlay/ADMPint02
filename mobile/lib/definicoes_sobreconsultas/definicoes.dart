@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+// Widget reutilizável para cada opção das definições
 class _SettingsCard extends StatelessWidget {
+  // Ícone mostrado no botão
   final IconData icon;
+   // Texto 
   final String text;
+  // Função executada quando o cartão é clicado
   final VoidCallback onTap;
 
   const _SettingsCard({
@@ -11,33 +15,35 @@ class _SettingsCard extends StatelessWidget {
     required this.text,
     required this.onTap,
   });
-
+ 
   @override
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
-      elevation: 2,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
+      borderRadius: BorderRadius.circular(12), // Bordas arredondadas
+      elevation: 2,// Sombra do cartão
+      child: InkWell( 
+        borderRadius: BorderRadius.circular(12),  // Ripple respeita as bordas arredondadas
+        onTap: onTap, // Ação ao clicar no cartão
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16), // Espaçamento interno
           child: Row(
             children: [
+              // Container do ícone
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF3EEE8),
+                  color: const Color(0xFFF3EEE8), // Fundo do ícone
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
-                  icon,
+                  icon, // Ícone recebido por parâmetro
                   color: const Color(0xFF907041),
                 ),
               ),
 
-              const SizedBox(width: 16),
+              const SizedBox(width: 16), // Espaço entre ícone e texto
+
 
               Expanded(
                 child: Text(
@@ -49,6 +55,7 @@ class _SettingsCard extends StatelessWidget {
                 ),
               ),
 
+              // Seta do lado direito
               const Icon(
                 Icons.arrow_forward_ios,
                 size: 16,
@@ -85,7 +92,7 @@ class _DefinicoesState extends State<Definicoes> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => context.go(
             '/inicio',
-          ), // vai diretamente para a rota /definicoes
+          ), // vai diretamente para a rota /inicio
         ),
         elevation: 0,
         flexibleSpace: Container(
