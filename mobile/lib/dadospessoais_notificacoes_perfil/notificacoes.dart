@@ -138,11 +138,7 @@ class _NotificacoesDadosState extends State<NotificacoesDados> {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFF907041),
-                Color(0xFF97774D),
-                Color(0xFFA68A69),
-              ],
+              colors: [Color(0xFF907041), Color(0xFF97774D), Color(0xFFA68A69)],
             ),
           ),
         ),
@@ -183,8 +179,7 @@ class _NotificacoesDadosState extends State<NotificacoesDados> {
                           ),
                         )
                       : ListView.builder(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
                           itemCount: notificacoes.length,
                           itemBuilder: (context, index) {
                             final n = notificacoes[index];
@@ -193,9 +188,7 @@ class _NotificacoesDadosState extends State<NotificacoesDados> {
                               notificacao: n,
                               onTap: () {
                                 _marcarComoLida(n);
-                                context.go(
-                                  _rotaPorDesignacao(n.designacao),
-                                );
+                                context.go(_rotaPorDesignacao(n.designacao));
                               },
                             );
                           },
@@ -258,10 +251,7 @@ class _NotificacaoCard extends StatelessWidget {
   final NotificacaoModel notificacao;
   final VoidCallback onTap;
 
-  const _NotificacaoCard({
-    required this.notificacao,
-    required this.onTap,
-  });
+  const _NotificacaoCard({required this.notificacao, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -279,8 +269,7 @@ class _NotificacaoCard extends StatelessWidget {
           border: Border(
             left: BorderSide(
               width: 4,
-              color:
-                  lida ? Colors.grey.shade300 : const Color(0xFF907041),
+              color: lida ? Colors.grey.shade300 : const Color(0xFF907041),
             ),
           ),
           boxShadow: const [
@@ -308,17 +297,13 @@ class _NotificacaoCard extends StatelessWidget {
                     notificacao.designacao,
                     style: TextStyle(
                       fontSize: 15,
-                      fontWeight:
-                          lida ? FontWeight.w500 : FontWeight.bold,
+                      fontWeight: lida ? FontWeight.w500 : FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     notificacao.descricao,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.black87,
-                    ),
+                    style: const TextStyle(fontSize: 14, color: Colors.black87),
                   ),
                 ],
               ),

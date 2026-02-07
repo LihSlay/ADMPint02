@@ -43,12 +43,13 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
   Future<void> _carregarDropdowns() async {
     try {
       final api = ApiService();
-      final genRes = await api.getGeneros(); // Assumindo que há métodos no ApiService
+      final genRes = await api
+          .getGeneros(); // Assumindo que há métodos no ApiService
       final estRes = await api.getEstadosCivis();
       if (mounted) {
         setState(() {
           generos = genRes;
-          estadosCivis = estRes ;
+          estadosCivis = estRes;
         });
       }
     } catch (e) {
@@ -179,7 +180,12 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
   }
 
   // Novo: Função auxiliar para obter designação por ID
-  String _getDesignacao(List<Map<String, dynamic>> lista, int? id, String keyId, String keyDesignacao) {
+  String _getDesignacao(
+    List<Map<String, dynamic>> lista,
+    int? id,
+    String keyId,
+    String keyDesignacao,
+  ) {
     if (id == null || lista.isEmpty) return 'N/A';
     final item = lista.firstWhere(
       (item) => item[keyId] == id,
@@ -195,15 +201,13 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
 
       // ------------------- APPBAR -------------------
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(140), // reduzido para tamanho mais compacto
+        preferredSize: const Size.fromHeight(
+          140,
+        ), // reduzido para tamanho mais compacto
         child: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Color(0xFF907041),
-                Color(0xFF97774D),
-                Color(0xFFA68A69),
-              ],
+              colors: [Color(0xFF907041), Color(0xFF97774D), Color(0xFFA68A69)],
             ),
           ),
           child: SafeArea(
@@ -218,7 +222,8 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
                 const SizedBox(width: 12),
                 _Avatar(texto: _iniciais(nomePaciente)),
                 const SizedBox(width: 16),
-                Expanded( // Adicionado para evitar overflow
+                Expanded(
+                  // Adicionado para evitar overflow
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -278,16 +283,16 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
                     icon: Icons.person_outline,
                     label: "Dados pessoais",
                     onTap: () {
-                        final alvo = _idPerfilAtivo ?? idPaciente!;
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => DadosPessoaisResponsavel(
-                              title: 'Dados pessoais',
-                              idPerfil: alvo,
-                            ),
+                      final alvo = _idPerfilAtivo ?? idPaciente!;
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => DadosPessoaisResponsavel(
+                            title: 'Dados pessoais',
+                            idPerfil: alvo,
                           ),
-                        );
+                        ),
+                      );
                     },
                   ),
 
@@ -328,7 +333,9 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
                             await _carregarDadosDaBase();
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Voltado à conta principal')),
+                                const SnackBar(
+                                  content: Text('Voltado à conta principal'),
+                                ),
                               );
                             }
                           },
@@ -353,7 +360,8 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
                         : Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: dependentes.map((dep) {
-                              final nomeDependente = dep['nome'] as String? ?? '';
+                              final nomeDependente =
+                                  dep['nome'] as String? ?? '';
                               final idDep = dep['id_perfis'] as int?;
 
                               return InkWell(
@@ -361,10 +369,16 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
                                     ? null
                                     : () async {
                                         // Guardar id atual como prev
-                                        final prefs = await SharedPreferences.getInstance();
-                                        final current = prefs.getInt('id_perfis');
+                                        final prefs =
+                                            await SharedPreferences.getInstance();
+                                        final current = prefs.getInt(
+                                          'id_perfis',
+                                        );
                                         if (current != null) {
-                                          await prefs.setInt('id_perfis_prev', current);
+                                          await prefs.setInt(
+                                            'id_perfis_prev',
+                                            current,
+                                          );
                                         }
                                         await prefs.setInt('id_perfis', idDep);
 
@@ -372,7 +386,9 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
                                         context.go('/inicio');
                                       },
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 8,
+                                  ),
                                   child: Row(
                                     children: [
                                       Container(
@@ -391,7 +407,9 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
                                         ),
                                         child: Center(
                                           child: Text(
-                                            _iniciais(nomeDependente).toUpperCase(),
+                                            _iniciais(
+                                              nomeDependente,
+                                            ).toUpperCase(),
                                             style: const TextStyle(
                                               fontSize: 22,
                                               fontWeight: FontWeight.bold,
@@ -438,10 +456,7 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
                       icon: const Icon(Icons.logout, color: Colors.white),
                       label: const Text(
                         "Terminar Sessão",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                        ),
+                        style: TextStyle(color: Colors.white, fontSize: 16),
                       ),
                     ),
                   ),
@@ -513,11 +528,7 @@ class _Avatar extends StatelessWidget {
         color: Colors.white,
         shape: BoxShape.circle,
         boxShadow: [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 6,
-            offset: Offset(0, 3),
-          ),
+          BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 3)),
         ],
       ),
       child: Center(
@@ -566,10 +577,7 @@ class SettingsCard extends StatelessWidget {
             const SizedBox(width: 20),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.brown.shade800,
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.brown.shade800),
             ),
           ],
         ),

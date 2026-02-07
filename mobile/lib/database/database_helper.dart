@@ -56,7 +56,9 @@ class DatabaseHelper {
     // Versão 4: adicionar colunas de genero/estado civil em perfis se ainda não existirem
     if (oldVersion < 4) {
       try {
-        await db.execute('ALTER TABLE perfis ADD COLUMN id_estado_civil INTEGER');
+        await db.execute(
+          'ALTER TABLE perfis ADD COLUMN id_estado_civil INTEGER',
+        );
       } catch (_) {}
       try {
         await db.execute('ALTER TABLE perfis ADD COLUMN id_genero INTEGER');
@@ -276,8 +278,6 @@ class DatabaseHelper {
       [id],
     );
   }
-
-
 
   // Métodos CRUD genéricos podem ser adicionados aqui
 }

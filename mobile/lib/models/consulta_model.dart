@@ -48,7 +48,6 @@ class Consulta {
       'especialidade_nome': especialidadeNome,
     };
   }
-  
 
   factory Consulta.fromMap(Map<String, dynamic> map) {
     return Consulta(

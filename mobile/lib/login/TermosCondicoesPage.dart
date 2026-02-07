@@ -96,8 +96,7 @@ class _TermosPageState extends State<TermosCondicoesPage> {
                   children: [
                     // ---------- Ponto 1 ----------
                     TextSpan(
-                      text:
-                          "1. Identificação do responsável pelo tratamento\n",
+                      text: "1. Identificação do responsável pelo tratamento\n",
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
@@ -122,9 +121,7 @@ class _TermosPageState extends State<TermosCondicoesPage> {
                       text:
                           "A Lei da Proteção de Dados Pessoais e o Regulamento Geral de Proteção de Dados asseguram a proteção das pessoas singulares relativamente ao tratamento de dados pessoais. \n"
                           "Mediante a aceitação da presente Política de Privacidade e/ou Termos e Condições o utilizador presta o seu consentimento informado, expresso, livre e inequívoco para que os dados pessoais fornecidos sejam incluídos num ficheiro da responsabilidade da CLINIMOLELOS, cujo tratamento nos termos do RGPD cumpre as medidas de segurança técnicas e organizativas adequadas. \n"
-
                           "Os dados presentes nesta base são unicamente os dados prestados pelos próprios, progenitores em caso de menores, maiores acompanhados ou cuidadores informais, na altura do seu registo, sendo tratados apenas para a criação do histórico clínico do utente.\n"
-                          
                           "Em caso algum será solicitada informação sobre convicções filosóficas ou políticas, filiação partidária ou sindical, fé religiosa, vida privada e origem racial. Os dados recolhidos não serão cedidos a outras pessoas ou outras entidades, sem o consentimento prévio do titular dos dados. \n\n",
                     ),
 
@@ -200,7 +197,9 @@ class _TermosPageState extends State<TermosCondicoesPage> {
                         width: 26,
                         height: 26,
                         decoration: BoxDecoration(
-                          color: aceitou ? const Color(0xFFF1EFEA) : Colors.white,
+                          color: aceitou
+                              ? const Color(0xFFF1EFEA)
+                              : Colors.white,
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
                             width: 2,
@@ -223,10 +222,7 @@ class _TermosPageState extends State<TermosCondicoesPage> {
                       const Expanded(
                         child: Text(
                           "Eu confirmo que li e aceito os termos e condições.",
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 14,
-                          ),
+                          style: TextStyle(fontFamily: 'Inter', fontSize: 14),
                         ),
                       ),
                     ],
@@ -240,8 +236,9 @@ class _TermosPageState extends State<TermosCondicoesPage> {
                   child: ElevatedButton(
                     onPressed: (aceitou && !aCarregar) ? _aceitarTermos : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          aceitou ? Colors.white : Colors.grey.shade300,
+                      backgroundColor: aceitou
+                          ? Colors.white
+                          : Colors.grey.shade300,
                       foregroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       elevation: aceitou ? 3 : 0,

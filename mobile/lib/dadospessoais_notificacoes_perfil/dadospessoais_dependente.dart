@@ -7,7 +7,8 @@ class Dadospessoais_Dependente extends StatefulWidget {
   const Dadospessoais_Dependente({super.key, required this.title});
 
   @override
-  State<Dadospessoais_Dependente> createState() => dadospessoais_dependenteState();
+  State<Dadospessoais_Dependente> createState() =>
+      dadospessoais_dependenteState();
 }
 
 // ignore: camel_case_types
@@ -33,11 +34,7 @@ class dadospessoais_dependenteState extends State<Dadospessoais_Dependente> {
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Color(0xFF907041),
-                Color(0xFF97774D),
-                Color(0xFFA68A69),
-              ],
+              colors: [Color(0xFF907041), Color(0xFF97774D), Color(0xFFA68A69)],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -58,16 +55,13 @@ class dadospessoais_dependenteState extends State<Dadospessoais_Dependente> {
                 color: Colors.black26,
                 blurRadius: 6,
                 offset: Offset(0, 3),
-              )
+              ),
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "Nome",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+              const Text("Nome", style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 4),
               const Text("Paula Manuel Pereira"),
               const SizedBox(height: 20),
@@ -78,19 +72,31 @@ class dadospessoais_dependenteState extends State<Dadospessoais_Dependente> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: const [
-                        Text("Nº de utente:", style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(
+                          "Nº de utente:",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         SizedBox(height: 4),
                         Text("7345868879"),
                         SizedBox(height: 20),
-                        Text("Género", style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(
+                          "Género",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         SizedBox(height: 4),
                         Text("Feminino"),
                         SizedBox(height: 20),
-                        Text("NIF", style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(
+                          "NIF",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         SizedBox(height: 4),
                         Text("257 136 892"),
                         SizedBox(height: 20),
-                        Text("Subsistema de saúde", style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(
+                          "Subsistema de saúde",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         SizedBox(height: 4),
                         Text("Multicare"),
                         SizedBox(height: 20),
@@ -102,19 +108,31 @@ class dadospessoais_dependenteState extends State<Dadospessoais_Dependente> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: const [
-                        Text("Data de nascimento", style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(
+                          "Data de nascimento",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         SizedBox(height: 4),
                         Text("10 Jun 2010"),
                         SizedBox(height: 20),
-                        Text("Nacionalidade", style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(
+                          "Nacionalidade",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         SizedBox(height: 4),
                         Text("Portuguesa"),
                         SizedBox(height: 20),
-                        Text("Estado Civil", style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(
+                          "Estado Civil",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         SizedBox(height: 4),
                         Text("Solteira"),
                         SizedBox(height: 20),
-                        Text("Profissão", style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(
+                          "Profissão",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         SizedBox(height: 4),
                         Text("Estudante"),
                         SizedBox(height: 20),
@@ -123,16 +141,25 @@ class dadospessoais_dependenteState extends State<Dadospessoais_Dependente> {
                   ),
                 ],
               ),
-              const Text("Morada", style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                "Morada",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 4),
               const Text("5400 – 221 Rua nova de Jugueiros nº21"),
               const SizedBox(height: 20),
-              const Text("Correio eletrónico", style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                "Correio eletrónico",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 4),
               const Text("AntMPereira@gmail.com"),
               const Text("paula.m.per@gmail.com"),
               const SizedBox(height: 20),
-              const Text("Contacto telefónico", style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                "Contacto telefónico",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 4),
               const Text("257 136 892"),
               const Text("931 693 684"),

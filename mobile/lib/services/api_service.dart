@@ -15,7 +15,6 @@ import '../models/plano_tratamento.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
 
-
 class ApiService {
   final String baseUrl = "https://pi4backend.onrender.com";
   final DatabaseHelper _dbHelper = DatabaseHelper();
@@ -151,8 +150,20 @@ class ApiService {
           notas: pacienteData['notas'] ?? '',
           idSubsistemasSaude: pacienteData['id_subsistemas_saude'] ?? 0,
           // aceitar variantes de nomes vindos do backend (id_estados_civis / id_generos)
-          idEstadoCivil: pacienteData['id_estado_civil'] ?? pacienteData['id_estados_civis'] ?? (pacienteData['EstadoCivil'] is Map ? (pacienteData['EstadoCivil']['id_estados_civis'] ?? pacienteData['EstadoCivil']['id']) : null),
-          idGenero: pacienteData['id_genero'] ?? pacienteData['id_generos'] ?? (pacienteData['Genero'] is Map ? (pacienteData['Genero']['id_generos'] ?? pacienteData['Genero']['id']) : null),
+          idEstadoCivil:
+              pacienteData['id_estado_civil'] ??
+              pacienteData['id_estados_civis'] ??
+              (pacienteData['EstadoCivil'] is Map
+                  ? (pacienteData['EstadoCivil']['id_estados_civis'] ??
+                        pacienteData['EstadoCivil']['id'])
+                  : null),
+          idGenero:
+              pacienteData['id_genero'] ??
+              pacienteData['id_generos'] ??
+              (pacienteData['Genero'] is Map
+                  ? (pacienteData['Genero']['id_generos'] ??
+                        pacienteData['Genero']['id'])
+                  : null),
           idParentesco: pacienteData['id_parentesco'] ?? 0,
           alcunhas: pacienteData['alcunhas'] ?? '',
           ativo: (pacienteData['ativo'] == true || pacienteData['ativo'] == 1)
@@ -185,7 +196,9 @@ class ApiService {
   }
 
   // Tenta obter um array de possíveis endpoints (tenta várias variantes e retorna o primeiro array que encontrar)
-  Future<List<dynamic>> _tryGetListFromCandidates(List<String> candidates) async {
+  Future<List<dynamic>> _tryGetListFromCandidates(
+    List<String> candidates,
+  ) async {
     for (final p in candidates) {
       try {
         final response = await http.get(Uri.parse('$baseUrl$p'));
@@ -215,10 +228,16 @@ class ApiService {
     for (final item in lista) {
       try {
         final rawId = item['id_generos'] ?? item['id'] ?? item['id_genero'];
-        final id = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '0') ?? 0;
-        final designacao = item['designacao'] ?? item['nome'] ?? item['name'] ?? '';
+        final id = rawId is int
+            ? rawId
+            : int.tryParse(rawId?.toString() ?? '0') ?? 0;
+        final designacao =
+            item['designacao'] ?? item['nome'] ?? item['name'] ?? '';
         if (id > 0) {
-          batch.insert('generos', {'id_generos': id, 'designacao': designacao}, conflictAlgorithm: ConflictAlgorithm.replace);
+          batch.insert('generos', {
+            'id_generos': id,
+            'designacao': designacao,
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
         }
       } catch (_) {}
     }
@@ -234,11 +253,18 @@ class ApiService {
     final batch = db.batch();
     for (final item in lista) {
       try {
-        final rawId = item['id_estados_civis'] ?? item['id'] ?? item['id_estado_civil'];
-        final id = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '0') ?? 0;
-        final designacao = item['designacao'] ?? item['nome'] ?? item['name'] ?? '';
+        final rawId =
+            item['id_estados_civis'] ?? item['id'] ?? item['id_estado_civil'];
+        final id = rawId is int
+            ? rawId
+            : int.tryParse(rawId?.toString() ?? '0') ?? 0;
+        final designacao =
+            item['designacao'] ?? item['nome'] ?? item['name'] ?? '';
         if (id > 0) {
-          batch.insert('estados_civis', {'id_estados_civis': id, 'designacao': designacao}, conflictAlgorithm: ConflictAlgorithm.replace);
+          batch.insert('estados_civis', {
+            'id_estados_civis': id,
+            'designacao': designacao,
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
         }
       } catch (_) {}
     }
@@ -248,17 +274,31 @@ class ApiService {
 
   Future<void> fetchAndSaveSubsistemas() async {
     final db = await _dbHelper.database;
-    final candidates = ['/subsistemas-saude', '/subsistemas_saude', '/subsistemas'];
+    final candidates = [
+      '/subsistemas-saude',
+      '/subsistemas_saude',
+      '/subsistemas',
+    ];
     final List<dynamic> lista = await _tryGetListFromCandidates(candidates);
     if (lista.isEmpty) return;
     final batch = db.batch();
     for (final item in lista) {
       try {
-        final rawId = item['id_subsistemas_saude'] ?? item['id'] ?? item['id_subsystem'] ?? item['id_subsistema'];
-        final id = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '0') ?? 0;
-        final designacao = item['designacao'] ?? item['nome'] ?? item['name'] ?? '';
+        final rawId =
+            item['id_subsistemas_saude'] ??
+            item['id'] ??
+            item['id_subsystem'] ??
+            item['id_subsistema'];
+        final id = rawId is int
+            ? rawId
+            : int.tryParse(rawId?.toString() ?? '0') ?? 0;
+        final designacao =
+            item['designacao'] ?? item['nome'] ?? item['name'] ?? '';
         if (id > 0) {
-          batch.insert('subsistemas_saude', {'id_subsistemas_saude': id, 'designacao': designacao}, conflictAlgorithm: ConflictAlgorithm.replace);
+          batch.insert('subsistemas_saude', {
+            'id_subsistemas_saude': id,
+            'designacao': designacao,
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
         }
       } catch (_) {}
     }
@@ -467,7 +507,7 @@ class ApiService {
       filePath,
       options: Options(headers: {'Authorization': 'Bearer $token'}),
     );
-    
+
     final file = File(filePath);
     print("📄 Ficheiro existe: ${await file.exists()}");
     print("📄 Tamanho: ${await file.length()} bytes");
@@ -1033,129 +1073,129 @@ class ApiService {
       }
     }
   }
+
   /// PERFIL + DEPENDENTES (rota usada na web)
-Future<void> fetchAndSaveMeuPerfilComDependentes(String token) async {
-  final db = await _dbHelper.database;
+  Future<void> fetchAndSaveMeuPerfilComDependentes(String token) async {
+    final db = await _dbHelper.database;
 
-  final response = await http.get(
-    Uri.parse('$baseUrl/pacientes/meu-perfil-com-dependentes'),
-    headers: {
-      'Authorization': 'Bearer $token',
-      'Content-Type': 'application/json',
-    },
-  );
-
-  if (response.statusCode != 200) {
-    throw Exception('Erro ao obter perfil com dependentes');
-  }
-
-  final data = json.decode(response.body);
-
-  final paciente = data['paciente'];
-  final List dependentes = data['dependentes'] ?? [];
-
-  // limpar perfis locais
-  await db.delete('perfis');
-
-  // ---------- PERFIL PRINCIPAL (RESPONSÁVEL) ----------
-  await db.insert('perfis', {
-    'id_perfis': paciente['id_perfis'],
-    'id_utilizadores': paciente['id_utilizadores'],
-    'nome': paciente['nome'],
-    'n_utente': paciente['n_utente'],
-    'data_nasc': paciente['data_nasc'],
-    'contacto_tel': paciente['contacto_tel'],
-    'profissao': paciente['profissao'],
-    'morada': paciente['morada'],
-    'cod_postal': paciente['cod_postal'],
-    'nif': paciente['nif'],
-    'responsavel': '', 
-    'notas': paciente['notas'],
-    'id_subsistemas_saude': paciente['id_subsistemas_saude'],
-    'id_parentesco': paciente['id_parentesco'],
-    'alcunhas': paciente['alcunhas'],
-    'ativo': (paciente['ativo'] == true || paciente['ativo'] == 1) ? 1 : 0,
-  });
-
-  // ---------- DEPENDENTES ----------
-  for (final dep in dependentes) {
-    await db.insert('perfis', {
-      'id_perfis': dep['id_perfis'],
-      'id_utilizadores': dep['id_utilizadores'],
-      'nome': dep['nome'],
-      'n_utente': dep['n_utente'],
-      'data_nasc': dep['data_nasc'],
-      'contacto_tel': dep['contacto_tel'],
-      'profissao': dep['profissao'],
-      'morada': dep['morada'],
-      'cod_postal': dep['cod_postal'],
-      'nif': dep['nif'],
-      'responsavel': paciente['id_perfis'].toString(), 
-      'notas': dep['notas'],
-      'id_subsistemas_saude': dep['id_subsistemas_saude'],
-      'id_parentesco': dep['id_parentesco'],
-      'alcunhas': dep['alcunhas'],
-      'ativo': (dep['ativo'] == true || dep['ativo'] == 1) ? 1 : 0,
-    });
-  }
-}
-// ================= NOTIFICAÇÕES (ligado ao backend da web) =================
-Future<void> fetchAndSaveNotificacoes() async {
-  final db = await _dbHelper.database;
-
-  if (!await hasInternet()) {
-    debugPrint('Sem internet → usar notificações locais');
-    return;
-  }
-
-  // obter token
-  final user = await db.query('utilizadores', limit: 1);
-  if (user.isEmpty) return;
-
-  final token = user.first['token'];
-  if (token == null) return;
-
-  final response = await http.get(
-    Uri.parse('$baseUrl/notificacoes/paciente'),
-    headers: {
-      'Authorization': 'Bearer $token',
-      'Content-Type': 'application/json',
-    },
-  );
-
-  if (response.statusCode != 200) {
-    debugPrint('Erro ao obter notificações');
-    return;
-  }
-
-  final data = json.decode(response.body);
-  final List lista = data['notificacoes'] ?? [];
-
-  // ⚠️ NÃO APAGAR A TABELA (senão "ressuscita")
-  for (final n in lista) {
-    final int idNotificacao = n['id_notificacoes'];
-
-    // 🔎 verificar se já existe localmente
-    final local = await db.query(
-      'notificacoes',
-      where: 'id_notificacoes = ?',
-      whereArgs: [idNotificacao],
-      limit: 1,
+    final response = await http.get(
+      Uri.parse('$baseUrl/pacientes/meu-perfil-com-dependentes'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
     );
 
-    int lidaFinal;
-
-    if (local.isNotEmpty) {
-      // 👉 mantém estado local (offline-first)
-      lidaFinal = local.first['lida'] as int;
-    } else {
-      // 👉 usa estado do backend
-      lidaFinal = (n['lida'] == true || n['lida'] == 1) ? 1 : 0;
+    if (response.statusCode != 200) {
+      throw Exception('Erro ao obter perfil com dependentes');
     }
 
-    await db.insert(
-      'notificacoes',
-      {
+    final data = json.decode(response.body);
+
+    final paciente = data['paciente'];
+    final List dependentes = data['dependentes'] ?? [];
+
+    // limpar perfis locais
+    await db.delete('perfis');
+
+    // ---------- PERFIL PRINCIPAL (RESPONSÁVEL) ----------
+    await db.insert('perfis', {
+      'id_perfis': paciente['id_perfis'],
+      'id_utilizadores': paciente['id_utilizadores'],
+      'nome': paciente['nome'],
+      'n_utente': paciente['n_utente'],
+      'data_nasc': paciente['data_nasc'],
+      'contacto_tel': paciente['contacto_tel'],
+      'profissao': paciente['profissao'],
+      'morada': paciente['morada'],
+      'cod_postal': paciente['cod_postal'],
+      'nif': paciente['nif'],
+      'responsavel': '',
+      'notas': paciente['notas'],
+      'id_subsistemas_saude': paciente['id_subsistemas_saude'],
+      'id_parentesco': paciente['id_parentesco'],
+      'alcunhas': paciente['alcunhas'],
+      'ativo': (paciente['ativo'] == true || paciente['ativo'] == 1) ? 1 : 0,
+    });
+
+    // ---------- DEPENDENTES ----------
+    for (final dep in dependentes) {
+      await db.insert('perfis', {
+        'id_perfis': dep['id_perfis'],
+        'id_utilizadores': dep['id_utilizadores'],
+        'nome': dep['nome'],
+        'n_utente': dep['n_utente'],
+        'data_nasc': dep['data_nasc'],
+        'contacto_tel': dep['contacto_tel'],
+        'profissao': dep['profissao'],
+        'morada': dep['morada'],
+        'cod_postal': dep['cod_postal'],
+        'nif': dep['nif'],
+        'responsavel': paciente['id_perfis'].toString(),
+        'notas': dep['notas'],
+        'id_subsistemas_saude': dep['id_subsistemas_saude'],
+        'id_parentesco': dep['id_parentesco'],
+        'alcunhas': dep['alcunhas'],
+        'ativo': (dep['ativo'] == true || dep['ativo'] == 1) ? 1 : 0,
+      });
+    }
+  }
+
+  // ================= NOTIFICAÇÕES (ligado ao backend da web) =================
+  Future<void> fetchAndSaveNotificacoes() async {
+    final db = await _dbHelper.database;
+
+    if (!await hasInternet()) {
+      debugPrint('Sem internet → usar notificações locais');
+      return;
+    }
+
+    // obter token
+    final user = await db.query('utilizadores', limit: 1);
+    if (user.isEmpty) return;
+
+    final token = user.first['token'];
+    if (token == null) return;
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/notificacoes/paciente'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      debugPrint('Erro ao obter notificações');
+      return;
+    }
+
+    final data = json.decode(response.body);
+    final List lista = data['notificacoes'] ?? [];
+
+    // ⚠️ NÃO APAGAR A TABELA (senão "ressuscita")
+    for (final n in lista) {
+      final int idNotificacao = n['id_notificacoes'];
+
+      // 🔎 verificar se já existe localmente
+      final local = await db.query(
+        'notificacoes',
+        where: 'id_notificacoes = ?',
+        whereArgs: [idNotificacao],
+        limit: 1,
+      );
+
+      int lidaFinal;
+
+      if (local.isNotEmpty) {
+        // 👉 mantém estado local (offline-first)
+        lidaFinal = local.first['lida'] as int;
+      } else {
+        // 👉 usa estado do backend
+        lidaFinal = (n['lida'] == true || n['lida'] == 1) ? 1 : 0;
+      }
+
+      await db.insert('notificacoes', {
         'id_notificacoes': idNotificacao,
         'descricao': n['descricao'],
         'designacao': n['designacao'],
@@ -1163,117 +1203,105 @@ Future<void> fetchAndSaveNotificacoes() async {
         'id_utilizadores': n['id_utilizadores'],
         'id_tipo_notificacoes': n['id_tipo_notificacoes'],
         'lida': lidaFinal,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+
+    debugPrint('✅ Notificações sincronizadas (offline-first)');
   }
 
-  debugPrint('✅ Notificações sincronizadas (offline-first)');
-}
+  /// Marca notificações como lidas
+  /// - se [idNotificacao] != null → marca só essa
+  /// - se [idNotificacao] == null → marca todas
+  Future<void> marcarNotificacoesComoLidas({int? idNotificacao}) async {
+    final db = await _dbHelper.database;
 
-/// Marca notificações como lidas
-/// - se [idNotificacao] != null → marca só essa
-/// - se [idNotificacao] == null → marca todas
-Future<void> marcarNotificacoesComoLidas({int? idNotificacao}) async {
-  final db = await _dbHelper.database;
+    // ===============================
+    // 1️⃣ LOCAL (IMEDIATO)
+    // ===============================
+    if (idNotificacao != null) {
+      await db.update(
+        'notificacoes',
+        {'lida': 1},
+        where: 'id_notificacoes = ?',
+        whereArgs: [idNotificacao],
+      );
+    } else {
+      await db.update('notificacoes', {'lida': 1}, where: 'lida = 0');
+    }
 
-  // ===============================
-  // 1️⃣ LOCAL (IMEDIATO)
-  // ===============================
-  if (idNotificacao != null) {
-    await db.update(
-      'notificacoes',
-      {'lida': 1},
-      where: 'id_notificacoes = ?',
-      whereArgs: [idNotificacao],
-    );
-  } else {
-    await db.update(
-      'notificacoes',
-      {'lida': 1},
-      where: 'lida = 0',
-    );
+    // ===============================
+    // 2️⃣ OFFLINE-FIRST
+    // ===============================
+    if (!await hasInternet()) return;
+
+    // ===============================
+    // 3️⃣ TOKEN
+    // ===============================
+    final user = await db.query('utilizadores', limit: 1);
+    if (user.isEmpty) return;
+
+    final token = user.first['token'];
+    if (token == null) return;
+
+    // ===============================
+    // 4️⃣ BACKEND (fire & forget)
+    // ===============================
+    try {
+      final uri = idNotificacao != null
+          ? Uri.parse('$baseUrl/notificacoes/$idNotificacao/lida')
+          : Uri.parse('$baseUrl/notificacoes/marcar-todas-como-lidas');
+
+      await http.put(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+    } catch (_) {
+      // offline-first → ignora
+    }
   }
 
-  // ===============================
-  // 2️⃣ OFFLINE-FIRST
-  // ===============================
-  if (!await hasInternet()) return;
+  // ================= DEPENDENTES (sincronizado com backend web) =================
+  Future<void> fetchAndSaveDependentes(int idPerfis) async {
+    final db = await _dbHelper.database;
 
-  // ===============================
-  // 3️⃣ TOKEN
-  // ===============================
-  final user = await db.query('utilizadores', limit: 1);
-  if (user.isEmpty) return;
+    // OFFLINE-FIRST
+    if (!await hasInternet()) {
+      debugPrint('Sem internet → usar dependentes locais');
+      return;
+    }
 
-  final token = user.first['token'];
-  if (token == null) return;
+    // TOKEN
+    final user = await db.query('utilizadores', limit: 1);
+    if (user.isEmpty) return;
 
-  // ===============================
-  // 4️⃣ BACKEND (fire & forget)
-  // ===============================
-  try {
-    final uri = idNotificacao != null
-        ? Uri.parse('$baseUrl/notificacoes/$idNotificacao/lida')
-        : Uri.parse('$baseUrl/notificacoes/marcar-todas-como-lidas');
+    final token = user.first['token'];
+    if (token == null) return;
 
-    await http.put(
-      uri,
+    final response = await http.get(
+      Uri.parse('$baseUrl/dependentes/$idPerfis'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
     );
-  } catch (_) {
-    // offline-first → ignora
-  }
-}
 
-// ================= DEPENDENTES (sincronizado com backend web) =================
-Future<void> fetchAndSaveDependentes(int idPerfis) async {
-  final db = await _dbHelper.database;
+    if (response.statusCode != 200) {
+      debugPrint('Erro ao obter dependentes');
+      return;
+    }
 
-  // OFFLINE-FIRST
-  if (!await hasInternet()) {
-    debugPrint('Sem internet → usar dependentes locais');
-    return;
-  }
+    final data = json.decode(response.body);
+    final List lista = data['dependentes'] ?? [];
 
-  // TOKEN
-  final user = await db.query('utilizadores', limit: 1);
-  if (user.isEmpty) return;
+    // 🔥 LIMPAR DEPENDENTES ANTIGOS DESTE RESPONSÁVEL
+    await db.delete('perfis', where: 'responsavel = ?', whereArgs: [idPerfis]);
 
-  final token = user.first['token'];
-  if (token == null) return;
-
-  final response = await http.get(
-    Uri.parse('$baseUrl/dependentes/$idPerfis'),
-    headers: {
-      'Authorization': 'Bearer $token',
-      'Content-Type': 'application/json',
-    },
-  );
-
-  if (response.statusCode != 200) {
-    debugPrint('Erro ao obter dependentes');
-    return;
-  }
-
-  final data = json.decode(response.body);
-  final List lista = data['dependentes'] ?? [];
-
-  // 🔥 LIMPAR DEPENDENTES ANTIGOS DESTE RESPONSÁVEL
-  await db.delete(
-    'perfis',
-    where: 'responsavel = ?',
-    whereArgs: [idPerfis],
-  );
-
-  // 🔹 INSERIR / ATUALIZAR DEPENDENTES
-  for (final d in lista) {
-    await db.insert(
-      'perfis',
-      {
+    // 🔹 INSERIR / ATUALIZAR DEPENDENTES
+    for (final d in lista) {
+      await db.insert('perfis', {
         'id_perfis': d['id_perfis'],
         'id_utilizadores': d['id_utilizadores'],
         'nome': d['nome'],
@@ -1287,18 +1315,15 @@ Future<void> fetchAndSaveDependentes(int idPerfis) async {
         'responsavel': idPerfis, // 🔑 MUITO IMPORTANTE
         'id_subsistemas_saude': d['id_subsistemas_saude'],
         // aceitar variantes vindas do backend
-        'id_estado_civil': d['id_estado_civil'] ?? d['id_estados_civis'] ?? null,
+        'id_estado_civil':
+            d['id_estado_civil'] ?? d['id_estados_civis'] ?? null,
         'id_genero': d['id_genero'] ?? d['id_generos'] ?? null,
         'id_parentesco': d['id_parentesco'],
         'alcunhas': d['alcunhas'],
         'ativo': d['ativo'] == true ? 1 : 0,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+
+    debugPrint('✅ Dependentes sincronizados (${lista.length})');
   }
-
-  debugPrint('✅ Dependentes sincronizados (${lista.length})');
-}
-
-
 }

@@ -17,8 +17,7 @@ class DadosPessoaisResponsavel extends StatefulWidget {
       _DadosPessoaisResponsavelState();
 }
 
-class _DadosPessoaisResponsavelState
-    extends State<DadosPessoaisResponsavel> {
+class _DadosPessoaisResponsavelState extends State<DadosPessoaisResponsavel> {
   final DatabaseHelper _dbHelper = DatabaseHelper();
 
   Map<String, dynamic>? perfil;
@@ -89,7 +88,12 @@ class _DadosPessoaisResponsavelState
     try {
       final generoId = perfil!['id_genero'];
       if (generoId != null) {
-        final g = await db.query('generos', where: 'id_generos = ?', whereArgs: [generoId], limit: 1);
+        final g = await db.query(
+          'generos',
+          where: 'id_generos = ?',
+          whereArgs: [generoId],
+          limit: 1,
+        );
         if (g.isNotEmpty) _generoTexto = g.first['designacao'] as String?;
       }
     } catch (_) {
@@ -98,7 +102,12 @@ class _DadosPessoaisResponsavelState
     try {
       final estadoId = perfil!['id_estado_civil'];
       if (estadoId != null) {
-        final e = await db.query('estados_civis', where: 'id_estados_civis = ?', whereArgs: [estadoId], limit: 1);
+        final e = await db.query(
+          'estados_civis',
+          where: 'id_estados_civis = ?',
+          whereArgs: [estadoId],
+          limit: 1,
+        );
         if (e.isNotEmpty) _estadoCivilTexto = e.first['designacao'] as String?;
       }
     } catch (_) {
@@ -109,7 +118,12 @@ class _DadosPessoaisResponsavelState
     try {
       final subsId = perfil!['id_subsistemas_saude'];
       if (subsId != null) {
-        final s = await db.query('subsistemas_saude', where: 'id_subsistemas_saude = ?', whereArgs: [subsId], limit: 1);
+        final s = await db.query(
+          'subsistemas_saude',
+          where: 'id_subsistemas_saude = ?',
+          whereArgs: [subsId],
+          limit: 1,
+        );
         if (s.isNotEmpty) _subsistemaTexto = s.first['designacao'] as String?;
       }
     } catch (_) {
@@ -127,10 +141,7 @@ class _DadosPessoaisResponsavelState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            titulo,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
+          Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
           Text(valor),
         ],
@@ -140,16 +151,19 @@ class _DadosPessoaisResponsavelState
 
   @override
   Widget build(BuildContext context) {
-    Widget? _subsistemaWidget = _subsistemaTexto != null && _subsistemaTexto!.isNotEmpty ? _campo('Subsistema de Saúde', _subsistemaTexto) : null;
+    final _ = _emailUsuario;
+    final _ = _subsistemasMap;
+
+    Widget? _subsistemaWidget =
+        _subsistemaTexto != null && _subsistemaTexto!.isNotEmpty
+        ? _campo('Subsistema de Saúde', _subsistemaTexto)
+        : null;
     return Scaffold(
       backgroundColor: Colors.white,
 
       // ---------------- APPBAR ----------------
       appBar: AppBar(
-        title: Text(
-          widget.title,
-          style: const TextStyle(color: Colors.white),
-        ),
+        title: Text(widget.title, style: const TextStyle(color: Colors.white)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
@@ -157,11 +171,7 @@ class _DadosPessoaisResponsavelState
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Color(0xFF907041),
-                Color(0xFF97774D),
-                Color(0xFFA68A69),
-              ],
+              colors: [Color(0xFF907041), Color(0xFF97774D), Color(0xFFA68A69)],
             ),
           ),
         ),

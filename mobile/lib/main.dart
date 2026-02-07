@@ -40,14 +40,8 @@ class _AppShellState extends State<AppShell> {
 
     // ouvir mudanças de conectividade e sincronizar quando houver rede
     _sub = Connectivity().onConnectivityChanged.listen((result) {
-      bool hasNetwork = false;
-
-      if (result is ConnectivityResult) {
-        hasNetwork = result != ConnectivityResult.none;
-      } else if (result is Iterable) {
-        // some platform implementations may emit a list — consider any non-none as connected
-        hasNetwork = result.any((r) => r is ConnectivityResult && r != ConnectivityResult.none);
-      }
+      // result é sempre ConnectivityResult
+      bool hasNetwork = result != ConnectivityResult.none;
 
       if (hasNetwork) {
         _apiService.sincronizarOperacoesPendentes().catchError((e) {

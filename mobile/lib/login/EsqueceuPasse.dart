@@ -16,8 +16,10 @@ class _EsqueceuPassePageState extends State<EsqueceuPassePage> {
   bool aCarregar = false;
   final ApiService _apiService = ApiService();
 
-  final List<TextEditingController> controllers =
-      List.generate(5, (_) => TextEditingController());
+  final List<TextEditingController> controllers = List.generate(
+    5,
+    (_) => TextEditingController(),
+  );
 
   final List<FocusNode> focusNodes = List.generate(5, (_) => FocusNode());
 
@@ -35,21 +37,25 @@ class _EsqueceuPassePageState extends State<EsqueceuPassePage> {
     setState(() => aCarregar = true);
     FocusScope.of(context).unfocus();
 
-    debugPrint("DEBUG: Tentando verificar código para o email: '${widget.email}'");
+    debugPrint(
+      "DEBUG: Tentando verificar código para o email: '${widget.email}'",
+    );
 
     try {
       final sucesso = await _apiService.verifyResetCode(widget.email, codigo);
       if (sucesso) {
         if (mounted) {
-          context.push('/alterar_passe_recuperacao', extra: {
-            'email': widget.email,
-            'code': codigo,
-          });
+          context.push(
+            '/alterar_passe_recuperacao',
+            extra: {'email': widget.email, 'code': codigo},
+          );
         }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Código inválido ou expirado (ver consola).")),
+            const SnackBar(
+              content: Text("Código inválido ou expirado (ver consola)."),
+            ),
           );
         }
       }
@@ -155,7 +161,9 @@ class _EsqueceuPassePageState extends State<EsqueceuPassePage> {
                           return GestureDetector(
                             onTap: () {
                               setState(() => selectedBox = index);
-                              FocusScope.of(context).requestFocus(focusNodes[index]);
+                              FocusScope.of(
+                                context,
+                              ).requestFocus(focusNodes[index]);
                             },
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 160),
@@ -164,11 +172,15 @@ class _EsqueceuPassePageState extends State<EsqueceuPassePage> {
                               width: 45,
                               height: 50,
                               decoration: BoxDecoration(
-                                color: isSelected ? const Color(0xFFF1EFEA) : Colors.white,
+                                color: isSelected
+                                    ? const Color(0xFFF1EFEA)
+                                    : Colors.white,
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
                                   width: 2,
-                                  color: isSelected ? const Color(0xFFB49B6D) : Colors.black26,
+                                  color: isSelected
+                                      ? const Color(0xFFB49B6D)
+                                      : Colors.black26,
                                 ),
                               ),
                               child: TextField(
@@ -186,10 +198,14 @@ class _EsqueceuPassePageState extends State<EsqueceuPassePage> {
                                   counterText: "",
                                   border: InputBorder.none,
                                 ),
-                                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
                                 onChanged: (val) {
                                   if (val.length == 1 && index < 4) {
-                                    FocusScope.of(context).requestFocus(focusNodes[index + 1]);
+                                    FocusScope.of(
+                                      context,
+                                    ).requestFocus(focusNodes[index + 1]);
                                     setState(() => selectedBox = index + 1);
                                   }
                                 },

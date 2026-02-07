@@ -49,10 +49,7 @@ class _InicioState extends State<Inicio> {
           limit: 1,
         );
       } else {
-        perfis = await db.query(
-          'perfis',
-          limit: 1,
-        );
+        perfis = await db.query('perfis', limit: 1);
       }
 
       if (perfis.isNotEmpty) {
@@ -170,7 +167,9 @@ class _InicioState extends State<Inicio> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             MenuItemButton(
-                              onPressed: () => context.go('/PerfilSemDependentes'), // redireciona para o perfil (restored)
+                              onPressed: () => context.go(
+                                '/PerfilSemDependentes',
+                              ), // redireciona para o perfil (restored)
                               child: const Row(
                                 children: [
                                   Icon(Icons.person, size: 20),

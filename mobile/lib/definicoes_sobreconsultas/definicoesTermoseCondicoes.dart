@@ -38,7 +38,12 @@ class _TermosCondicoesState extends State<TermosCondicoes> {
         children: [
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 10), // padding geral do conteúdo
+              padding: const EdgeInsets.fromLTRB(
+                20,
+                20,
+                20,
+                10,
+              ), // padding geral do conteúdo
               child: RichText(
                 textAlign: TextAlign.justify,
                 text: const TextSpan(
@@ -69,8 +74,7 @@ class _TermosCondicoesState extends State<TermosCondicoes> {
                       text:
                           "2. Informação, consentimento e finalidade do tratamento\n",
                       style: TextStyle(
-                        fontWeight: FontWeight
-                            .w600, 
+                        fontWeight: FontWeight.w600,
                         fontSize: 14,
                       ),
                     ),
@@ -86,8 +90,7 @@ class _TermosCondicoesState extends State<TermosCondicoes> {
                     TextSpan(
                       text: "3. Medidas de segurança\n",
                       style: TextStyle(
-                        fontWeight: FontWeight
-                            .w600, 
+                        fontWeight: FontWeight.w600,
                         fontSize: 14,
                       ),
                     ),
@@ -100,8 +103,7 @@ class _TermosCondicoesState extends State<TermosCondicoes> {
                     TextSpan(
                       text: "4. Exercício dos direitos\n",
                       style: TextStyle(
-                        fontWeight: FontWeight
-                            .w600, 
+                        fontWeight: FontWeight.w600,
                         fontSize: 14,
                       ),
                     ),
@@ -114,8 +116,7 @@ class _TermosCondicoesState extends State<TermosCondicoes> {
                     TextSpan(
                       text: "5. Prazo de conservação\n",
                       style: TextStyle(
-                        fontWeight: FontWeight
-                            .w600, 
+                        fontWeight: FontWeight.w600,
                         fontSize: 14,
                       ),
                     ),
@@ -126,10 +127,9 @@ class _TermosCondicoesState extends State<TermosCondicoes> {
 
                     // ---------- Ponto 6 ----------
                     TextSpan(
-                      text: "6. Autoridade de controlo\n", 
+                      text: "6. Autoridade de controlo\n",
                       style: TextStyle(
-                        fontWeight: FontWeight
-                            .w600, 
+                        fontWeight: FontWeight.w600,
                         fontSize: 14,
                       ),
                     ),
@@ -147,7 +147,7 @@ class _TermosCondicoesState extends State<TermosCondicoes> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentPageIndex,
         indicatorColor: Colors.transparent,
-        backgroundColor: Colors.white, 
+        backgroundColor: Colors.white,
         onDestinationSelected: (index) {
           setState(() => currentPageIndex = index);
 

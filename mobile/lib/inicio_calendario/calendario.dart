@@ -53,35 +53,34 @@ class _CalendarioState extends State<Calendario> {
         list = list.where((c) => c.idPerfis == idPerfisAtivo).toList();
       }
       debugPrint("Consultas recebidas: ${list.length}");
-final hoje = DateTime.now();
+      final hoje = DateTime.now();
 
-list.sort((a, b) {
-  DateTime dataA;
-  DateTime dataB;
+      list.sort((a, b) {
+        DateTime dataA;
+        DateTime dataB;
 
-  try {
-    dataA = DateTime.parse(a.dataConsulta ?? '');
-  } catch (_) {
-    dataA = DateTime(2100); // vai para o fim
-  }
+        try {
+          dataA = DateTime.parse(a.dataConsulta ?? '');
+        } catch (_) {
+          dataA = DateTime(2100); // vai para o fim
+        }
 
-  try {
-    dataB = DateTime.parse(b.dataConsulta ?? '');
-  } catch (_) {
-    dataB = DateTime(2100);
-  }
+        try {
+          dataB = DateTime.parse(b.dataConsulta ?? '');
+        } catch (_) {
+          dataB = DateTime(2100);
+        }
 
-  // prioridade: datas futuras mais próximas
-  final diffA = dataA.difference(hoje).inMinutes;
-  final diffB = dataB.difference(hoje).inMinutes;
+        // prioridade: datas futuras mais próximas
+        final diffA = dataA.difference(hoje).inMinutes;
+        final diffB = dataB.difference(hoje).inMinutes;
 
-  return diffA.compareTo(diffB);
-});
+        return diffA.compareTo(diffB);
+      });
 
-setState(() {
-  consultas = list;
-});
-
+      setState(() {
+        consultas = list;
+      });
     } catch (e) {
       debugPrint("Erro ao carregar consultas: $e");
     } finally {
@@ -133,135 +132,135 @@ setState(() {
             child: SizedBox(
               height: 217,
 
-           child: TableCalendar(
-  locale: 'pt_PT', // 🇵🇹 meses e datas em português
+              child: TableCalendar(
+                locale: 'pt_PT', // 🇵🇹 meses e datas em português
 
-  firstDay: DateTime.utc(2020, 1, 1),
-  lastDay: DateTime.utc(2030, 12, 31),
-  focusedDay: _focusedDay,
+                firstDay: DateTime.utc(2020, 1, 1),
+                lastDay: DateTime.utc(2030, 12, 31),
+                focusedDay: _focusedDay,
 
-  selectedDayPredicate: (day) => false, // desativa seleção
-  eventLoader: (day) => _consultasDoDia(day),
+                selectedDayPredicate: (day) => false, // desativa seleção
+                eventLoader: (day) => _consultasDoDia(day),
 
-  calendarStyle: const CalendarStyle(
-    outsideDaysVisible: false, // ⬅️ remove dias do mês anterior/seguinte
-  ),
+                calendarStyle: const CalendarStyle(
+                  outsideDaysVisible:
+                      false, // ⬅️ remove dias do mês anterior/seguinte
+                ),
 
-  calendarBuilders: CalendarBuilders(
-    todayBuilder: (context, day, focusedDay) {
-      return Container(
-        width: 26,
-        height: 26,
-        decoration: const BoxDecoration(
-          color: Color(0xFFA68A69),
-          shape: BoxShape.circle,
-        ),
-        child: Center(
-          child: Text(
-            '${day.day}',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-        ),
-      );
-    },
+                calendarBuilders: CalendarBuilders(
+                  todayBuilder: (context, day, focusedDay) {
+                    return Container(
+                      width: 26,
+                      height: 26,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFA68A69),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${day.day}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
 
-    defaultBuilder: (context, day, focusedDay) {
-      return Center(
-        child: Text(
-          '${day.day}',
-          style: const TextStyle(
-            fontSize: 12,
-            color: Colors.black87,
-          ),
-        ),
-      );
-    },
+                  defaultBuilder: (context, day, focusedDay) {
+                    return Center(
+                      child: Text(
+                        '${day.day}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    );
+                  },
 
-    markerBuilder: (context, day, events) {
-      if (events.isNotEmpty) {
-        return Align(
-          alignment: Alignment.bottomCenter,
-          child: Container(
-            width: 16,
-            height: 2,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Color(0xFF907041),
-                  Color(0xFF97774D),
-                  Color(0xFFA68A69),
-                ],
+                  markerBuilder: (context, day, events) {
+                    if (events.isNotEmpty) {
+                      return Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Container(
+                          width: 16,
+                          height: 2,
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Color(0xFF907041),
+                                Color(0xFF97774D),
+                                Color(0xFFA68A69),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                    return null;
+                  },
+                ),
+
+                headerStyle: HeaderStyle(
+                  formatButtonVisible: false,
+                  titleCentered: true,
+                  leftChevronPadding: EdgeInsets.zero,
+                  rightChevronPadding: EdgeInsets.zero,
+
+                  titleTextStyle: const TextStyle(
+                    color: Color(0xFF907041),
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+
+                  // ⬇️ garante o nome do mês em português
+                  titleTextFormatter: (date, locale) {
+                    const meses = [
+                      'Janeiro',
+                      'Fevereiro',
+                      'Março',
+                      'Abril',
+                      'Maio',
+                      'Junho',
+                      'Julho',
+                      'Agosto',
+                      'Setembro',
+                      'Outubro',
+                      'Novembro',
+                      'Dezembro',
+                    ];
+                    return '${meses[date.month - 1]} ${date.year}';
+                  },
+                ),
+
+                daysOfWeekHeight: 20,
+                rowHeight: 26,
+
+                daysOfWeekStyle: DaysOfWeekStyle(
+                  weekdayStyle: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.black87,
+                  ),
+                  weekendStyle: const TextStyle(fontSize: 12),
+                  dowTextFormatter: (date, locale) {
+                    const diasSemana = [
+                      'Seg',
+                      'Ter',
+                      'Qua',
+                      'Qui',
+                      'Sex',
+                      'Sáb',
+                      'Dom',
+                    ];
+                    return diasSemana[date.weekday - 1];
+                  },
+                ),
+
+                onDaySelected: (_, __) {}, // clique desativado
               ),
-            ),
-          ),
-        );
-      }
-      return null;
-    },
-  ),
-
-  headerStyle: HeaderStyle(
-    formatButtonVisible: false,
-    titleCentered: true,
-    leftChevronPadding: EdgeInsets.zero,
-    rightChevronPadding: EdgeInsets.zero,
-
-    titleTextStyle: const TextStyle(
-      color: Color(0xFF907041),
-      fontSize: 14,
-      fontWeight: FontWeight.bold,
-    ),
-
-    // ⬇️ garante o nome do mês em português
-    titleTextFormatter: (date, locale) {
-      const meses = [
-        'Janeiro',
-        'Fevereiro',
-        'Março',
-        'Abril',
-        'Maio',
-        'Junho',
-        'Julho',
-        'Agosto',
-        'Setembro',
-        'Outubro',
-        'Novembro',
-        'Dezembro',
-      ];
-      return '${meses[date.month - 1]} ${date.year}';
-    },
-  ),
-
-  daysOfWeekHeight: 20,
-  rowHeight: 26,
-
-  daysOfWeekStyle: DaysOfWeekStyle(
-    weekdayStyle: const TextStyle(
-      fontSize: 12,
-      color: Colors.black87,
-    ),
-    weekendStyle: const TextStyle(fontSize: 12),
-    dowTextFormatter: (date, locale) {
-      const diasSemana = [
-        'Seg',
-        'Ter',
-        'Qua',
-        'Qui',
-        'Sex',
-        'Sáb',
-        'Dom',
-      ];
-      return diasSemana[date.weekday - 1];
-    },
-  ),
-
-  onDaySelected: (_, __) {}, // clique desativado
-),
-
             ),
           ),
 
@@ -333,7 +332,7 @@ setState(() {
                               itemBuilder: (context, index) {
                                 final c = consultas[index];
                                 return _cardConsulta(
-                                  context: context, 
+                                  context: context,
                                   tipoConsulta:
                                       c.especialidadeNome ??
                                       c.medicoNome ??

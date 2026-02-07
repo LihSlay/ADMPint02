@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 class _SettingsCard extends StatelessWidget {
   // Ícone mostrado no botão
   final IconData icon;
-   // Texto 
+  // Texto
   final String text;
   // Função executada quando o cartão é clicado
   final VoidCallback onTap;
@@ -15,18 +15,23 @@ class _SettingsCard extends StatelessWidget {
     required this.text,
     required this.onTap,
   });
- 
+
   @override
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(12), // Bordas arredondadas
-      elevation: 2,// Sombra do cartão
-      child: InkWell( 
-        borderRadius: BorderRadius.circular(12),  // Ripple respeita as bordas arredondadas
+      elevation: 2, // Sombra do cartão
+      child: InkWell(
+        borderRadius: BorderRadius.circular(
+          12,
+        ), // Ripple respeita as bordas arredondadas
         onTap: onTap, // Ação ao clicar no cartão
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16), // Espaçamento interno
+          padding: const EdgeInsets.symmetric(
+            vertical: 20,
+            horizontal: 16,
+          ), // Espaçamento interno
           child: Row(
             children: [
               // Container do ícone
@@ -43,7 +48,6 @@ class _SettingsCard extends StatelessWidget {
               ),
 
               const SizedBox(width: 16), // Espaço entre ícone e texto
-
 
               Expanded(
                 child: Text(
@@ -90,19 +94,14 @@ class _DefinicoesState extends State<Definicoes> {
         title: Text(widget.title, style: const TextStyle(color: Colors.white)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => context.go(
-            '/inicio',
-          ), // vai diretamente para a rota /inicio
+          onPressed: () =>
+              context.go('/inicio'), // vai diretamente para a rota /inicio
         ),
         elevation: 0,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Color(0xFF907041),
-                Color(0xFF97774D),
-                Color(0xFFA68A69),
-              ],
+              colors: [Color(0xFF907041), Color(0xFF97774D), Color(0xFFA68A69)],
             ),
           ),
         ),
@@ -132,7 +131,7 @@ class _DefinicoesState extends State<Definicoes> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentPageIndex,
         indicatorColor: Colors.transparent,
-        backgroundColor: Colors.white, 
+        backgroundColor: Colors.white,
         onDestinationSelected: (index) {
           setState(() {
             currentPageIndex = index;

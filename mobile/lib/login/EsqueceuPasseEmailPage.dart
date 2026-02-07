@@ -39,9 +39,11 @@ class _EsqueceuPasseEmailPageState extends State<EsqueceuPasseEmailPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                duration: Duration(seconds: 5),
-                content: Text(
-                    "Não foi possível enviar o código. Verifique a sua ligação ou se o e-mail está correto (o servidor pode estar a iniciar, tente novamente se demorar).")),
+              duration: Duration(seconds: 5),
+              content: Text(
+                "Não foi possível enviar o código. Verifique a sua ligação ou se o e-mail está correto (o servidor pode estar a iniciar, tente novamente se demorar).",
+              ),
+            ),
           );
         }
       }
@@ -49,8 +51,10 @@ class _EsqueceuPasseEmailPageState extends State<EsqueceuPasseEmailPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text(
-                  "Erro de ligação: O servidor pode estar em manutenção.")),
+            content: Text(
+              "Erro de ligação: O servidor pode estar em manutenção.",
+            ),
+          ),
         );
       }
     } finally {
@@ -95,8 +99,11 @@ class _EsqueceuPasseEmailPageState extends State<EsqueceuPasseEmailPage> {
                     children: [
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
-                        child: const Icon(Icons.arrow_back_ios_new,
-                            color: Colors.white, size: 20),
+                        child: const Icon(
+                          Icons.arrow_back_ios_new,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                       ),
                       const SizedBox(width: 10),
                       const Text(
@@ -142,12 +149,15 @@ class _EsqueceuPasseEmailPageState extends State<EsqueceuPasseEmailPage> {
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           height: 48,
                           decoration: BoxDecoration(
-                            color: selected ? const Color(0xFFF1EFEA) : Colors.white,
+                            color: selected
+                                ? const Color(0xFFF1EFEA)
+                                : Colors.white,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
                               width: 2,
-                              color:
-                                  selected ? const Color(0xFFB49B6D) : Colors.black26,
+                              color: selected
+                                  ? const Color(0xFFB49B6D)
+                                  : Colors.black26,
                             ),
                           ),
                           child: Center(

@@ -61,8 +61,7 @@ class _MapScreenState extends State<MapScreen> {
             point: latLng,
             width: 40,
             height: 40,
-            child:
-                const Icon(Icons.my_location, color: Colors.blue, size: 40),
+            child: const Icon(Icons.my_location, color: Colors.blue, size: 40),
           ),
         );
     });
@@ -79,16 +78,14 @@ class _MapScreenState extends State<MapScreen> {
             point: latLng,
             width: 40,
             height: 40,
-            child:
-                const Icon(Icons.location_on, color: Colors.red, size: 40),
+            child: const Icon(Icons.location_on, color: Colors.red, size: 40),
           ),
         );
     });
   }
 
   void _show(String msg) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(msg)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   @override

@@ -14,15 +14,17 @@ class SobreConsultasPage extends StatefulWidget {
 
 class _SobreConsultasPageState extends State<SobreConsultasPage> {
   int currentPageIndex = 3; // Bottomnavegationbar
-  final MapController _mapController = MapController(); // Controlador do mapa para manipular a posição e o zoom
-  final List<Marker> _markers = []; // Lista de marcadores para exibir no mapa (inicialmente vazia)
+  final MapController _mapController =
+      MapController(); // Controlador do mapa para manipular a posição e o zoom
+  final List<Marker> _markers =
+      []; // Lista de marcadores para exibir no mapa (inicialmente vazia)
   final LatLng _initial = LatLng(
     40.533192,
     -8.1033865,
   ); // Localização inicial (Tondela)
 
   @override
-  void initState() { 
+  void initState() {
     super.initState();
     _markers.add(
       Marker(
@@ -34,7 +36,8 @@ class _SobreConsultasPageState extends State<SobreConsultasPage> {
     );
   }
 
-  Future<void> _goToMyLocation() async { // Função para obter a localização atual do usuário e mover o mapa para essa posição
+  Future<void> _goToMyLocation() async {
+    // Função para obter a localização atual do usuário e mover o mapa para essa posição
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       _show("Ativa o GPS.");
@@ -57,7 +60,8 @@ class _SobreConsultasPageState extends State<SobreConsultasPage> {
 
     final latLng = LatLng(pos.latitude, pos.longitude);
 
-    setState(() { // Atualiza o estado para adicionar um marcador na posição atual do usuário e mover o mapa para essa posição
+    setState(() {
+      // Atualiza o estado para adicionar um marcador na posição atual do usuário e mover o mapa para essa posição
       _markers
         ..clear()
         ..add(
@@ -73,7 +77,8 @@ class _SobreConsultasPageState extends State<SobreConsultasPage> {
     _mapController.move(latLng, 16);
   }
 
-  void _onTap(TapPosition tapPosition, LatLng latLng) { // Função para adicionar um marcador no local onde o usuário tocar no mapa
+  void _onTap(TapPosition tapPosition, LatLng latLng) {
+    // Função para adicionar um marcador no local onde o usuário tocar no mapa
     setState(() {
       _markers
         ..clear()
@@ -88,7 +93,8 @@ class _SobreConsultasPageState extends State<SobreConsultasPage> {
     });
   }
 
-  void _show(String msg) { // Função para exibir uma mensagem de erro ou informação usando um SnackBar
+  void _show(String msg) {
+    // Função para exibir uma mensagem de erro ou informação usando um SnackBar
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
@@ -228,7 +234,7 @@ class _SobreConsultasPageState extends State<SobreConsultasPage> {
                           onTap: _onTap,
                         ),
                         children: [
-                          TileLayer( 
+                          TileLayer(
                             urlTemplate:
                                 "https://tile.openstreetmap.org/{z}/{x}/{y}.png", // Mapa base
                             userAgentPackageName: 'com.exemplo.app',

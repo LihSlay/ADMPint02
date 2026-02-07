@@ -71,7 +71,11 @@ class _AlterarPassePageState extends State<AlterarPassePage> {
     setState(() => aCarregar = true);
 
     try {
-      final sucesso = await _apiService.resetPassword(widget.email, widget.code, p1);
+      final sucesso = await _apiService.resetPassword(
+        widget.email,
+        widget.code,
+        p1,
+      );
       if (sucesso) {
         mostrarPopupSucesso();
       } else {
@@ -85,7 +89,11 @@ class _AlterarPassePageState extends State<AlterarPassePage> {
       if (mounted) {
         final msg = e.toString().replaceFirst('Exception: ', '').trim();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg.isNotEmpty ? msg : "Erro de ligação ao servidor.")),
+          SnackBar(
+            content: Text(
+              msg.isNotEmpty ? msg : "Erro de ligação ao servidor.",
+            ),
+          ),
         );
       }
     } finally {
@@ -199,8 +207,11 @@ class _AlterarPassePageState extends State<AlterarPassePage> {
                     children: [
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
-                        child: const Icon(Icons.arrow_back_ios_new,
-                            color: Colors.white, size: 20),
+                        child: const Icon(
+                          Icons.arrow_back_ios_new,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                       ),
                       const SizedBox(width: 10),
                       const Text(
@@ -269,8 +280,8 @@ class _AlterarPassePageState extends State<AlterarPassePage> {
                         borderColor: matches
                             ? const Color(0xFF2ECC71)
                             : (field2Selected
-                                ? const Color(0xFFB49B6D)
-                                : Colors.black26),
+                                  ? const Color(0xFFB49B6D)
+                                  : Colors.black26),
                         bgColor: matches ? const Color(0xFFE9F7EF) : null,
                       ),
                       if (matchMessage.isNotEmpty) ...[
@@ -387,74 +398,74 @@ class _AlterarPassePageState extends State<AlterarPassePage> {
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
-                    ),
+                        ),
+                      ),
+                      Text(
+                        "clinimolelos@gmail.com",
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 14,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
                   ),
-                  Text(
-                    "clinimolelos@gmail.com",
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 14,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget campoPassword({
+    required TextEditingController controller,
+    required bool show,
+    required bool selected,
+    required VoidCallback onToggle,
+    required VoidCallback onSelect,
+    Color? borderColor,
+    Color? bgColor,
+  }) {
+    return GestureDetector(
+      onTap: onSelect,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        height: 48,
+        decoration: BoxDecoration(
+          color: bgColor ?? (selected ? const Color(0xFFF1EFEA) : Colors.white),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            width: 2,
+            color:
+                borderColor ??
+                (selected ? const Color(0xFFB49B6D) : Colors.black26),
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: controller,
+                obscureText: !show,
+                cursorColor: const Color(0xFFB49B6D),
+                style: const TextStyle(fontSize: 16),
+                decoration: const InputDecoration(border: InputBorder.none),
+                onTap: onSelect,
+              ),
+            ),
+            GestureDetector(
+              onTap: onToggle,
+              child: Icon(
+                show ? Icons.visibility_off : Icons.visibility,
+                color: Colors.black54,
               ),
             ),
           ],
         ),
       ),
-    ),
-  ),
-);
-}
-
-Widget campoPassword({
-  required TextEditingController controller,
-  required bool show,
-  required bool selected,
-  required VoidCallback onToggle,
-  required VoidCallback onSelect,
-  Color? borderColor,
-  Color? bgColor,
-}) {
-  return GestureDetector(
-    onTap: onSelect,
-    child: AnimatedContainer(
-      duration: const Duration(milliseconds: 150),
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      height: 48,
-      decoration: BoxDecoration(
-        color: bgColor ?? (selected ? const Color(0xFFF1EFEA) : Colors.white),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          width: 2,
-          color: borderColor ?? (selected ? const Color(0xFFB49B6D) : Colors.black26),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: controller,
-              obscureText: !show,
-              cursorColor: const Color(0xFFB49B6D),
-              style: const TextStyle(fontSize: 16),
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-              ),
-              onTap: onSelect,
-            ),
-          ),
-          GestureDetector(
-            onTap: onToggle,
-            child: Icon(
-              show ? Icons.visibility_off : Icons.visibility,
-              color: Colors.black54,
-            ),
-          )
-        ],
-      ),
-    ),
-  );
-}
+    );
+  }
 }

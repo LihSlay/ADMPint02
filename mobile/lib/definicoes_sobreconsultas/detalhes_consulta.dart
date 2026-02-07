@@ -63,12 +63,18 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
           ? const Center(child: CircularProgressIndicator())
           : consultas.isEmpty
           ? const Center(child: Text('Nenhuma consulta encontrada'))
-          : SingleChildScrollView( // Scroll automático se faltar espaço
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+          : SingleChildScrollView(
+              // Scroll automático se faltar espaço
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 16.0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildConsultaDetailCard(consultas.first), // Exibe apenas a primeira consulta para detalhes
+                  _buildConsultaDetailCard(
+                    consultas.first,
+                  ), // Exibe apenas a primeira consulta para detalhes
                   const SizedBox(height: 5),
                   _buildAviso(), // Aviso sobre desmarcações
                 ],
@@ -122,7 +128,8 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
     );
   }
 
-  Widget _buildAviso() { // Exibir o aviso sobre desmarcações
+  Widget _buildAviso() {
+    // Exibir o aviso sobre desmarcações
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 0),
       child: Row(
@@ -157,18 +164,25 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
     DateTime dataParsed;
     try {
       final dataStr = consulta.dataConsulta;
-      if (dataStr != null && dataStr.isNotEmpty) { // Verificar se a string não é nula ou vazia
-        dataParsed = DateTime.parse(dataStr); 
+      if (dataStr != null && dataStr.isNotEmpty) {
+        // Verificar se a string não é nula ou vazia
+        dataParsed = DateTime.parse(dataStr);
       } else {
-        dataParsed = DateTime.now();// Valor padrão se a data for nula ou vazia
+        dataParsed = DateTime.now(); // Valor padrão se a data for nula ou vazia
       }
     } catch (_) {
-      dataParsed = DateTime.now(); // Valor padrão se ocorrer um erro ao analisar a data
+      dataParsed =
+          DateTime.now(); // Valor padrão se ocorrer um erro ao analisar a data
     }
-    final dia = dataParsed.day.toString().padLeft(2, '0'); // Garantir que o dia tem 2 dígitos
-    final mesNumero = dataParsed.month; // Obter o número do mês para converter em texto
+    final dia = dataParsed.day.toString().padLeft(
+      2,
+      '0',
+    ); // Garantir que o dia tem 2 dígitos
+    final mesNumero =
+        dataParsed.month; // Obter o número do mês para converter em texto
     final ano = dataParsed.year.toString(); // Obter o ano como string
-    const meses = [ // Lista de meses para converter número em texto
+    const meses = [
+      // Lista de meses para converter número em texto
       'Jan',
       'Fev',
       'Mar',
@@ -182,8 +196,9 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
       'Nov',
       'Dez',
     ];
-    final mesTexto = meses[mesNumero - 1]; 
-    final dataFormatada = '$dia $mesTexto $ano'; // Formatar data como "DD Mês AAAA"
+    final mesTexto = meses[mesNumero - 1];
+    final dataFormatada =
+        '$dia $mesTexto $ano'; // Formatar data como "DD Mês AAAA"
 
     // Formatar horário
     String formatarHora(String? hora) {
@@ -196,19 +211,21 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
       }
     }
 
-    final horarioFormatado = 
+    final horarioFormatado =
         '${formatarHora(consulta.horarioInicio)} - ${formatarHora(consulta.horarioFim)}'; // Formatar horário como "HH:MM - HH:MM"
 
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 16.0), // Espaçamento entre os cartões
+      margin: const EdgeInsets.only(
+        bottom: 16.0,
+      ), // Espaçamento entre os cartões
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08), // Sombra leve 
+            color: Colors.black.withOpacity(0.08), // Sombra leve
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -226,7 +243,10 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
             'Tipo de Consulta',
             consulta.especialidadeNome ?? 'Não informado',
           ),
-          _buildDetailRow('Médico', consulta.medicoNome ?? 'Não informado'), // Exibir "Não informado" se o nome do médico for nulo
+          _buildDetailRow(
+            'Médico',
+            consulta.medicoNome ?? 'Não informado',
+          ), // Exibir "Não informado" se o nome do médico for nulo
           _buildDetailRow('Data', dataFormatada),
           _buildDetailRow('Horário', horarioFormatado),
           _buildDetailRow('Estado', consulta.estado),
@@ -236,7 +256,8 @@ class _DetalhesConsultaState extends State<DetalhesConsulta> {
     );
   }
 
-  Widget _buildDetailRow(String label, String value) { // Widget para exibir cada linha de detalhes da consulta
+  Widget _buildDetailRow(String label, String value) {
+    // Widget para exibir cada linha de detalhes da consulta
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
       child: Column(
