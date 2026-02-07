@@ -62,17 +62,21 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
     numeroUtente = paciente['n_utente'] as int?;
 
     // 🔹 DEPENDENTES
-    dependentes = await db.query( //vai buscar os dependentes associados a este perfil (onde o id do perfil é igual ao campo "responsavel" dos dependentes)
+    // ⚠️ responsavel é STRING → comparação tem de ser STRING
+    dependentes = await db.query(
       'perfis',
       where: 'responsavel = ?',
       whereArgs: [idPaciente.toString()],
     );
 
-    // 🧪 DEBUG (podes apagar depois)
+    // 🧪 DEBUG
     debugPrint('================ PERFIL DEBUG ================');
     debugPrint('ID UTILIZADOR: $idUtilizador');
     debugPrint('ID PACIENTE: $idPaciente');
-    debugPrint('DEPENDENTES: $dependentes');
+    debugPrint('DEPENDENTES (${dependentes.length}):');
+    for (final d in dependentes) {
+      debugPrint('→ ${d['nome']} | responsavel=${d['responsavel']}');
+    }
     debugPrint('==============================================');
 
     if (mounted) setState(() => carregado = true);
@@ -101,7 +105,7 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
               colors: [
                 Color(0xFF907041),
                 Color(0xFF97774D),
-                Color(0xFFA68A69)
+                Color(0xFFA68A69),
               ],
             ),
           ),
@@ -189,7 +193,7 @@ class _PerfilSemDependentesState extends State<PerfilSemDependentes> {
 
                   const SizedBox(height: 15),
 
-                  dependentes.isEmpty //se não tiver dependentes associados, mostra esta mensagem
+                  dependentes.isEmpty
                       ? const Text(
                           "Sem dependentes associados",
                           style: TextStyle(color: Colors.black54),

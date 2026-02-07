@@ -726,7 +726,7 @@ Future<void> fetchAndSaveMeuPerfilComDependentes(String token) async {
     });
   }
 }
-// ================= NOTIFICAÇÕES =================
+// ================= NOTIFICAÇÕES (ligado ao backend da web) =================
 Future<void> fetchAndSaveNotificacoes() async {
   final db = await _dbHelper.database;
 
@@ -854,6 +854,74 @@ Future<void> marcarNotificacoesComoLidas({int? idNotificacao}) async {
   } catch (_) {
     // offline-first → ignora
   }
+}
+
+// ================= DEPENDENTES (sincronizado com backend web) =================
+Future<void> fetchAndSaveDependentes(int idPerfis) async {
+  final db = await _dbHelper.database;
+
+  // OFFLINE-FIRST
+  if (!await hasInternet()) {
+    debugPrint('Sem internet → usar dependentes locais');
+    return;
+  }
+
+  // TOKEN
+  final user = await db.query('utilizadores', limit: 1);
+  if (user.isEmpty) return;
+
+  final token = user.first['token'];
+  if (token == null) return;
+
+  final response = await http.get(
+    Uri.parse('$baseUrl/dependentes/$idPerfis'),
+    headers: {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    },
+  );
+
+  if (response.statusCode != 200) {
+    debugPrint('Erro ao obter dependentes');
+    return;
+  }
+
+  final data = json.decode(response.body);
+  final List lista = data['dependentes'] ?? [];
+
+  // 🔥 LIMPAR DEPENDENTES ANTIGOS DESTE RESPONSÁVEL
+  await db.delete(
+    'perfis',
+    where: 'responsavel = ?',
+    whereArgs: [idPerfis],
+  );
+
+  // 🔹 INSERIR / ATUALIZAR DEPENDENTES
+  for (final d in lista) {
+    await db.insert(
+      'perfis',
+      {
+        'id_perfis': d['id_perfis'],
+        'id_utilizadores': d['id_utilizadores'],
+        'nome': d['nome'],
+        'n_utente': d['n_utente'],
+        'data_nasc': d['data_nasc'],
+        'contacto_tel': d['contacto_tel'],
+        'profissao': d['profissao'],
+        'morada': d['morada'],
+        'cod_postal': d['cod_postal'],
+        'nif': d['nif'],
+        'responsavel': idPerfis, // 🔑 MUITO IMPORTANTE
+        'id_subsistemas_saude': d['id_subsistemas_saude'],
+        'id_parentesco': d['id_parentesco'],
+        'alcunhas': d['alcunhas'],
+        'ativo': d['ativo'] == true ? 1 : 0,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  debugPrint('✅ Dependentes sincronizados (${lista.length})');
 }
 
 
